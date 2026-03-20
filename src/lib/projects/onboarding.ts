@@ -16,6 +16,8 @@ export interface OnboardingStepState {
   complete: boolean
 }
 
+export type OnboardingStepVisualState = 'done' | 'current' | 'upcoming'
+
 export interface UserOnboardingState {
   currentStep: OnboardingStepId
   title: string
@@ -56,6 +58,21 @@ export function getProjectExecutionLabel(project: ProjectDto) {
   }
 
   return 'Keep shipping'
+}
+
+export function getOnboardingStepVisualState(
+  step: OnboardingStepState,
+  currentStep: OnboardingStepId
+): OnboardingStepVisualState {
+  if (step.complete) {
+    return 'done'
+  }
+
+  if (step.id === currentStep) {
+    return 'current'
+  }
+
+  return 'upcoming'
 }
 
 export function getUserOnboardingState(

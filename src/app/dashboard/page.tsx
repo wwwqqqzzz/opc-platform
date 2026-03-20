@@ -3,9 +3,8 @@
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
-import { getProjectExecutionLabel, getUserOnboardingState } from '@/lib/projects/onboarding'
-import type { GithubIntegrationStatus } from '@/types/github'
-import type { ProjectDto } from '@/types/projects'
+import { useDashboardOnboarding } from '@/hooks/useDashboardExecutionState'
+import { getProjectExecutionLabel } from '@/lib/projects/onboarding'
 
 interface Stats {
   botsCount: number
@@ -20,9 +19,8 @@ interface DashboardIdeaSummary {
 export default function DashboardPage() {
   const { user } = useAuth()
   const [stats, setStats] = useState<Stats>({ botsCount: 0, ideasCount: 0, projectsCount: 0 })
-  const [projects, setProjects] = useState<ProjectDto[]>([])
-  const [githubStatus, setGithubStatus] = useState<GithubIntegrationStatus | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [statsLoading, setStatsLoading] = useState(true)
+  const { projects, githubStatus, onboarding } = useDashboardOnboarding()
 
   useEffect(() => {
     if (user) {
@@ -36,13 +34,12 @@ export default function DashboardPage() {
     }
 
     try {
-      setLoading(true)
+      setStatsLoading(true)
 
-      const [botsRes, ideasRes, projectsRes, githubRes] = await Promise.all([
+      const [botsRes, ideasRes, projectsRes] = await Promise.all([
         fetch('/api/bots'),
         fetch('/api/ideas'),
         fetch(`/api/projects?userId=${user.id}`),
-        fetch('/api/integrations/github/me'),
       ])
 
       if (botsRes.ok) {
@@ -57,23 +54,16 @@ export default function DashboardPage() {
       }
 
       if (projectsRes.ok) {
-        const data: ProjectDto[] = await projectsRes.json()
-        setProjects(data)
+        const data = await projectsRes.json()
         setStats((prev) => ({ ...prev, projectsCount: data.length }))
-      }
-
-      if (githubRes.ok) {
-        const data: GithubIntegrationStatus = await githubRes.json()
-        setGithubStatus(data)
       }
     } catch (error) {
       console.error('Failed to fetch dashboard data:', error)
     } finally {
-      setLoading(false)
+      setStatsLoading(false)
     }
   }
 
-  const onboarding = getUserOnboardingState(projects, Boolean(githubStatus?.connection.connected))
   const launchReadyProjects = projects.filter(
     (project) => project.deliveryStage === 'launch_ready' && !project.launch
   )
@@ -129,19 +119,19 @@ export default function DashboardPage() {
         <StatLink
           href="/dashboard/bots"
           label="Total Bots"
-          value={loading ? '...' : String(stats.botsCount)}
+          value={statsLoading ? '...' : String(stats.botsCount)}
           tone="emerald"
         />
         <StatLink
           href="/dashboard/ideas"
           label="Published Ideas"
-          value={loading ? '...' : String(stats.ideasCount)}
+          value={statsLoading ? '...' : String(stats.ideasCount)}
           tone="purple"
         />
         <StatLink
           href="/dashboard/projects"
           label="My Projects"
-          value={loading ? '...' : String(stats.projectsCount)}
+          value={statsLoading ? '...' : String(stats.projectsCount)}
           tone="yellow"
         />
       </div>

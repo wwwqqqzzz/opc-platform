@@ -1,8 +1,10 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { useAuth } from '@/contexts/AuthContext'
 import Link from 'next/link'
+import { useEffect, useState } from 'react'
+import DashboardEmptyState from '@/components/dashboard/DashboardEmptyState'
+import { useAuth } from '@/contexts/AuthContext'
+import { useDashboardOnboarding } from '@/hooks/useDashboardExecutionState'
 
 interface Idea {
   id: string
@@ -23,94 +25,66 @@ interface Idea {
   }
 }
 
+type IdeaFilter = 'all' | 'pending' | 'in_progress' | 'completed'
+
 export default function MyIdeasPage() {
   const { user } = useAuth()
+  const { onboarding } = useDashboardOnboarding()
   const [ideas, setIdeas] = useState<Idea[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [filter, setFilter] = useState<'all' | 'pending' | 'in_progress' | 'completed'>('all')
+  const [filter, setFilter] = useState<IdeaFilter>('all')
 
   useEffect(() => {
     if (user) {
-      fetchIdeas()
+      void fetchIdeas()
     }
   }, [user])
 
   const fetchIdeas = async () => {
-    if (!user) return
+    if (!user) {
+      return
+    }
 
     try {
       setLoading(true)
       const response = await fetch('/api/ideas')
-      if (!response.ok) throw new Error('Failed to fetch ideas')
-      const data = await response.json()
-      // Filter only user's ideas
-      const userIdeas = data.filter((idea: Idea) => idea.userId === user.id)
-      setIdeas(userIdeas)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch ideas')
+      if (!response.ok) {
+        throw new Error('Failed to fetch ideas')
+      }
+
+      const data: Idea[] = await response.json()
+      setIdeas(data.filter((idea) => idea.userId === user.id))
+    } catch (fetchError) {
+      setError(fetchError instanceof Error ? fetchError.message : 'Failed to fetch ideas')
     } finally {
       setLoading(false)
     }
   }
 
   const deleteIdea = async (ideaId: string) => {
-    if (!confirm('Are you sure you want to delete this idea?')) return
+    if (!confirm('Are you sure you want to delete this idea?')) {
+      return
+    }
 
     try {
       const response = await fetch(`/api/ideas/${ideaId}`, {
         method: 'DELETE',
       })
 
-      if (!response.ok) throw new Error('Failed to delete idea')
+      if (!response.ok) {
+        throw new Error('Failed to delete idea')
+      }
 
       await fetchIdeas()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete idea')
+    } catch (deleteError) {
+      setError(deleteError instanceof Error ? deleteError.message : 'Failed to delete idea')
     }
-  }
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return 'bg-yellow-900/50 text-yellow-400 border border-yellow-700'
-      case 'in_progress':
-        return 'bg-blue-900/50 text-blue-400 border border-blue-700'
-      case 'completed':
-        return 'bg-emerald-900/50 text-emerald-400 border border-emerald-700'
-      default:
-        return 'bg-gray-700 text-gray-300'
-    }
-  }
-
-  const getStatusLabel = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return 'Pending'
-      case 'in_progress':
-        return 'In Progress'
-      case 'completed':
-        return 'Completed'
-      default:
-        return status
-    }
-  }
-
-  const filteredIdeas = ideas.filter(idea => {
-    if (filter === 'all') return true
-    return idea.status === filter
-  })
-
-  const stats = {
-    total: ideas.length,
-    pending: ideas.filter(i => i.status === 'pending').length,
-    inProgress: ideas.filter(i => i.status === 'in_progress').length,
-    completed: ideas.filter(i => i.status === 'completed').length,
   }
 
   if (!user) {
     return (
-      <div className="text-center py-12">
+      <div className="py-12 text-center">
         <p className="text-gray-400">Please login to view your ideas</p>
       </div>
     )
@@ -124,107 +98,120 @@ export default function MyIdeasPage() {
     )
   }
 
+  const filteredIdeas = ideas.filter((idea) => filter === 'all' || idea.status === filter)
+  const claimedIdeas = ideas.filter((idea) => Boolean(idea.project)).length
+  const stats = [
+    { label: 'Total', value: ideas.length, filterValue: 'all' as IdeaFilter },
+    { label: 'Pending', value: ideas.filter((idea) => idea.status === 'pending').length, filterValue: 'pending' as IdeaFilter },
+    {
+      label: 'In Progress',
+      value: ideas.filter((idea) => idea.status === 'in_progress').length,
+      filterValue: 'in_progress' as IdeaFilter,
+    },
+    {
+      label: 'Completed',
+      value: ideas.filter((idea) => idea.status === 'completed').length,
+      filterValue: 'completed' as IdeaFilter,
+    },
+  ]
+
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-white">My Ideas</h1>
           <p className="mt-1 text-sm text-gray-400">
-            Manage your startup ideas
+            Track which ideas are still waiting, which ones became projects, and where to push next.
           </p>
         </div>
-        <Link
-          href="/idea"
-          className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-colors"
-        >
-          <svg className="mr-2 -ml-1 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-          Post New Idea
-        </Link>
-      </div>
-
-      {error && (
-        <div className="bg-red-900/50 border border-red-700 text-red-200 px-4 py-3 rounded-lg flex justify-between items-center">
-          <span>{error}</span>
-          <button
-            onClick={() => setError(null)}
-            className="text-red-300 hover:text-red-100"
+        <div className="flex flex-wrap gap-3">
+          <Link
+            href="/ideas/human"
+            className="inline-flex items-center rounded-lg bg-cyan-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-cyan-700"
           >
-            ×
-          </button>
+            Browse Idea Board
+          </Link>
+          {onboarding.activeProject && (
+            <Link
+              href={`/project/${onboarding.activeProject.id}`}
+              className="inline-flex items-center rounded-lg border border-gray-600 px-4 py-2 text-sm font-medium text-gray-200 transition hover:bg-gray-800"
+            >
+              Continue active project
+            </Link>
+          )}
         </div>
-      )}
-
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <button
-          onClick={() => setFilter('all')}
-          className={`bg-gray-800 rounded-lg p-4 border text-left transition-all ${
-            filter === 'all' ? 'border-purple-500' : 'border-gray-700 hover:border-gray-500'
-          }`}
-        >
-          <p className="text-sm font-medium text-gray-400">Total</p>
-          <p className="mt-2 text-2xl font-bold text-white">{stats.total}</p>
-        </button>
-        <button
-          onClick={() => setFilter('pending')}
-          className={`bg-gray-800 rounded-lg p-4 border text-left transition-all ${
-            filter === 'pending' ? 'border-yellow-500' : 'border-gray-700 hover:border-gray-500'
-          }`}
-        >
-          <p className="text-sm font-medium text-gray-400">Pending</p>
-          <p className="mt-2 text-2xl font-bold text-white">{stats.pending}</p>
-        </button>
-        <button
-          onClick={() => setFilter('in_progress')}
-          className={`bg-gray-800 rounded-lg p-4 border text-left transition-all ${
-            filter === 'in_progress' ? 'border-blue-500' : 'border-gray-700 hover:border-gray-500'
-          }`}
-        >
-          <p className="text-sm font-medium text-gray-400">In Progress</p>
-          <p className="mt-2 text-2xl font-bold text-white">{stats.inProgress}</p>
-        </button>
-        <button
-          onClick={() => setFilter('completed')}
-          className={`bg-gray-800 rounded-lg p-4 border text-left transition-all ${
-            filter === 'completed' ? 'border-emerald-500' : 'border-gray-700 hover:border-gray-500'
-          }`}
-        >
-          <p className="text-sm font-medium text-gray-400">Completed</p>
-          <p className="mt-2 text-2xl font-bold text-white">{stats.completed}</p>
-        </button>
       </div>
 
-      {/* Ideas List */}
-      <div className="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden">
-        {filteredIdeas.length === 0 ? (
-          <div className="p-12 text-center">
-            <svg className="mx-auto h-12 w-12 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-            </svg>
-            <p className="mt-2 text-lg text-gray-400">No ideas yet</p>
-            <p className="mt-1 text-sm text-gray-500">Post your first idea to get started</p>
+      <section className="rounded-lg border border-cyan-700/40 bg-cyan-900/20 p-5">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div>
+            <div className="text-sm uppercase tracking-wide text-cyan-300">Idea to execution</div>
+            <div className="mt-1 text-lg font-medium text-white">{claimedIdeas} idea(s) already became projects</div>
+            <p className="mt-2 text-sm text-cyan-100/80">
+              Ideas are the intake layer. Once one gets claimed, GitHub execution moves to the active project flow.
+            </p>
           </div>
+          <Link
+            href={onboarding.ctaHref}
+            className="rounded-lg border border-cyan-600 px-4 py-2 text-sm font-medium text-cyan-100 transition hover:bg-cyan-950/40"
+          >
+            {onboarding.ctaLabel}
+          </Link>
+        </div>
+      </section>
+
+      {error && <Banner tone="error" message={error} onClose={() => setError(null)} />}
+
+      <div className="grid gap-4 md:grid-cols-4">
+        {stats.map((item) => (
+          <button
+            key={item.label}
+            type="button"
+            onClick={() => setFilter(item.filterValue)}
+            className={`rounded-lg border bg-gray-800 p-4 text-left transition-colors ${
+              filter === item.filterValue
+                ? 'border-cyan-500'
+                : 'border-gray-700 hover:border-gray-500'
+            }`}
+          >
+            <p className="text-sm font-medium text-gray-400">{item.label}</p>
+            <p className="mt-2 text-2xl font-bold text-white">{item.value}</p>
+          </button>
+        ))}
+      </div>
+
+      <div className="overflow-hidden rounded-lg border border-gray-700 bg-gray-800">
+        {filteredIdeas.length === 0 ? (
+          ideas.length === 0 ? (
+            <div className="p-6">
+              <DashboardEmptyState
+                title="No ideas yet"
+                description="Your idea list is empty. Start by browsing the idea board, then claim or publish the first opportunity you want to turn into a project."
+                primaryLabel="Browse idea board"
+                primaryHref="/ideas/human"
+                secondaryLabel="Open dashboard overview"
+                secondaryHref="/dashboard"
+              />
+            </div>
+          ) : (
+            <div className="p-12 text-center">
+              <p className="text-lg text-gray-400">No ideas match the current filter.</p>
+            </div>
+          )
         ) : (
           <div className="divide-y divide-gray-700">
             {filteredIdeas.map((idea) => (
               <div key={idea.id} className="p-6">
-                <div className="flex items-start justify-between">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                   <div className="flex-1">
-                    <div className="flex items-center space-x-3">
-                      <h3 className="text-lg font-medium text-white">
-                        {idea.title}
-                      </h3>
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(idea.status)}`}>
+                    <div className="flex flex-wrap items-center gap-3">
+                      <h3 className="text-lg font-medium text-white">{idea.title}</h3>
+                      <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusTone(idea.status)}`}>
                         {getStatusLabel(idea.status)}
                       </span>
                     </div>
-                    <p className="mt-2 text-sm text-gray-400 line-clamp-2">
-                      {idea.description}
-                    </p>
-                    <div className="mt-3 flex items-center space-x-6 text-sm text-gray-500">
+                    <p className="mt-2 line-clamp-2 text-sm text-gray-400">{idea.description}</p>
+                    <div className="mt-3 flex flex-wrap gap-6 text-sm text-gray-500">
                       <span>Created: {new Date(idea.createdAt).toLocaleDateString()}</span>
                       {idea._count && (
                         <>
@@ -234,23 +221,25 @@ export default function MyIdeasPage() {
                       )}
                       {idea.project && (
                         <span className="text-emerald-400">
-                          Project: <Link href={`/project/${idea.project.id}`} className="hover:underline">
+                          Project:{' '}
+                          <Link href={`/project/${idea.project.id}`} className="hover:underline">
                             {idea.project.title}
                           </Link>
                         </span>
                       )}
                     </div>
                   </div>
-                  <div className="ml-4 flex items-center space-x-2">
+                  <div className="flex items-center gap-2">
                     <Link
                       href={`/idea/${idea.id}`}
-                      className="inline-flex items-center px-3 py-1.5 border border-gray-600 text-xs font-medium rounded text-gray-300 hover:bg-gray-700 transition-colors"
+                      className="inline-flex items-center rounded border border-gray-600 px-3 py-1.5 text-xs font-medium text-gray-300 transition-colors hover:bg-gray-700"
                     >
                       View
                     </Link>
                     <button
+                      type="button"
                       onClick={() => deleteIdea(idea.id)}
-                      className="inline-flex items-center px-3 py-1.5 border border-red-700 text-xs font-medium rounded text-red-400 hover:bg-red-900/30 transition-colors"
+                      className="inline-flex items-center rounded border border-red-700 px-3 py-1.5 text-xs font-medium text-red-400 transition-colors hover:bg-red-900/30"
                     >
                       Delete
                     </button>
@@ -263,4 +252,54 @@ export default function MyIdeasPage() {
       </div>
     </div>
   )
+}
+
+function Banner({
+  tone,
+  message,
+  onClose,
+}: {
+  tone: 'error' | 'success'
+  message: string
+  onClose: () => void
+}) {
+  const className =
+    tone === 'error'
+      ? 'border-red-700 bg-red-900/50 text-red-200'
+      : 'border-emerald-700 bg-emerald-900/50 text-emerald-200'
+
+  return (
+    <div className={`flex items-center justify-between rounded-lg border px-4 py-3 ${className}`}>
+      <span>{message}</span>
+      <button type="button" onClick={onClose} className="text-sm">
+        x
+      </button>
+    </div>
+  )
+}
+
+function getStatusTone(status: string) {
+  switch (status) {
+    case 'pending':
+      return 'border border-yellow-700 bg-yellow-900/50 text-yellow-400'
+    case 'in_progress':
+      return 'border border-blue-700 bg-blue-900/50 text-blue-400'
+    case 'completed':
+      return 'border border-emerald-700 bg-emerald-900/50 text-emerald-400'
+    default:
+      return 'bg-gray-700 text-gray-300'
+  }
+}
+
+function getStatusLabel(status: string) {
+  switch (status) {
+    case 'pending':
+      return 'Pending'
+    case 'in_progress':
+      return 'In Progress'
+    case 'completed':
+      return 'Completed'
+    default:
+      return status
+  }
 }

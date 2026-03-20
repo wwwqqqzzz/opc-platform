@@ -1,13 +1,16 @@
 'use client'
 
+import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
+import { useDashboardOnboarding } from '@/hooks/useDashboardExecutionState'
 import type { GithubIntegrationStatus } from '@/types/github'
 
 export default function SettingsPage() {
   const { user, refreshUser } = useAuth()
   const searchParams = useSearchParams()
+  const { onboarding } = useDashboardOnboarding()
   const [githubStatus, setGithubStatus] = useState<GithubIntegrationStatus | null>(null)
   const [githubStatusLoading, setGithubStatusLoading] = useState(true)
   const [loading, setLoading] = useState(false)
@@ -172,6 +175,9 @@ export default function SettingsPage() {
   const githubConfigured = githubStatus?.configured ?? false
   const blockingProjects = githubStatus?.blockingProjects ?? []
   const githubScopes = githubStatus?.connection.scopes ?? []
+  const githubConnectHref = onboarding.activeProject
+    ? `/api/integrations/github/connect?redirect=${encodeURIComponent(`/project/${onboarding.activeProject.id}?onboarding=1`)}`
+    : '/api/integrations/github/connect'
 
   return (
     <div className="space-y-6">
@@ -179,6 +185,32 @@ export default function SettingsPage() {
         <h1 className="text-2xl font-bold text-white">Settings</h1>
         <p className="mt-1 text-sm text-gray-400">Manage your account, security, and GitHub connection.</p>
       </div>
+
+      <section className="rounded-lg border border-cyan-700/40 bg-cyan-900/20 p-5">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div>
+            <div className="text-sm uppercase tracking-wide text-cyan-300">Execution routing</div>
+            <div className="mt-1 text-lg font-medium text-white">{onboarding.title}</div>
+            <p className="mt-2 text-sm text-cyan-100/80">{onboarding.description}</p>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <Link
+              href={onboarding.ctaHref}
+              className="rounded-lg bg-cyan-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-cyan-700"
+            >
+              {onboarding.ctaLabel}
+            </Link>
+            {onboarding.activeProject && (
+              <Link
+                href={`/project/${onboarding.activeProject.id}`}
+                className="rounded-lg border border-gray-600 px-4 py-2 text-sm font-medium text-gray-200 transition hover:bg-gray-800"
+              >
+                Open active project
+              </Link>
+            )}
+          </div>
+        </div>
+      </section>
 
       {error && <Banner tone="error" message={error} onClose={() => setError(null)} />}
       {success && <Banner tone="success" message={success} onClose={() => setSuccess(null)} />}
@@ -225,7 +257,7 @@ export default function SettingsPage() {
             <div className="flex gap-3">
               {githubConfigured ? (
                 <a
-                  href="/api/integrations/github/connect"
+                  href={githubConnectHref}
                   className="rounded-lg bg-cyan-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-cyan-700"
                 >
                   {githubConnected ? 'Reconnect GitHub' : 'Connect GitHub'}

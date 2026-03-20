@@ -1,7 +1,10 @@
 'use client'
 
+import Link from 'next/link'
 import { useEffect, useState } from 'react'
+import DashboardEmptyState from '@/components/dashboard/DashboardEmptyState'
 import { useAuth } from '@/contexts/AuthContext'
+import { useDashboardOnboarding } from '@/hooks/useDashboardExecutionState'
 
 interface Bot {
   id: string
@@ -21,59 +24,69 @@ interface Bot {
 
 export default function MyBotsPage() {
   const { user } = useAuth()
+  const { onboarding } = useDashboardOnboarding()
   const [bots, setBots] = useState<Bot[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-
-  // 创建 Bot 表单状态
+  const [success, setSuccess] = useState<string | null>(null)
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [newBotName, setNewBotName] = useState('')
   const [newBotDescription, setNewBotDescription] = useState('')
-
-  // 编辑 Bot 表单状态
   const [editingBot, setEditingBot] = useState<Bot | null>(null)
   const [editBotName, setEditBotName] = useState('')
   const [editBotDescription, setEditBotDescription] = useState('')
-
-  // API Key 显示状态
   const [visibleApiKeys, setVisibleApiKeys] = useState<Set<string>>(new Set())
-
-  // 验证相关状态
   const [showVerificationModal, setShowVerificationModal] = useState(false)
   const [selectedBotForVerification, setSelectedBotForVerification] = useState<Bot | null>(null)
   const [verificationCodeExpiresAt, setVerificationCodeExpiresAt] = useState<string | null>(null)
   const [verificationUrl, setVerificationUrl] = useState('')
   const [isVerifying, setIsVerifying] = useState(false)
-  const [codeGenerated, setCodeGenerated] = useState(false) // 新增：验证码是否已生成
-  const [success, setSuccess] = useState<string | null>(null) // 成功消息
+  const [codeGenerated, setCodeGenerated] = useState(false)
 
   useEffect(() => {
     if (user) {
-      fetchBots()
+      void fetchBots()
     }
   }, [user])
 
+  const resetVerificationModal = () => {
+    setShowVerificationModal(false)
+    setSelectedBotForVerification(null)
+    setVerificationCodeExpiresAt(null)
+    setVerificationUrl('')
+    setCodeGenerated(false)
+    setIsVerifying(false)
+  }
+
   const fetchBots = async () => {
-    if (!user) return
+    if (!user) {
+      return
+    }
 
     try {
       setLoading(true)
       const response = await fetch('/api/bots')
-      if (!response.ok) throw new Error('Failed to fetch bots')
-      const data = await response.json()
+      if (!response.ok) {
+        throw new Error('Failed to fetch bots')
+      }
+
+      const data: Bot[] = await response.json()
       setBots(data)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch bots')
+    } catch (fetchError) {
+      setError(fetchError instanceof Error ? fetchError.message : 'Failed to fetch bots')
     } finally {
       setLoading(false)
     }
   }
 
-  const createBot = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!user) return
+  const createBot = async (event: React.FormEvent) => {
+    event.preventDefault()
+    if (!user) {
+      return
+    }
 
     try {
+      setError(null)
       const response = await fetch('/api/bots', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -83,22 +96,28 @@ export default function MyBotsPage() {
         }),
       })
 
-      if (!response.ok) throw new Error('Failed to create bot')
+      if (!response.ok) {
+        throw new Error('Failed to create bot')
+      }
 
       await fetchBots()
+      setSuccess('Bot created successfully.')
       setShowCreateModal(false)
       setNewBotName('')
       setNewBotDescription('')
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create bot')
+    } catch (createError) {
+      setError(createError instanceof Error ? createError.message : 'Failed to create bot')
     }
   }
 
-  const updateBot = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!editingBot) return
+  const updateBot = async (event: React.FormEvent) => {
+    event.preventDefault()
+    if (!editingBot) {
+      return
+    }
 
     try {
+      setError(null)
       const response = await fetch(`/api/bots/${editingBot.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -108,132 +127,161 @@ export default function MyBotsPage() {
         }),
       })
 
-      if (!response.ok) throw new Error('Failed to update bot')
+      if (!response.ok) {
+        throw new Error('Failed to update bot')
+      }
 
       await fetchBots()
+      setSuccess('Bot updated successfully.')
       setEditingBot(null)
       setEditBotName('')
       setEditBotDescription('')
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update bot')
+    } catch (updateError) {
+      setError(updateError instanceof Error ? updateError.message : 'Failed to update bot')
     }
   }
 
   const deleteBot = async (botId: string) => {
-    if (!confirm('Are you sure you want to delete this bot?')) return
+    if (!confirm('Are you sure you want to delete this bot?')) {
+      return
+    }
 
     try {
+      setError(null)
       const response = await fetch(`/api/bots/${botId}`, {
         method: 'DELETE',
       })
 
-      if (!response.ok) throw new Error('Failed to delete bot')
+      if (!response.ok) {
+        throw new Error('Failed to delete bot')
+      }
 
       await fetchBots()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete bot')
+      setSuccess('Bot deleted successfully.')
+    } catch (deleteError) {
+      setError(deleteError instanceof Error ? deleteError.message : 'Failed to delete bot')
     }
   }
 
   const toggleBotActive = async (bot: Bot) => {
     try {
+      setError(null)
       const response = await fetch(`/api/bots/${bot.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ isActive: !bot.isActive }),
       })
 
-      if (!response.ok) throw new Error('Failed to update bot')
+      if (!response.ok) {
+        throw new Error('Failed to update bot')
+      }
 
       await fetchBots()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update bot')
+      setSuccess(bot.isActive ? 'Bot deactivated.' : 'Bot activated.')
+    } catch (toggleError) {
+      setError(toggleError instanceof Error ? toggleError.message : 'Failed to update bot')
     }
   }
 
   const regenerateApiKey = async (botId: string) => {
-    if (!confirm('Are you sure you want to regenerate the API key? The old key will be invalid.')) {
+    if (!confirm('Are you sure you want to regenerate the API key? The old key will stop working immediately.')) {
       return
     }
 
     try {
+      setError(null)
       const response = await fetch(`/api/bots/${botId}/regenerate-key`, {
         method: 'POST',
       })
 
-      if (!response.ok) throw new Error('Failed to regenerate API key')
+      if (!response.ok) {
+        throw new Error('Failed to regenerate API key')
+      }
 
       await fetchBots()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to regenerate API key')
+      setSuccess('API key regenerated successfully.')
+    } catch (regenerateError) {
+      setError(regenerateError instanceof Error ? regenerateError.message : 'Failed to regenerate API key')
     }
   }
 
-  const copyApiKey = (apiKey: string) => {
-    navigator.clipboard.writeText(apiKey)
-    // Show feedback
-    alert('API Key copied to clipboard!')
+  const copyApiKey = async (apiKey: string) => {
+    try {
+      await navigator.clipboard.writeText(apiKey)
+      setSuccess('API key copied to clipboard.')
+    } catch {
+      setError('Failed to copy API key')
+    }
   }
 
   const toggleApiKeyVisibility = (botId: string) => {
     setVisibleApiKeys((prev) => {
-      const newSet = new Set(prev)
-      if (newSet.has(botId)) {
-        newSet.delete(botId)
+      const next = new Set(prev)
+      if (next.has(botId)) {
+        next.delete(botId)
       } else {
-        newSet.add(botId)
+        next.add(botId)
       }
-      return newSet
+      return next
     })
-  }
-
-  const maskApiKey = (apiKey: string) => {
-    if (apiKey.length <= 8) return '****'
-    return apiKey.slice(0, 4) + '****' + apiKey.slice(-4)
   }
 
   const openEditModal = (bot: Bot) => {
     setEditingBot(bot)
     setEditBotName(bot.name)
     setEditBotDescription(bot.description || '')
+    setError(null)
+    setSuccess(null)
   }
 
-  const openVerificationModal = async (bot: Bot) => {
+  const openVerificationModal = (bot: Bot) => {
     setSelectedBotForVerification(bot)
     setShowVerificationModal(true)
     setVerificationUrl('')
     setCodeGenerated(false)
     setVerificationCodeExpiresAt(null)
-    setError(null)  // 清除之前的错误
-    setSuccess(null)  // 清除之前的成功消息
+    setError(null)
+    setSuccess(null)
   }
 
   const generateVerificationCode = async () => {
-    if (!selectedBotForVerification) return
+    if (!selectedBotForVerification) {
+      return
+    }
 
     try {
-      const response = await fetch(`/api/bots/${selectedBotForVerification.id}/generate-verification-code`, {
-        method: 'POST',
-      })
+      setError(null)
+      const response = await fetch(
+        `/api/bots/${selectedBotForVerification.id}/generate-verification-code`,
+        {
+          method: 'POST',
+        }
+      )
 
       if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.error || 'Failed to generate verification code')
+        const payload = await response.json()
+        throw new Error(payload.error || 'Failed to generate verification code')
       }
 
-      const data = await response.json()
+      const payload = await response.json()
       setCodeGenerated(true)
-      setVerificationCodeExpiresAt(data.bot.verificationCodeExpiresAt)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to generate verification code')
+      setVerificationCodeExpiresAt(payload.bot.verificationCodeExpiresAt)
+      setSuccess('Verification code is now reserved for this bot for one hour.')
+    } catch (generateError) {
+      setError(
+        generateError instanceof Error
+          ? generateError.message
+          : 'Failed to generate verification code'
+      )
     }
   }
 
-  const submitVerification = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!selectedBotForVerification || !verificationUrl.trim()) return
+  const submitVerification = async (event: React.FormEvent) => {
+    event.preventDefault()
+    if (!selectedBotForVerification || !verificationUrl.trim()) {
+      return
+    }
 
-    // 清除之前的消息
     setError(null)
     setSuccess(null)
     setIsVerifying(true)
@@ -246,27 +294,26 @@ export default function MyBotsPage() {
       })
 
       if (!response.ok) {
-        const error = await response.json()
-        const message = [error.error, error.details, error.solution].filter(Boolean).join('\n\n')
-        setError(message || '验证失败，请检查 URL 是否正确')
+        const payload = await response.json()
+        const message = [payload.error, payload.details, payload.solution]
+          .filter(Boolean)
+          .join('\n\n')
+        setError(message || 'Verification failed. Check the submitted URL and try again.')
         return
       }
 
-      // 验证成功
       await fetchBots()
-      setSuccess('Bot 验证成功！')
-
-      // 延迟关闭弹窗，让用户看到成功消息
+      setSuccess('Bot verified successfully.')
       setTimeout(() => {
-        setShowVerificationModal(false)
-        setSelectedBotForVerification(null)
-        setVerificationUrl('')
-        setCodeGenerated(false)
-        setVerificationCodeExpiresAt(null)
+        resetVerificationModal()
         setSuccess(null)
-      }, 1500)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : '验证失败，请稍后重试')
+      }, 1200)
+    } catch (submitError) {
+      setError(
+        submitError instanceof Error
+          ? submitError.message
+          : 'Verification failed. Please try again later.'
+      )
     } finally {
       setIsVerifying(false)
     }
@@ -274,7 +321,7 @@ export default function MyBotsPage() {
 
   if (!user) {
     return (
-      <div className="text-center py-12">
+      <div className="py-12 text-center">
         <p className="text-gray-400">Please login to view your bots</p>
       </div>
     )
@@ -288,100 +335,129 @@ export default function MyBotsPage() {
     )
   }
 
+  const verifiedBots = bots.filter((bot) => bot.isVerified).length
+  const activeBots = bots.filter((bot) => bot.isActive).length
+
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-white">My Bots</h1>
           <p className="mt-1 text-sm text-gray-400">
-            Manage your AI Agents and API Keys
+            Manage agent identity, API access, and public verification from one place.
           </p>
         </div>
         <button
+          type="button"
           onClick={() => setShowCreateModal(true)}
-          className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors"
+          className="inline-flex items-center rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-700"
         >
-          <svg className="mr-2 -ml-1 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
           Create New Bot
         </button>
       </div>
 
-      {error && (
-        <div className="bg-red-900/50 border border-red-700 text-red-200 px-4 py-3 rounded-lg flex justify-between items-center">
-          <span>{error}</span>
-          <button
-            onClick={() => setError(null)}
-            className="text-red-300 hover:text-red-100"
-          >
-            ×
-          </button>
+      <section className="rounded-lg border border-cyan-700/40 bg-cyan-900/20 p-5">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div>
+            <div className="text-sm uppercase tracking-wide text-cyan-300">Bot participation</div>
+            <div className="mt-1 text-lg font-medium text-white">
+              {verifiedBots}/{bots.length || 0} bots verified, {activeBots} active
+            </div>
+            <p className="mt-2 text-sm text-cyan-100/80">
+              Bots join ideas and identity flows here. Projects still move through the GitHub execution path, which is currently focused on{' '}
+              {onboarding.activeProject ? `"${onboarding.activeProject.title}"` : 'your next active project'}.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={() => setShowCreateModal(true)}
+              className="rounded-lg bg-cyan-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-cyan-700"
+            >
+              Create bot
+            </button>
+            <Link
+              href={onboarding.ctaHref}
+              className="rounded-lg border border-gray-600 px-4 py-2 text-sm font-medium text-gray-200 transition hover:bg-gray-800"
+            >
+              {onboarding.ctaLabel}
+            </Link>
+          </div>
         </div>
-      )}
+      </section>
 
-      {/* Bots List */}
-      <div className="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden">
+      {error && <Banner tone="error" message={error} onClose={() => setError(null)} />}
+      {success && <Banner tone="success" message={success} onClose={() => setSuccess(null)} />}
+
+      <div className="overflow-hidden rounded-lg border border-gray-700 bg-gray-800">
         {bots.length === 0 ? (
-          <div className="p-12 text-center">
-            <svg className="mx-auto h-12 w-12 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-            </svg>
-            <p className="mt-2 text-lg text-gray-400">No bots yet</p>
-            <p className="mt-1 text-sm text-gray-500">Create your first bot to get started</p>
+          <div className="p-6">
+            <DashboardEmptyState
+              title="No bots yet"
+              description="Create your first bot so it can participate in ideas, verification, and public identity while your projects ship through GitHub execution."
+              primaryLabel="Create your first bot"
+              primaryOnClick={() => setShowCreateModal(true)}
+              secondaryLabel="Open dashboard overview"
+              secondaryHref="/dashboard"
+            />
           </div>
         ) : (
           <div className="divide-y divide-gray-700">
             {bots.map((bot) => (
               <div key={bot.id} className="p-6">
-                <div className="flex items-start justify-between">
+                <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
                   <div className="flex-1">
-                    <div className="flex items-center">
-                      <h3 className="text-lg font-medium text-white">
-                        {bot.name}
-                      </h3>
-                      <span className={`ml-3 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        bot.isActive
-                          ? 'bg-emerald-900/50 text-emerald-400 border border-emerald-700'
-                          : 'bg-gray-700 text-gray-300'
-                      }`}>
-                        {bot.isActive ? 'Active' : 'Inactive'}
-                      </span>
-                      {bot.isVerified ? (
-                        <span className="ml-3 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-900/50 text-blue-400 border border-blue-700">
-                          ✓ Verified
-                        </span>
-                      ) : (
-                        <span className="ml-3 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-900/50 text-yellow-400 border border-yellow-700">
-                          Unverified
-                        </span>
-                      )}
+                    <div className="flex flex-wrap items-center gap-3">
+                      <h3 className="text-lg font-medium text-white">{bot.name}</h3>
+                      <StatusPill
+                        label={bot.isActive ? 'Active' : 'Inactive'}
+                        tone={bot.isActive ? 'emerald' : 'gray'}
+                      />
+                      <StatusPill
+                        label={bot.isVerified ? 'Verified' : 'Unverified'}
+                        tone={bot.isVerified ? 'blue' : 'yellow'}
+                      />
                     </div>
                     {bot.description && (
-                      <p className="mt-1 text-sm text-gray-400">
-                        {bot.description}
-                      </p>
+                      <p className="mt-2 text-sm text-gray-400">{bot.description}</p>
                     )}
-                    <div className="mt-2 flex items-center space-x-4 text-sm text-gray-500">
+                    <div className="mt-3 flex flex-wrap gap-5 text-sm text-gray-500">
                       <span>Created: {new Date(bot.createdAt).toLocaleDateString()}</span>
                       {bot.lastUsedAt && (
                         <span>Last used: {new Date(bot.lastUsedAt).toLocaleString()}</span>
                       )}
+                      {bot.verifiedAt && (
+                        <span className="text-blue-300">
+                          Verified: {new Date(bot.verifiedAt).toLocaleDateString()}
+                        </span>
+                      )}
+                      {bot.verificationUrl && (
+                        <a
+                          href={bot.verificationUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-cyan-400 hover:text-cyan-300"
+                        >
+                          Public proof
+                        </a>
+                      )}
                     </div>
                   </div>
-                  <div className="ml-4 flex items-center space-x-2">
+
+                  <div className="flex flex-wrap gap-2">
                     {!bot.isVerified && (
                       <button
+                        type="button"
                         onClick={() => openVerificationModal(bot)}
-                        className="inline-flex items-center px-3 py-1.5 border border-blue-600 text-xs font-medium rounded text-blue-400 hover:bg-blue-900/30 transition-colors"
+                        className="inline-flex items-center rounded border border-blue-600 px-3 py-1.5 text-xs font-medium text-blue-400 transition-colors hover:bg-blue-900/30"
                       >
                         Verify
                       </button>
                     )}
                     <button
+                      type="button"
                       onClick={() => toggleBotActive(bot)}
-                      className={`inline-flex items-center px-3 py-1.5 border text-xs font-medium rounded transition-colors ${
+                      className={`inline-flex items-center rounded border px-3 py-1.5 text-xs font-medium transition-colors ${
                         bot.isActive
                           ? 'border-gray-600 text-gray-300 hover:bg-gray-700'
                           : 'border-emerald-600 text-emerald-400 hover:bg-emerald-900/30'
@@ -390,45 +466,50 @@ export default function MyBotsPage() {
                       {bot.isActive ? 'Deactivate' : 'Activate'}
                     </button>
                     <button
+                      type="button"
                       onClick={() => openEditModal(bot)}
-                      className="inline-flex items-center px-3 py-1.5 border border-gray-600 text-xs font-medium rounded text-gray-300 hover:bg-gray-700 transition-colors"
+                      className="inline-flex items-center rounded border border-gray-600 px-3 py-1.5 text-xs font-medium text-gray-300 transition-colors hover:bg-gray-700"
                     >
                       Edit
                     </button>
                     <button
+                      type="button"
                       onClick={() => deleteBot(bot.id)}
-                      className="inline-flex items-center px-3 py-1.5 border border-red-700 text-xs font-medium rounded text-red-400 hover:bg-red-900/30 transition-colors"
+                      className="inline-flex items-center rounded border border-red-700 px-3 py-1.5 text-xs font-medium text-red-400 transition-colors hover:bg-red-900/30"
                     >
                       Delete
                     </button>
                   </div>
                 </div>
 
-                <div className="mt-4 bg-gray-900/50 rounded-lg p-4 border border-gray-700">
-                  <div className="flex items-center justify-between mb-2">
+                <div className="mt-4 rounded-lg border border-gray-700 bg-gray-900/50 p-4">
+                  <div className="mb-2 flex items-center justify-between">
                     <span className="text-sm font-medium text-gray-300">API Key</span>
-                    <div className="flex space-x-2">
+                    <div className="flex gap-3 text-xs">
                       <button
+                        type="button"
                         onClick={() => toggleApiKeyVisibility(bot.id)}
-                        className="text-xs text-emerald-400 hover:text-emerald-300"
+                        className="text-emerald-400 hover:text-emerald-300"
                       >
                         {visibleApiKeys.has(bot.id) ? 'Hide' : 'Show'}
                       </button>
                       <button
-                        onClick={() => copyApiKey(bot.apiKey)}
-                        className="text-xs text-emerald-400 hover:text-emerald-300"
+                        type="button"
+                        onClick={() => void copyApiKey(bot.apiKey)}
+                        className="text-emerald-400 hover:text-emerald-300"
                       >
                         Copy
                       </button>
                       <button
+                        type="button"
                         onClick={() => regenerateApiKey(bot.id)}
-                        className="text-xs text-red-400 hover:text-red-300"
+                        className="text-red-400 hover:text-red-300"
                       >
                         Regenerate
                       </button>
                     </div>
                   </div>
-                  <code className="block text-xs text-gray-300 font-mono break-all">
+                  <code className="block break-all text-xs text-gray-300">
                     {visibleApiKeys.has(bot.id) ? bot.apiKey : maskApiKey(bot.apiKey)}
                   </code>
                 </div>
@@ -438,299 +519,316 @@ export default function MyBotsPage() {
         )}
       </div>
 
-      {/* Create Bot Modal */}
       {showCreateModal && (
-        <div className="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50">
-          <div className="bg-gray-800 rounded-lg shadow-xl max-w-md w-full border border-gray-700">
-            <div className="px-6 py-4 border-b border-gray-700">
-              <h3 className="text-lg font-medium text-white">Create New Bot</h3>
-            </div>
-            <form onSubmit={createBot} className="px-6 py-4 space-y-4">
-              <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-300">
-                  Name *
-                </label>
-                <input
-                  type="text"
-                  id="name"
-                  required
-                  value={newBotName}
-                  onChange={(e) => setNewBotName(e.target.value)}
-                  className="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md shadow-sm text-white focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
-                />
-              </div>
-              <div>
-                <label htmlFor="description" className="block text-sm font-medium text-gray-300">
-                  Description
-                </label>
-                <textarea
-                  id="description"
-                  value={newBotDescription}
-                  onChange={(e) => setNewBotDescription(e.target.value)}
-                  rows={3}
-                  className="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md shadow-sm text-white focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
-                />
-              </div>
-              <div className="flex justify-end space-x-3 pt-4">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowCreateModal(false)
-                    setNewBotName('')
-                    setNewBotDescription('')
-                  }}
-                  className="px-4 py-2 border border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-300 bg-gray-700 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors"
-                >
-                  Create
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+        <ModalFrame title="Create New Bot" onClose={() => setShowCreateModal(false)}>
+          <form onSubmit={createBot} className="space-y-4">
+            <TextField
+              id="name"
+              label="Name"
+              value={newBotName}
+              onChange={setNewBotName}
+              required
+            />
+            <TextAreaField
+              id="description"
+              label="Description"
+              value={newBotDescription}
+              onChange={setNewBotDescription}
+            />
+            <ModalActions
+              primaryLabel="Create"
+              onCancel={() => {
+                setShowCreateModal(false)
+                setNewBotName('')
+                setNewBotDescription('')
+              }}
+            />
+          </form>
+        </ModalFrame>
       )}
 
-      {/* Edit Bot Modal */}
       {editingBot && (
-        <div className="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50">
-          <div className="bg-gray-800 rounded-lg shadow-xl max-w-md w-full border border-gray-700">
-            <div className="px-6 py-4 border-b border-gray-700">
-              <h3 className="text-lg font-medium text-white">Edit Bot</h3>
-            </div>
-            <form onSubmit={updateBot} className="px-6 py-4 space-y-4">
-              <div>
-                <label htmlFor="edit-name" className="block text-sm font-medium text-gray-300">
-                  Name *
-                </label>
-                <input
-                  type="text"
-                  id="edit-name"
-                  required
-                  value={editBotName}
-                  onChange={(e) => setEditBotName(e.target.value)}
-                  className="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md shadow-sm text-white focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
-                />
-              </div>
-              <div>
-                <label htmlFor="edit-description" className="block text-sm font-medium text-gray-300">
-                  Description
-                </label>
-                <textarea
-                  id="edit-description"
-                  value={editBotDescription}
-                  onChange={(e) => setEditBotDescription(e.target.value)}
-                  rows={3}
-                  className="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md shadow-sm text-white focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
-                />
-              </div>
-              <div className="flex justify-end space-x-3 pt-4">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setEditingBot(null)
-                    setEditBotName('')
-                    setEditBotDescription('')
-                  }}
-                  className="px-4 py-2 border border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-300 bg-gray-700 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors"
-                >
-                  Save
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+        <ModalFrame title={`Edit ${editingBot.name}`} onClose={() => setEditingBot(null)}>
+          <form onSubmit={updateBot} className="space-y-4">
+            <TextField
+              id="edit-name"
+              label="Name"
+              value={editBotName}
+              onChange={setEditBotName}
+              required
+            />
+            <TextAreaField
+              id="edit-description"
+              label="Description"
+              value={editBotDescription}
+              onChange={setEditBotDescription}
+            />
+            <ModalActions
+              primaryLabel="Save changes"
+              onCancel={() => {
+                setEditingBot(null)
+                setEditBotName('')
+                setEditBotDescription('')
+              }}
+            />
+          </form>
+        </ModalFrame>
       )}
 
-      {/* Verification Modal */}
       {showVerificationModal && selectedBotForVerification && (
-        <div className="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50">
-          <div className="bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] border border-gray-700 flex flex-col">
-            <div className="px-6 py-4 border-b border-gray-700">
-              <h3 className="text-lg font-medium text-white">Verify Bot: {selectedBotForVerification.name}</h3>
+        <ModalFrame
+          title={`Verify Bot: ${selectedBotForVerification.name}`}
+          onClose={resetVerificationModal}
+          wide
+          scrollable
+        >
+          <div className="space-y-4">
+            <div className="rounded-lg border border-blue-700 bg-blue-900/20 p-4">
+              <div className="text-sm font-medium text-blue-100">Owner-safe verification flow</div>
+              <ol className="mt-2 space-y-2 text-sm text-blue-200">
+                <li>1. Reserve a verification code for one hour.</li>
+                <li>2. Your bot fetches the code itself from the bot-only endpoint.</li>
+                <li>3. The bot writes one short public post containing the exact code.</li>
+                <li>4. You submit only the published public URL back here.</li>
+              </ol>
             </div>
 
-            <div className="px-6 py-4 space-y-4 overflow-y-auto">
-              {/* 错误消息 */}
-              {error && (
-                <div className="bg-red-900/50 border border-red-700 text-red-200 px-4 py-3 rounded-lg flex justify-between items-center">
-                  <span>{error}</span>
+            {!codeGenerated ? (
+              <button
+                type="button"
+                onClick={generateVerificationCode}
+                className="w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700"
+              >
+                Reserve Verification Code
+              </button>
+            ) : (
+              <form onSubmit={submitVerification} className="space-y-4">
+                <div className="rounded-lg border border-emerald-700 bg-emerald-900/20 p-4">
+                  <div className="text-sm font-medium text-emerald-100">Reserved for bot access</div>
+                  <p className="mt-2 text-sm text-emerald-200">
+                    The owner never sees the code. The bot must fetch it directly and follow the returned `skills`
+                    instructions to write a short, interesting story-like verification post.
+                  </p>
+                  <code className="mt-3 inline-block rounded bg-gray-950/70 px-3 py-2 text-xs text-emerald-200">
+                    GET /api/bots/me/verification-code
+                  </code>
+                  {verificationCodeExpiresAt && (
+                    <p className="mt-3 text-sm text-emerald-200">
+                      Reserved until {new Date(verificationCodeExpiresAt).toLocaleString()}.
+                    </p>
+                  )}
+                </div>
+
+                <div className="rounded-lg border border-amber-700 bg-amber-900/20 p-4 text-sm text-amber-100">
+                  Keep it to one short public post. This should fit a normal X/Twitter post, not a long explanation or thread.
+                </div>
+
+                <TextField
+                  id="verification-url"
+                  label="Published Content URL"
+                  type="url"
+                  value={verificationUrl}
+                  onChange={setVerificationUrl}
+                  placeholder="https://x.com/... or https://gist.github.com/..."
+                  required
+                />
+
+                <div className="flex justify-end gap-3">
                   <button
-                    onClick={() => setError(null)}
-                    className="text-red-300 hover:text-red-100"
+                    type="button"
+                    onClick={resetVerificationModal}
+                    className="rounded-md border border-gray-600 bg-gray-700 px-4 py-2 text-sm font-medium text-gray-300 transition hover:bg-gray-600"
                   >
-                    ×
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isVerifying}
+                    className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700 disabled:opacity-50"
+                  >
+                    {isVerifying ? 'Submitting...' : 'Submit Verification'}
                   </button>
                 </div>
-              )}
-
-              {/* 成功消息 */}
-              {success && (
-                <div className="bg-green-900/50 border border-green-700 text-green-200 px-4 py-3 rounded-lg flex justify-between items-center">
-                  <span>{success}</span>
-                  <button
-                    onClick={() => setSuccess(null)}
-                    className="text-green-300 hover:text-green-100"
-                  >
-                    ×
-                  </button>
-                </div>
-              )}
-
-              {!codeGenerated ? (
-                // Step 1: Generate Verification Code
-                <div>
-                  <div className="bg-blue-900/30 border-l-4 border-blue-500 p-4 mb-4">
-                    <div className="flex">
-                      <div className="flex-shrink-0">
-                        <svg className="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                        </svg>
-                      </div>
-                      <div className="ml-3">
-                        <p className="text-sm text-blue-300">
-                          <strong>Verification Process:</strong>
-                        </p>
-                        <ol className="list-decimal list-inside text-sm text-blue-300 mt-2 space-y-1">
-                          <li>Click "Get Verification Code" to generate a code</li>
-                          <li>Publish content containing the code on any public platform (X/Weibo/Zhihu/GitHub etc.)</li>
-                          <li>Submit the URL of your published content for verification</li>
-                        </ol>
-                      </div>
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={generateVerificationCode}
-                    className="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
-                  >
-                    Get Verification Code
-                  </button>
-                </div>
-              ) : (
-                // Step 2: Submit Verification URL
-                <form onSubmit={submitVerification}>
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-2">
-                        Verification Code Generated! ✅
-                      </label>
-                      <div className="bg-green-900/30 border-l-4 border-green-500 p-4 mb-4">
-                        <div className="flex">
-                          <div className="flex-shrink-0">
-                            <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
-                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                            </svg>
-                          </div>
-                          <div className="ml-3">
-                            <p className="text-sm text-green-300 font-medium mb-2">
-                              Next Steps:
-                            </p>
-                            <ol className="list-decimal list-inside text-sm text-green-300 space-y-1">
-                              <li>Your ClawBot can now access the verification code via API</li>
-                              <li>ClawBot will generate and publish verification content automatically</li>
-                              <li>Once published, submit the URL below to complete verification</li>
-                            </ol>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="bg-blue-900/30 border border-blue-700 rounded-md p-3">
-                        <div className="space-y-2 text-xs text-blue-300">
-                          <p>
-                            <strong>Bot-only endpoint:</strong>
-                          </p>
-                          <code className="inline-block bg-gray-900 px-2 py-1 rounded text-blue-200">
-                            GET /api/bots/me/verification-code
-                          </code>
-                          <p>
-                            The verification code is not shown to the owner. Your bot must fetch it directly, follow the returned skills, and write one short, interesting public story-like post that includes the exact code.
-                          </p>
-                        </div>
-                      </div>
-                      {verificationCodeExpiresAt && (
-                        <p className="mt-2 text-sm text-gray-400">
-                          Code expires at: {new Date(verificationCodeExpiresAt).toLocaleString()} (valid for 1 hour)
-                        </p>
-                      )}
-
-                    </div>
-
-                    {/* 移除验证文案模板显示 */}
-
-                      <div className="bg-yellow-900/30 border-l-4 border-yellow-500 p-4">
-                      <div className="flex">
-                        <div className="flex-shrink-0">
-                          <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                          </svg>
-                        </div>
-                        <div className="ml-3">
-                          <p className="text-sm text-yellow-300">
-                            <strong>Important:</strong> Keep it to a single short post, suitable for a normal X/Twitter account. Do not turn it into a long explanation or thread.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div>
-                      <label htmlFor="verificationUrl" className="block text-sm font-medium text-gray-300 mb-2">
-                        Published Content URL *
-                      </label>
-                      <input
-                        type="url"
-                        id="verificationUrl"
-                        required
-                        value={verificationUrl}
-                        onChange={(e) => setVerificationUrl(e.target.value)}
-                        placeholder="https://twitter.com/your/status/..."
-                        className="block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md shadow-sm text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                      />
-                      <p className="mt-1 text-xs text-gray-400">
-                        Enter the full URL of your published verification content
-                      </p>
-                    </div>
-
-                    <div className="flex justify-end space-x-3 pt-4">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setShowVerificationModal(false)
-                          setSelectedBotForVerification(null)
-                          setVerificationUrl('')
-                          setCodeGenerated(false)
-                          setVerificationCodeExpiresAt(null)
-                          setError(null)
-                          setSuccess(null)
-                        }}
-                        className="px-4 py-2 border border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-300 bg-gray-700 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        type="submit"
-                        disabled={isVerifying}
-                        className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                      >
-                        {isVerifying ? 'Verifying...' : 'Submit Verification'}
-                      </button>
-                    </div>
-                  </div>
-                </form>
-              )}
-            </div>
+              </form>
+            )}
           </div>
-        </div>
+        </ModalFrame>
       )}
     </div>
   )
+}
+
+function Banner({
+  tone,
+  message,
+  onClose,
+}: {
+  tone: 'error' | 'success'
+  message: string
+  onClose: () => void
+}) {
+  const className =
+    tone === 'error'
+      ? 'border-red-700 bg-red-900/50 text-red-200'
+      : 'border-emerald-700 bg-emerald-900/50 text-emerald-200'
+
+  return (
+    <div className={`flex items-center justify-between rounded-lg border px-4 py-3 ${className}`}>
+      <span className="whitespace-pre-line">{message}</span>
+      <button type="button" onClick={onClose} className="text-sm">
+        x
+      </button>
+    </div>
+  )
+}
+
+function StatusPill({
+  label,
+  tone,
+}: {
+  label: string
+  tone: 'emerald' | 'blue' | 'yellow' | 'gray'
+}) {
+  const className =
+    tone === 'emerald'
+      ? 'border-emerald-700 bg-emerald-900/50 text-emerald-400'
+      : tone === 'blue'
+      ? 'border-blue-700 bg-blue-900/50 text-blue-400'
+      : tone === 'yellow'
+      ? 'border-yellow-700 bg-yellow-900/50 text-yellow-400'
+      : 'border-gray-700 bg-gray-700 text-gray-300'
+
+  return (
+    <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium ${className}`}>
+      {label}
+    </span>
+  )
+}
+
+function ModalFrame({
+  title,
+  children,
+  onClose,
+  wide,
+  scrollable,
+}: {
+  title: string
+  children: React.ReactNode
+  onClose: () => void
+  wide?: boolean
+  scrollable?: boolean
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/75 p-4">
+      <div
+        className={`w-full rounded-lg border border-gray-700 bg-gray-800 shadow-xl ${
+          wide ? 'max-w-2xl' : 'max-w-md'
+        }`}
+      >
+        <div className="flex items-center justify-between border-b border-gray-700 px-6 py-4">
+          <h3 className="text-lg font-medium text-white">{title}</h3>
+          <button type="button" onClick={onClose} className="text-gray-400 hover:text-white">
+            x
+          </button>
+        </div>
+        <div className={`px-6 py-4 ${scrollable ? 'max-h-[80vh] overflow-y-auto' : ''}`}>{children}</div>
+      </div>
+    </div>
+  )
+}
+
+function TextField({
+  id,
+  label,
+  value,
+  onChange,
+  type = 'text',
+  placeholder,
+  required,
+}: {
+  id: string
+  label: string
+  value: string
+  onChange: (value: string) => void
+  type?: string
+  placeholder?: string
+  required?: boolean
+}) {
+  return (
+    <div>
+      <label htmlFor={id} className="block text-sm font-medium text-gray-300">
+        {label}
+      </label>
+      <input
+        id={id}
+        type={type}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        placeholder={placeholder}
+        required={required}
+        className="mt-1 block w-full rounded-md border border-gray-600 bg-gray-700 px-3 py-2 text-white focus:border-emerald-500 focus:outline-none"
+      />
+    </div>
+  )
+}
+
+function TextAreaField({
+  id,
+  label,
+  value,
+  onChange,
+}: {
+  id: string
+  label: string
+  value: string
+  onChange: (value: string) => void
+}) {
+  return (
+    <div>
+      <label htmlFor={id} className="block text-sm font-medium text-gray-300">
+        {label}
+      </label>
+      <textarea
+        id={id}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        rows={3}
+        className="mt-1 block w-full rounded-md border border-gray-600 bg-gray-700 px-3 py-2 text-white focus:border-emerald-500 focus:outline-none"
+      />
+    </div>
+  )
+}
+
+function ModalActions({
+  primaryLabel,
+  onCancel,
+}: {
+  primaryLabel: string
+  onCancel: () => void
+}) {
+  return (
+    <div className="flex justify-end gap-3 pt-4">
+      <button
+        type="button"
+        onClick={onCancel}
+        className="rounded-md border border-gray-600 bg-gray-700 px-4 py-2 text-sm font-medium text-gray-300 transition hover:bg-gray-600"
+      >
+        Cancel
+      </button>
+      <button
+        type="submit"
+        className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-700"
+      >
+        {primaryLabel}
+      </button>
+    </div>
+  )
+}
+
+function maskApiKey(apiKey: string) {
+  if (apiKey.length <= 8) {
+    return '****'
+  }
+
+  return `${apiKey.slice(0, 4)}****${apiKey.slice(-4)}`
 }

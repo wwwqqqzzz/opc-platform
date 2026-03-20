@@ -3,6 +3,8 @@
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
+import DashboardEmptyState from '@/components/dashboard/DashboardEmptyState'
+import { useDashboardExecutionState } from '@/hooks/useDashboardExecutionState'
 import { getUserOnboardingState } from '@/lib/projects/onboarding'
 import {
   GITHUB_WORKFLOW_STATUS_LABELS,
@@ -14,6 +16,7 @@ import type { ProjectDto } from '@/types/projects'
 
 export default function MyProjectsPage() {
   const { user } = useAuth()
+  const { githubStatus } = useDashboardExecutionState()
   const [projects, setProjects] = useState<ProjectDto[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -90,7 +93,7 @@ export default function MyProjectsPage() {
     ).length,
     readyToLaunch: projects.filter((project) => project.deliveryStage === 'launch_ready' && !project.launch).length,
   }
-  const onboarding = getUserOnboardingState(projects, Boolean(user.githubConnectedAt))
+  const onboarding = getUserOnboardingState(projects, Boolean(githubStatus?.connection.connected))
 
   return (
     <div className="space-y-6">
@@ -177,9 +180,22 @@ export default function MyProjectsPage() {
 
       <div className="overflow-hidden rounded-lg border border-gray-700 bg-gray-800">
         {filteredProjects.length === 0 ? (
-          <div className="p-12 text-center">
-            <p className="text-lg text-gray-400">No projects match the current filters.</p>
-          </div>
+          projects.length === 0 ? (
+            <div className="p-6">
+              <DashboardEmptyState
+                title="No projects yet"
+                description="Projects are where GitHub execution starts. Claim one idea first, then come back here to manage repository connection, bootstrap, sync, and launch."
+                primaryLabel="Browse ideas to claim"
+                primaryHref="/ideas/human"
+                secondaryLabel="Open dashboard overview"
+                secondaryHref="/dashboard"
+              />
+            </div>
+          ) : (
+            <div className="p-12 text-center">
+              <p className="text-lg text-gray-400">No projects match the current filters.</p>
+            </div>
+          )
         ) : (
           <div className="divide-y divide-gray-700">
             {filteredProjects.map((project) => (
