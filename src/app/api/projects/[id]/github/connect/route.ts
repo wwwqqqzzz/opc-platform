@@ -4,7 +4,10 @@ import { prisma } from '@/lib/prisma'
 import { requireGithubAccessToken } from '@/lib/github/auth'
 import { getOwnedProject } from '@/lib/github/guards'
 import { createGithubRepositoryWebhook, getGithubRepository } from '@/lib/github/repos'
-import { getGithubRepoConnectionBlocker } from '@/lib/projects/transitions'
+import {
+  getGithubRepoConnectionBlocker,
+  getGithubRepoDisconnectionBlocker,
+} from '@/lib/projects/transitions'
 import { createLifecycleEvent } from '@/lib/projects/lifecycle'
 import { mapProjectDto } from '@/lib/github/mappers'
 
@@ -170,6 +173,105 @@ export async function POST(
     console.error('Failed to connect GitHub repository:', error)
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Failed to connect GitHub repository' },
+      { status: error instanceof Error && error.message === 'Unauthorized' ? 403 : 500 }
+    )
+  }
+}
+
+export async function DELETE(
+  _request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const user = await getAuthenticatedUser()
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const { id } = await params
+    const project = await getOwnedProject(id, user.id)
+    const disconnectionBlocker = getGithubRepoDisconnectionBlocker(project)
+    if (disconnectionBlocker) {
+      return NextResponse.json({ error: disconnectionBlocker }, { status: 400 })
+    }
+
+    await prisma.project.update({
+      where: { id: project.id },
+      data: {
+        githubRepoId: null,
+        githubRepoOwner: null,
+        githubRepoName: null,
+        githubRepoFullName: null,
+        githubDefaultBranch: null,
+        githubInstallationType: null,
+        githubConnectedAt: null,
+        githubLastSyncedAt: null,
+        githubSyncStatus: 'idle',
+        githubWorkflowStatus: 'not_started',
+        githubUrl: null,
+        deliveryStage: 'project',
+        agentGithubStatus: 'pending',
+        agentGithubUrl: null,
+        handoffRequestedAt: null,
+        handoffCompletedAt: null,
+      },
+    })
+
+    await prisma.projectGithubActivity.deleteMany({
+      where: {
+        projectId: project.id,
+      },
+    })
+
+    await createLifecycleEvent(prisma, {
+      projectId: project.id,
+      eventType: 'github_repo_disconnected',
+      title: 'GitHub repository disconnected',
+      description: `Disconnected ${project.githubRepoFullName} before bootstrap started.`,
+      deliveryStage: 'project',
+      agentGithubStatus: 'pending',
+      actorType: 'user',
+      actorId: user.id,
+      actorName: user.name || user.email,
+      metadata: {
+        previousRepoFullName: project.githubRepoFullName,
+      },
+    })
+
+    const refreshedProject = await prisma.project.findUniqueOrThrow({
+      where: { id: project.id },
+      include: {
+        idea: true,
+        launch: true,
+        user: {
+          select: {
+            id: true,
+            email: true,
+            name: true,
+            githubLogin: true,
+            githubName: true,
+            githubAvatarUrl: true,
+            githubConnectedAt: true,
+          },
+        },
+        githubActivities: {
+          orderBy: { createdAt: 'desc' },
+          take: 50,
+        },
+        lifecycleEvents: {
+          orderBy: { createdAt: 'asc' },
+        },
+      },
+    })
+
+    return NextResponse.json({
+      project: mapProjectDto(refreshedProject),
+      message: 'GitHub repository disconnected.',
+    })
+  } catch (error) {
+    console.error('Failed to disconnect GitHub repository:', error)
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Failed to disconnect GitHub repository' },
       { status: error instanceof Error && error.message === 'Unauthorized' ? 403 : 500 }
     )
   }

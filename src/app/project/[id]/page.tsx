@@ -25,6 +25,7 @@ export default function ProjectDetailPage() {
   const [actionError, setActionError] = useState<string | null>(null)
   const [actionMessage, setActionMessage] = useState<string | null>(null)
   const [connectingRepo, setConnectingRepo] = useState(false)
+  const [disconnectingRepo, setDisconnectingRepo] = useState(false)
   const [bootstrapping, setBootstrapping] = useState(false)
   const [syncing, setSyncing] = useState(false)
   const [launching, setLaunching] = useState(false)
@@ -130,6 +131,24 @@ export default function ProjectDetailPage() {
     }
   }
 
+  const handleDisconnectRepo = async () => {
+    if (!project) return
+
+    try {
+      setDisconnectingRepo(true)
+      setActionError(null)
+      await runProjectAction(`/api/projects/${project.id}/github/connect`, undefined, {
+        method: 'DELETE',
+        successMessage: 'GitHub repository disconnected.',
+      })
+      setRepoForm({ repoOwner: '', repoName: '' })
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : 'Failed to disconnect repository')
+    } finally {
+      setDisconnectingRepo(false)
+    }
+  }
+
   const handleSync = async () => {
     if (!project) return
 
@@ -193,12 +212,14 @@ export default function ProjectDetailPage() {
   const githubConnected = Boolean(project.githubConnection?.connected)
   const repoConnected = Boolean(project.github?.connection.fullName)
   const repoConnectionBlocker = getRepoConnectionBlocker(project, githubConnected)
+  const repoDisconnectionBlocker = getRepoDisconnectionBlocker(project)
   const bootstrapBlocker = getBootstrapBlocker(project)
   const syncBlocker = getSyncBlocker(project)
   const launchBlocker = getLaunchBlocker(project)
   const bootstrapReady = bootstrapBlocker === null
   const canLaunch = project.status === 'in_progress' && !project.launch && project.deliveryStage === 'launch_ready'
   const nextAction = getNextAction(project, githubConnected)
+  const launchChecklist = getLaunchChecklist(project)
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 text-white">
@@ -357,16 +378,27 @@ export default function ProjectDetailPage() {
                         <div className="text-sm text-gray-400">Connected Repository</div>
                         <div className="text-lg font-medium">{project.github.connection.fullName}</div>
                       </div>
-                      {project.github.connection.url && (
-                        <a
-                          href={project.github.connection.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-cyan-400 hover:text-cyan-300"
-                        >
-                          Open Repository
-                        </a>
-                      )}
+                      <div className="flex flex-wrap items-center gap-3">
+                        {project.github.connection.url && (
+                          <a
+                            href={project.github.connection.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-cyan-400 hover:text-cyan-300"
+                          >
+                            Open Repository
+                          </a>
+                        )}
+                        {canManageProject && (
+                          <button
+                            onClick={handleDisconnectRepo}
+                            disabled={Boolean(repoDisconnectionBlocker) || disconnectingRepo}
+                            className="rounded-lg border border-red-700 px-3 py-1.5 text-sm text-red-300 transition hover:bg-red-900/30 disabled:opacity-50"
+                          >
+                            {disconnectingRepo ? 'Disconnecting...' : 'Disconnect Repo'}
+                          </button>
+                        )}
+                      </div>
                     </div>
 
                     <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
@@ -404,6 +436,13 @@ export default function ProjectDetailPage() {
                         </a>
                       )}
                     </div>
+
+                    {canManageProject && (
+                      <p className={`mt-4 text-sm ${repoDisconnectionBlocker ? 'text-amber-300' : 'text-gray-500'}`}>
+                        {repoDisconnectionBlocker ||
+                          'You can disconnect and replace this repository until GitHub bootstrap artifacts are created.'}
+                      </p>
+                    )}
 
                     <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
                       <ChecklistPill label="GitHub account" complete={githubConnected} />
@@ -510,6 +549,35 @@ export default function ProjectDetailPage() {
             </div>
           </section>
 
+          <section className="rounded-lg bg-gray-800/50 p-6">
+            <div className="mb-4 flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+              <div>
+                <h2 className="text-xl font-semibold">Launch Readiness</h2>
+                <p className="mt-1 text-sm text-gray-400">
+                  OPC only opens launch after the GitHub execution trail is complete and current.
+                </p>
+              </div>
+              <div className={`text-sm ${launchBlocker ? 'text-amber-300' : 'text-emerald-300'}`}>
+                {launchBlocker ? 'Launch is locked' : 'Launch can be created now'}
+              </div>
+            </div>
+
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+              {launchChecklist.map((item) => (
+                <ChecklistCard
+                  key={item.label}
+                  label={item.label}
+                  description={item.description}
+                  complete={item.complete}
+                />
+              ))}
+            </div>
+
+            {launchBlocker && (
+              <p className="mt-4 text-sm text-amber-300">{launchBlocker}</p>
+            )}
+          </section>
+
           {agentTeam.length > 0 && (
             <section className="rounded-lg bg-gray-800/50 p-6">
               <h2 className="mb-3 text-xl font-semibold">Agent Team</h2>
@@ -590,6 +658,40 @@ function ChecklistPill({ label, complete }: { label: string; complete: boolean }
   )
 }
 
+function ChecklistCard({
+  label,
+  description,
+  complete,
+}: {
+  label: string
+  description: string
+  complete: boolean
+}) {
+  return (
+    <div
+      className={`rounded-lg border p-4 ${
+        complete
+          ? 'border-emerald-700 bg-emerald-900/20'
+          : 'border-amber-700 bg-amber-900/20'
+      }`}
+    >
+      <div className="flex items-center justify-between gap-3">
+        <div className="font-medium text-white">{label}</div>
+        <span
+          className={`rounded-full border px-2 py-0.5 text-xs ${
+            complete
+              ? 'border-emerald-500 text-emerald-200'
+              : 'border-amber-500 text-amber-200'
+          }`}
+        >
+          {complete ? 'Ready' : 'Pending'}
+        </span>
+      </div>
+      <p className="mt-2 text-sm text-gray-300">{description}</p>
+    </div>
+  )
+}
+
 function getRepoConnectionBlocker(project: ProjectDto, githubConnected: boolean) {
   if (!githubConnected) {
     return 'Connect your GitHub account in Settings before binding a repository.'
@@ -601,6 +703,22 @@ function getRepoConnectionBlocker(project: ProjectDto, githubConnected: boolean)
 
   if (project.githubPrimaryIssueNumber || project.githubPrimaryPrNumber) {
     return 'This project already created GitHub bootstrap artifacts, so the connected repository is fixed.'
+  }
+
+  return null
+}
+
+function getRepoDisconnectionBlocker(project: ProjectDto) {
+  if (!project.githubRepoFullName) {
+    return 'No repository is connected yet.'
+  }
+
+  if (project.status === 'launched') {
+    return 'Launched projects keep their repository history locked.'
+  }
+
+  if (project.githubPrimaryIssueNumber || project.githubPrimaryPrNumber) {
+    return 'Bootstrap already created issue or PR artifacts, so this repository should stay attached.'
   }
 
   return null
@@ -639,11 +757,66 @@ function getLaunchBlocker(project: ProjectDto) {
     return 'This project already has a launch entry.'
   }
 
+  if (!project.githubRepoFullName || !project.githubUrl) {
+    return 'Connect a visible GitHub repository before launch.'
+  }
+
+  if (!project.githubPrimaryIssueNumber || !project.githubPrimaryPrNumber) {
+    return 'Create the GitHub bootstrap issue and pull request before launch.'
+  }
+
+  if (!project.githubLastSyncedAt) {
+    return 'Run GitHub sync once before launch so OPC has current execution data.'
+  }
+
+  if (project.githubSyncStatus === 'error') {
+    return 'Fix the GitHub sync error and run a successful sync before launch.'
+  }
+
+  if (project.githubWorkflowStatus !== 'ready_for_launch') {
+    return 'GitHub workflow has not reached a launch-ready state yet.'
+  }
+
   if (project.deliveryStage !== 'launch_ready') {
     return 'Launch opens after GitHub activity reaches the launch-ready state.'
   }
 
   return null
+}
+
+function getLaunchChecklist(project: ProjectDto) {
+  return [
+    {
+      label: 'Repository connected',
+      description: 'One public repository is attached to this project.',
+      complete: Boolean(project.githubRepoFullName && project.githubUrl),
+    },
+    {
+      label: 'Bootstrap created',
+      description: 'The primary GitHub issue and pull request exist.',
+      complete: Boolean(project.githubPrimaryIssueNumber && project.githubPrimaryPrNumber),
+    },
+    {
+      label: 'Synced from GitHub',
+      description: 'OPC has a recent GitHub snapshot for this project.',
+      complete: Boolean(project.githubLastSyncedAt) && project.githubSyncStatus !== 'error',
+    },
+    {
+      label: 'Workflow is launch ready',
+      description: 'GitHub activity has reached the ready-for-launch state.',
+      complete: project.githubWorkflowStatus === 'ready_for_launch',
+    },
+    {
+      label: 'Delivery stage confirmed',
+      description: 'OPC marked the project as launch-ready, not just in progress.',
+      complete: project.deliveryStage === 'launch_ready' || project.deliveryStage === 'launched',
+    },
+    {
+      label: 'No launch exists yet',
+      description: 'Launch creation is only available once per project.',
+      complete: !project.launch,
+    },
+  ]
 }
 
 function getNextAction(project: ProjectDto, githubConnected: boolean) {

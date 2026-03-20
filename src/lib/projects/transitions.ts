@@ -8,6 +8,12 @@ export function canBootstrapGithubWorkflow(project: Pick<Project, 'githubRepoFul
   return getGithubBootstrapBlocker(project) === null
 }
 
+export function canDisconnectGithubRepo(
+  project: Pick<Project, 'status' | 'githubRepoFullName' | 'githubPrimaryIssueNumber' | 'githubPrimaryPrNumber'>
+) {
+  return getGithubRepoDisconnectionBlocker(project) === null
+}
+
 export function getGithubRepoConnectionBlocker(
   project: Pick<Project, 'status' | 'githubRepoFullName' | 'githubPrimaryIssueNumber' | 'githubPrimaryPrNumber'>
 ) {
@@ -39,6 +45,24 @@ export function getGithubBootstrapBlocker(
 
   if (project.githubPrimaryIssueNumber || project.githubPrimaryPrNumber) {
     return 'GitHub bootstrap already exists for this project.'
+  }
+
+  return null
+}
+
+export function getGithubRepoDisconnectionBlocker(
+  project: Pick<Project, 'status' | 'githubRepoFullName' | 'githubPrimaryIssueNumber' | 'githubPrimaryPrNumber'>
+) {
+  if (!project.githubRepoFullName) {
+    return 'No GitHub repository is connected to this project.'
+  }
+
+  if (project.status === 'launched') {
+    return 'Launched projects keep their original repository provenance and cannot disconnect GitHub.'
+  }
+
+  if (project.githubPrimaryIssueNumber || project.githubPrimaryPrNumber) {
+    return 'This project already created GitHub bootstrap artifacts. Keep the repository attached so launch provenance stays intact.'
   }
 
   return null

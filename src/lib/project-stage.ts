@@ -42,6 +42,7 @@ export type GithubSyncStatus = (typeof GITHUB_SYNC_STATUSES)[number]
 export const PROJECT_LIFECYCLE_EVENT_TYPES = [
   'project_created',
   'github_repo_connected',
+  'github_repo_disconnected',
   'github_bootstrap_started',
   'github_issue_created',
   'github_pr_created',

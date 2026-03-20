@@ -83,6 +83,10 @@ export default async function ProjectsPage() {
 
                   <div className="mb-4 rounded-lg border border-gray-700 bg-gray-900/30 p-3 text-sm text-gray-400">
                     <div>Repo: {project.githubRepoFullName || 'Not connected yet'}</div>
+                    <div className="mt-1">
+                      Bootstrap: {project.githubPrimaryIssueNumber && project.githubPrimaryPrNumber ? 'Created' : 'Not created'}
+                    </div>
+                    <div className="mt-1">Last sync: {project.githubLastSyncedAt ? new Date(project.githubLastSyncedAt).toLocaleDateString() : 'Not synced'}</div>
                     <div className="mt-1">Launch readiness: {project.deliveryStage === 'launch_ready' ? 'Ready' : 'Not ready'}</div>
                   </div>
 

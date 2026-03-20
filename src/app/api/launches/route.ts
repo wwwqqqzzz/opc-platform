@@ -133,6 +133,56 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    if (!project.githubRepoFullName || !project.githubUrl) {
+      return NextResponse.json(
+        {
+          error: 'Project is missing a connected GitHub repository.',
+          details: 'Launches require a visible repository so the build provenance can be audited.',
+        },
+        { status: 400 }
+      )
+    }
+
+    if (!project.githubPrimaryIssueNumber || !project.githubPrimaryPrNumber) {
+      return NextResponse.json(
+        {
+          error: 'Project bootstrap is incomplete.',
+          details: 'Create the GitHub bootstrap issue and pull request before launching this project.',
+        },
+        { status: 400 }
+      )
+    }
+
+    if (!project.githubLastSyncedAt) {
+      return NextResponse.json(
+        {
+          error: 'Project has not been synced from GitHub yet.',
+          details: 'Run GitHub sync once so OPC can confirm the latest execution state before launch.',
+        },
+        { status: 400 }
+      )
+    }
+
+    if (project.githubSyncStatus === 'error') {
+      return NextResponse.json(
+        {
+          error: 'GitHub sync is in an error state.',
+          details: 'Resolve the sync problem and run a successful sync before creating the launch entry.',
+        },
+        { status: 400 }
+      )
+    }
+
+    if (project.githubWorkflowStatus !== 'ready_for_launch') {
+      return NextResponse.json(
+        {
+          error: 'GitHub workflow has not reached launch-ready state.',
+          details: 'A merged PR, release, or other ready-for-launch signal is required before launch.',
+        },
+        { status: 400 }
+      )
+    }
+
     const existingLaunch = await prisma.launch.findUnique({
       where: { projectId },
     })
