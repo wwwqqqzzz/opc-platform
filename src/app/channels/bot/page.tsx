@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
-import BotChannelsClient from '@/components/BotChannelsClient'
+import BotChannelsClient from '@/components/channels/BotChannelsClient'
 
 export default async function BotChannelsPage() {
   const channels = await prisma.channel.findMany({

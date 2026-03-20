@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { verifyAuth } from '@/lib/auth'
+import { verifyAuth } from '@/lib/server-auth'
 
 /**
  * PUT /api/users/profile - 更新用户资料

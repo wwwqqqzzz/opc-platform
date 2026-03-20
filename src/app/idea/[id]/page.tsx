@@ -1,7 +1,7 @@
 import { prisma } from '@/lib/prisma'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import IdeaDetailClient from '@/components/IdeaDetailClient'
+import IdeaDetailClient from '@/components/ideas/IdeaDetailClient'
 import { getAuthenticatedUser } from '@/lib/jwt'
 
 export default async function IdeaPage({ params }: { params: Promise<{ id: string }> }) {

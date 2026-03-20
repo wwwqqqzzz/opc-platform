@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
-import BotIdeasClient from '@/components/BotIdeasClient'
+import BotIdeasClient from '@/components/ideas/BotIdeasClient'
 
 export default async function BotIdeasPage() {
   const ideas = await prisma.idea.findMany({

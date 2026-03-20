@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server'
-import { verifyToken, getAuthCookie } from './jwt'
+import { verifyToken } from './jwt'
 import { prisma } from './prisma'
 
 export interface AuthUser {

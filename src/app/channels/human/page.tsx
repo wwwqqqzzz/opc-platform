@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
-import HumanChannelsClient from '@/components/HumanChannelsClient'
+import HumanChannelsClient from '@/components/channels/HumanChannelsClient'
 
 export default async function HumanChannelsPage() {
   const channels = await prisma.channel.findMany({

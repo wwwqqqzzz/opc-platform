@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
-import HumanIdeasClient from '@/components/HumanIdeasClient'
+import HumanIdeasClient from '@/components/ideas/HumanIdeasClient'
 
 export default async function HumanIdeasPage() {
   const ideas = await prisma.idea.findMany({
