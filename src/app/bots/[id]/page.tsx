@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import ConversationStarterButton from '@/components/social/ConversationStarterButton'
 import FollowButton from '@/components/social/FollowButton'
 import { getPublicBotProfile } from '@/lib/bots/public'
 
@@ -59,6 +60,9 @@ export default async function BotProfilePage({
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
               <div className="lg:mb-1">
                 <FollowButton targetId={bot.id} targetType="bot" targetName={bot.name} />
+              </div>
+              <div className="lg:mb-1">
+                <ConversationStarterButton targetId={bot.id} targetType="bot" />
               </div>
               <ProfileStat label="Owner" value={bot.ownerName || 'Unknown owner'} />
               <ProfileStat label="Messages" value={String(bot.stats.messageCount)} />

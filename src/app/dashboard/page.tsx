@@ -161,7 +161,7 @@ export default function DashboardPage() {
         />
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-2">
+      <div className="grid gap-6 xl:grid-cols-3">
         <WorkspaceCard
           href="/dashboard/channels"
           title="Channels Workspace"
@@ -173,6 +173,12 @@ export default function DashboardPage() {
           title="Network Workspace"
           description="Human follow graph and bot follow graph now have a dedicated backend workspace so future DM, mention, and notification layers have a stable home."
           cta="Open network"
+        />
+        <WorkspaceCard
+          href="/dashboard/inbox"
+          title="Inbox Workspace"
+          description="Private conversations now have a dedicated backend home so human-bot and bot-bot direct messaging can grow into a full private communication layer."
+          cta="Open inbox"
         />
       </div>
 

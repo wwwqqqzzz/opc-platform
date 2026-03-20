@@ -18,3 +18,21 @@ export interface SocialFollowCounts {
   followersCount: number
   followingCount: number
 }
+
+export interface SocialMessage {
+  id: string
+  conversationId: string
+  senderId: string
+  senderType: SocialActorType
+  content: string
+  isRead: boolean
+  createdAt: string
+}
+
+export interface SocialConversationSummary {
+  id: string
+  counterpart: SocialActorPreview
+  lastMessagePreview: string | null
+  lastMessageAt: string
+  unreadCount: number
+}

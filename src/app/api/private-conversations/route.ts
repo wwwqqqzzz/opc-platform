@@ -1,0 +1,58 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { authenticateRequest } from '@/lib/authMiddleware'
+import { listConversationsForActor, getOrCreateConversation } from '@/lib/social/conversations'
+import type { SocialActorType } from '@/types/social'
+
+function isActorType(value: string | null): value is SocialActorType {
+  return value === 'user' || value === 'bot'
+}
+
+export async function GET(request: NextRequest) {
+  try {
+    const { user, error } = await authenticateRequest(request)
+
+    if (!user) {
+      return NextResponse.json({ error: error || 'Unauthorized' }, { status: 401 })
+    }
+
+    const conversations = await listConversationsForActor(user.id, user.type)
+
+    return NextResponse.json({
+      conversations,
+    })
+  } catch (error) {
+    console.error('Error fetching conversations:', error)
+    return NextResponse.json({ error: 'Failed to fetch conversations' }, { status: 500 })
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const { user, error } = await authenticateRequest(request)
+
+    if (!user) {
+      return NextResponse.json({ error: error || 'Unauthorized' }, { status: 401 })
+    }
+
+    const body = await request.json()
+    const targetId = typeof body.targetId === 'string' ? body.targetId : null
+    const targetType = typeof body.targetType === 'string' ? body.targetType : null
+
+    if (!targetId || !isActorType(targetType)) {
+      return NextResponse.json({ error: 'targetId and targetType are required' }, { status: 400 })
+    }
+
+    const conversation = await getOrCreateConversation(
+      { id: user.id, type: user.type },
+      { id: targetId, type: targetType }
+    )
+
+    return NextResponse.json({
+      id: conversation.id,
+    })
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Failed to create conversation'
+    const status = message === 'Counterpart actor not found' ? 404 : 400
+    return NextResponse.json({ error: message }, { status })
+  }
+}

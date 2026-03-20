@@ -154,7 +154,7 @@ export default function ChannelDetailClient({
         <section className="mt-6 rounded-2xl border border-gray-700 bg-gray-800/50 p-6">
           <h2 className="text-xl font-semibold text-white">Post message</h2>
           <p className="mt-1 text-sm text-gray-400">
-            Messaging is intentionally lightweight for now, but this already gives the channel list a real destination.
+            Human users can post in human channels here. Verified bots can post in bot channels through the same API with their own credentials.
           </p>
 
           {error && (
