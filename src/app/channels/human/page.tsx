@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma'
 
 export default async function HumanChannelsPage() {
   const channels = await prisma.channel.findMany({
-    where: { type: 'human' },
+    where: { type: 'human', visibility: 'open', isActive: true },
     orderBy: { order: 'asc' },
     include: {
       _count: {

@@ -1,37 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { authenticateRequest } from '@/lib/authMiddleware'
 import { prisma } from '@/lib/prisma'
+import {
+  canActorCreateChannelType,
+  listVisibleChannelsForActor,
+} from '@/lib/social/channels'
+import type { ChannelType, ChannelVisibility } from '@/types/channels'
 
-export async function GET(_request: NextRequest) {
+function isChannelType(value: string): value is ChannelType {
+  return value === 'human' || value === 'bot' || value === 'mixed' || value === 'announcement'
+}
+
+function isVisibility(value: string): value is ChannelVisibility {
+  return value === 'open' || value === 'invite_only' || value === 'private'
+}
+
+export async function GET(request: NextRequest) {
   try {
-    const channels = await prisma.channel.findMany({
-      where: {
-        isActive: true,
-      },
-      orderBy: {
-        order: 'asc',
-      },
-      include: {
-        _count: {
-          select: {
-            messages: true,
-            members: true,
-          },
-        },
-      },
-    })
+    const { user } = await authenticateRequest(request)
+    const channels = await listVisibleChannelsForActor(user ? { id: user.id, type: user.type } : null)
 
-    return NextResponse.json({
-      channels: channels.map((channel) => ({
-        id: channel.id,
-        name: channel.name,
-        type: channel.type,
-        description: channel.description,
-        order: channel.order,
-        messageCount: channel._count.messages,
-        memberCount: channel._count.members,
-        createdAt: channel.createdAt,
-      })),
-    })
+    return NextResponse.json({ channels })
   } catch (error) {
     console.error('Error fetching channels:', error)
     return NextResponse.json({ error: 'Failed to fetch channels' }, { status: 500 })
@@ -40,15 +29,31 @@ export async function GET(_request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
-    const { name, type, description, order } = body
+    const { user, error } = await authenticateRequest(request)
 
-    if (!name || !type) {
-      return NextResponse.json({ error: 'Name and type are required' }, { status: 400 })
+    if (!user) {
+      return NextResponse.json({ error: error || 'Unauthorized' }, { status: 401 })
     }
 
-    if (!['human', 'bot', 'mixed', 'announcement'].includes(type)) {
-      return NextResponse.json({ error: 'Invalid channel type' }, { status: 400 })
+    const body = await request.json()
+    const name = typeof body.name === 'string' ? body.name.trim() : ''
+    const description = typeof body.description === 'string' ? body.description.trim() : ''
+    const type = typeof body.type === 'string' ? body.type : ''
+    const visibility = typeof body.visibility === 'string' ? body.visibility : 'open'
+    const order = typeof body.order === 'number' ? body.order : 0
+
+    if (!name || !isChannelType(type) || !isVisibility(visibility)) {
+      return NextResponse.json(
+        { error: 'name, type, and valid visibility are required' },
+        { status: 400 }
+      )
+    }
+
+    if (!canActorCreateChannelType(user.type, type)) {
+      return NextResponse.json(
+        { error: 'This actor type cannot create this room type' },
+        { status: 403 }
+      )
     }
 
     const existingChannel = await prisma.channel.findUnique({
@@ -63,8 +68,24 @@ export async function POST(request: NextRequest) {
       data: {
         name,
         type,
-        description,
-        order: order || 0,
+        visibility,
+        description: description || null,
+        order,
+        members: {
+          create: {
+            actorId: user.id,
+            actorType: user.type,
+            role: 'owner',
+          },
+        },
+      },
+      include: {
+        _count: {
+          select: {
+            messages: true,
+            members: true,
+          },
+        },
       },
     })
 
@@ -75,9 +96,13 @@ export async function POST(request: NextRequest) {
           id: channel.id,
           name: channel.name,
           type: channel.type,
+          visibility: channel.visibility,
           description: channel.description,
           order: channel.order,
-          createdAt: channel.createdAt,
+          messageCount: channel._count.messages,
+          memberCount: channel._count.members,
+          isMember: true,
+          hasPendingInvite: false,
         },
       },
       { status: 201 }

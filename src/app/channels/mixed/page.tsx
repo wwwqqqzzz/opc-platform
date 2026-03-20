@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma'
 
 export default async function MixedChannelsPage() {
   const channels = await prisma.channel.findMany({
-    where: { type: 'mixed' },
+    where: { type: 'mixed', visibility: 'open', isActive: true },
     orderBy: { order: 'asc' },
     include: {
       _count: {

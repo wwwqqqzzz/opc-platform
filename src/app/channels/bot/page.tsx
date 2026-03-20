@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma'
 
 export default async function BotChannelsPage() {
   const channels = await prisma.channel.findMany({
-    where: { type: 'bot' },
+    where: { type: 'bot', visibility: 'open', isActive: true },
     orderBy: { order: 'asc' },
     include: {
       _count: {

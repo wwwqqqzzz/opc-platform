@@ -1,11 +1,11 @@
 'use client'
 
 import Link from 'next/link'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import ChannelMembersList from '@/components/channels/ChannelMembersList'
 import ChannelMembershipButton from '@/components/channels/ChannelMembershipButton'
 import { useAuth } from '@/contexts/AuthContext'
-import type { ChannelType } from '@/types/channels'
+import type { ChannelActorType, ChannelType, ChannelVisibility } from '@/types/channels'
 
 interface ChannelMessage {
   id: string
@@ -19,6 +19,7 @@ interface ChannelDetailClientProps {
   channelId: string
   channelName: string
   channelType: string
+  channelVisibility: ChannelVisibility
   channelDescription: string | null
   memberCount: number
   backHref: string
@@ -31,6 +32,7 @@ export default function ChannelDetailClient({
   channelId,
   channelName,
   channelType,
+  channelVisibility,
   channelDescription,
   memberCount,
   backHref,
@@ -43,6 +45,18 @@ export default function ChannelDetailClient({
   const [content, setContent] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [sending, setSending] = useState(false)
+  const [inviteActorId, setInviteActorId] = useState('')
+  const [inviteActorType, setInviteActorType] = useState<ChannelActorType>('user')
+  const [inviting, setInviting] = useState(false)
+  const [moderatorActorId, setModeratorActorId] = useState('')
+  const [moderatorActorType, setModeratorActorType] = useState<ChannelActorType>('user')
+  const [promoting, setPromoting] = useState(false)
+  const [demoting, setDemoting] = useState(false)
+  const [managementMessage, setManagementMessage] = useState<string | null>(null)
+  const [membershipRole, setMembershipRole] = useState<string | null>(null)
+
+  const isManager = membershipRole === 'owner' || membershipRole === 'moderator'
+  const isOwner = membershipRole === 'owner'
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
@@ -93,6 +107,94 @@ export default function ChannelDetailClient({
     }
   }
 
+  const refreshMembership = async () => {
+    const response = await fetch(`/api/channels/${channelId}/membership`)
+
+    if (response.ok) {
+      const data: { membership: { role: string } | null } = await response.json()
+      setMembershipRole(data.membership?.role || null)
+    }
+  }
+
+  useEffect(() => {
+    void refreshMembership()
+  }, [channelId])
+
+  const handleInvite = async (event: React.FormEvent) => {
+    event.preventDefault()
+
+    if (!inviteActorId.trim()) {
+      setError('Invite actor id is required.')
+      return
+    }
+
+    try {
+      setInviting(true)
+      setError(null)
+      setManagementMessage(null)
+      const response = await fetch(`/api/channels/${channelId}/invites`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          invitedActorId: inviteActorId.trim(),
+          invitedActorType: inviteActorType,
+        }),
+      })
+      const data = await response.json()
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to send invite')
+      }
+      setInviteActorId('')
+      setManagementMessage('Invite sent.')
+    } catch (inviteError) {
+      setError(inviteError instanceof Error ? inviteError.message : 'Failed to send invite')
+    } finally {
+      setInviting(false)
+    }
+  }
+
+  const handleModeratorUpdate = async (nextRole: 'promote' | 'demote') => {
+    if (!moderatorActorId.trim()) {
+      setError('Moderator target actor id is required.')
+      return
+    }
+
+    try {
+      if (nextRole === 'promote') {
+        setPromoting(true)
+      } else {
+        setDemoting(true)
+      }
+      setError(null)
+      setManagementMessage(null)
+      const response = await fetch(`/api/channels/${channelId}/moderators`, {
+        method: nextRole === 'promote' ? 'POST' : 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          targetActorId: moderatorActorId.trim(),
+          targetActorType: moderatorActorType,
+        }),
+      })
+      const data = await response.json()
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to update moderator role')
+      }
+      setModeratorActorId('')
+      setManagementMessage(nextRole === 'promote' ? 'Moderator promoted.' : 'Moderator removed.')
+    } catch (moderatorError) {
+      setError(
+        moderatorError instanceof Error ? moderatorError.message : 'Failed to update moderator role'
+      )
+    } finally {
+      setPromoting(false)
+      setDemoting(false)
+    }
+  }
+
   return (
     <main className="min-h-screen bg-gray-900 text-white">
       <div className="container mx-auto max-w-5xl px-4 py-8">
@@ -108,6 +210,9 @@ export default function ChannelDetailClient({
               <p className="mt-2 max-w-3xl text-sm leading-6 text-gray-400">
                 {channelDescription || 'No description yet.'}
               </p>
+              <div className="mt-3 inline-flex rounded-full border border-gray-700 bg-gray-900/40 px-3 py-1 text-xs uppercase tracking-wide text-gray-300">
+                {channelVisibility}
+              </div>
             </div>
             <div className="flex flex-col items-end gap-2">
               <div className="rounded-full border border-gray-700 bg-gray-900/40 px-4 py-2 text-sm text-gray-300">
@@ -127,11 +232,16 @@ export default function ChannelDetailClient({
                 <div className="text-sm uppercase tracking-[0.25em] text-cyan-300">Membership</div>
                 <h2 className="mt-2 text-xl font-semibold text-white">Join the room before posting</h2>
                 <p className="mt-2 text-sm leading-6 text-gray-400">
-                  Human users join rooms from their own dashboard session. Bots join rooms with their own API key and
-                  control surface. They do not reuse the human dashboard.
+                Human users join rooms from their own dashboard session. Bots join rooms with their own API key and
+                control surface. They do not reuse the human dashboard.
+              </p>
+              {membershipRole && (
+                <p className="mt-2 text-xs uppercase tracking-wide text-cyan-200">
+                  Your role: {membershipRole}
                 </p>
-              </div>
-              <ChannelMembershipButton channelId={channelId} channelType={channelType as ChannelType} />
+              )}
+            </div>
+            <ChannelMembershipButton channelId={channelId} channelType={channelType as ChannelType} />
             </div>
 
             <div className="mt-6">
@@ -146,12 +256,90 @@ export default function ChannelDetailClient({
             <div className="text-sm uppercase tracking-[0.25em] text-cyan-300">Room rules</div>
             <div className="mt-3 space-y-3 text-sm leading-6 text-gray-400">
               <p>Room type: <span className="font-medium text-white">{channelType}</span></p>
+              <p>Room visibility: <span className="font-medium text-white">{channelVisibility}</span></p>
               <p>Humans only control their own dashboard workspace.</p>
               <p>Bots control their own room state through authenticated API calls.</p>
               <p>Announcements stay read-only. Mixed rooms allow both actor types.</p>
             </div>
           </section>
         </div>
+
+        {(isManager || isOwner) && (
+          <section className="mt-6 grid gap-6 rounded-2xl border border-gray-700 bg-gray-800/50 p-6 lg:grid-cols-2">
+            <div>
+              <h2 className="text-xl font-semibold text-white">Invite member</h2>
+              <p className="mt-1 text-sm text-gray-400">
+                Invite humans or bots into invite-only and private rooms.
+              </p>
+              <form onSubmit={handleInvite} className="mt-4 space-y-4">
+                <input
+                  value={inviteActorId}
+                  onChange={(event) => setInviteActorId(event.target.value)}
+                  placeholder="Actor id"
+                  className="w-full rounded-lg border border-gray-700 bg-gray-900 px-4 py-3 text-white focus:border-cyan-500 focus:outline-none"
+                />
+                <select
+                  value={inviteActorType}
+                  onChange={(event) => setInviteActorType(event.target.value as ChannelActorType)}
+                  className="w-full rounded-lg border border-gray-700 bg-gray-900 px-4 py-3 text-white focus:border-cyan-500 focus:outline-none"
+                >
+                  <option value="user">user</option>
+                  <option value="bot">bot</option>
+                </select>
+                <button
+                  type="submit"
+                  disabled={inviting}
+                  className="rounded-lg bg-cyan-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-cyan-700 disabled:opacity-50"
+                >
+                  {inviting ? 'Sending...' : 'Send invite'}
+                </button>
+              </form>
+            </div>
+
+            {isOwner && (
+              <div>
+                <h2 className="text-xl font-semibold text-white">Moderators</h2>
+                <p className="mt-1 text-sm text-gray-400">
+                  Owners can promote or demote room moderators.
+                </p>
+                <div className="mt-4 space-y-4">
+                  <input
+                    value={moderatorActorId}
+                    onChange={(event) => setModeratorActorId(event.target.value)}
+                    placeholder="Member actor id"
+                    className="w-full rounded-lg border border-gray-700 bg-gray-900 px-4 py-3 text-white focus:border-cyan-500 focus:outline-none"
+                  />
+                  <select
+                    value={moderatorActorType}
+                    onChange={(event) => setModeratorActorType(event.target.value as ChannelActorType)}
+                    className="w-full rounded-lg border border-gray-700 bg-gray-900 px-4 py-3 text-white focus:border-cyan-500 focus:outline-none"
+                  >
+                    <option value="user">user</option>
+                    <option value="bot">bot</option>
+                  </select>
+                  <div className="flex flex-wrap gap-3">
+                    <button
+                      type="button"
+                      onClick={() => void handleModeratorUpdate('promote')}
+                      disabled={promoting}
+                      className="rounded-lg bg-cyan-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-cyan-700 disabled:opacity-50"
+                    >
+                      {promoting ? 'Updating...' : 'Promote moderator'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void handleModeratorUpdate('demote')}
+                      disabled={demoting}
+                      className="rounded-lg border border-gray-600 px-4 py-2 text-sm font-medium text-gray-200 transition hover:bg-gray-800 disabled:opacity-50"
+                    >
+                      {demoting ? 'Updating...' : 'Remove moderator'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </section>
+        )}
 
         <section className="mt-6 rounded-2xl border border-gray-700 bg-gray-800/50 p-6">
           <div className="flex items-center justify-between gap-4">
@@ -203,6 +391,11 @@ export default function ChannelDetailClient({
           {error && (
             <div className="mt-4 rounded-lg border border-red-700 bg-red-900/20 p-4 text-sm text-red-200">
               {error}
+            </div>
+          )}
+          {managementMessage && (
+            <div className="mt-4 rounded-lg border border-cyan-700 bg-cyan-900/20 p-4 text-sm text-cyan-200">
+              {managementMessage}
             </div>
           )}
 

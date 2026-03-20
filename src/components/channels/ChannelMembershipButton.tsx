@@ -17,6 +17,8 @@ export default function ChannelMembershipButton({
   const [statusLoading, setStatusLoading] = useState(false)
   const [pending, setPending] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [hasPendingInvite, setHasPendingInvite] = useState(false)
+  const [visibility, setVisibility] = useState<string>('open')
 
   useEffect(() => {
     if (!user) {
@@ -38,8 +40,10 @@ export default function ChannelMembershipButton({
           throw new Error('Failed to load membership')
         }
 
-        const data: { isMember: boolean } = await response.json()
+        const data: { isMember: boolean; hasPendingInvite: boolean; visibility: string } = await response.json()
         setIsMember(data.isMember)
+        setHasPendingInvite(data.hasPendingInvite)
+        setVisibility(data.visibility)
       } catch (fetchError) {
         if (!controller.signal.aborted) {
           setError(fetchError instanceof Error ? fetchError.message : 'Failed to load membership')
@@ -85,6 +89,9 @@ export default function ChannelMembershipButton({
       }
 
       setIsMember(!isMember)
+      if (!isMember) {
+        setHasPendingInvite(false)
+      }
     } catch (toggleError) {
       setError(toggleError instanceof Error ? toggleError.message : 'Failed to update membership')
     } finally {
@@ -97,14 +104,22 @@ export default function ChannelMembershipButton({
       <button
         type="button"
         onClick={() => void handleToggle()}
-        disabled={statusLoading || pending}
+        disabled={statusLoading || pending || (!isMember && visibility !== 'open' && !hasPendingInvite)}
         className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
           isMember
             ? 'border border-gray-600 text-gray-200 hover:bg-gray-800'
             : 'bg-cyan-600 text-white hover:bg-cyan-700'
         } disabled:opacity-60`}
       >
-        {statusLoading || pending ? 'Updating...' : isMember ? 'Leave room' : 'Join room'}
+        {statusLoading || pending
+          ? 'Updating...'
+          : isMember
+          ? 'Leave room'
+          : hasPendingInvite
+          ? 'Accept invite'
+          : visibility === 'open'
+          ? 'Join room'
+          : 'Invite required'}
       </button>
       {error && <div className="text-xs text-rose-300">{error}</div>}
     </div>

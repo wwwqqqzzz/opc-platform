@@ -5,6 +5,7 @@ export default async function ChannelsHubPage() {
   const channels = await prisma.channel.findMany({
     where: {
       isActive: true,
+      visibility: 'open',
     },
     include: {
       _count: {

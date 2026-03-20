@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { authenticateRequest } from '@/lib/authMiddleware'
-import { getChannelMembership, joinChannel, leaveChannel } from '@/lib/social/channels'
+import {
+  getChannelAccessForActor,
+  joinChannel,
+  leaveChannel,
+} from '@/lib/social/channels'
 
 interface RouteContext {
   params: Promise<{
@@ -17,14 +21,16 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
     }
 
     const { id } = await params
-    const membership = await getChannelMembership(id, user.id, user.type)
+    const access = await getChannelAccessForActor(id, { id: user.id, type: user.type })
 
     return NextResponse.json({
-      isMember: Boolean(membership),
-      membership: membership
+      isMember: access.isMember,
+      hasPendingInvite: access.hasPendingInvite,
+      canView: access.canView,
+      visibility: access.visibility,
+      membership: access.isMember
         ? {
-            joinedAt: membership.joinedAt.toISOString(),
-            role: membership.role,
+            role: access.membershipRole,
           }
         : null,
     })
@@ -57,7 +63,7 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
     const status =
       message === 'Channel not found'
         ? 404
-        : message === 'This actor type cannot join this channel'
+        : message === 'This actor type cannot join this channel' || message === 'This room requires an invite'
         ? 403
         : 500
 
@@ -78,7 +84,8 @@ export async function DELETE(request: NextRequest, { params }: RouteContext) {
 
     return NextResponse.json({ message: 'Left channel successfully' })
   } catch (error) {
-    console.error('Error leaving channel:', error)
-    return NextResponse.json({ error: 'Failed to leave channel' }, { status: 500 })
+    const message = error instanceof Error ? error.message : 'Failed to leave channel'
+    const status = message === 'Channel owners cannot leave their own room' ? 403 : 500
+    return NextResponse.json({ error: message }, { status })
   }
 }

@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { authenticateRequest } from '@/lib/authMiddleware'
 import { prisma } from '@/lib/prisma'
-import { canActorPostInChannelType, getChannelMembership } from '@/lib/social/channels'
+import {
+  canActorPostInChannelType,
+  getChannelAccessForActor,
+  touchChannelReadState,
+} from '@/lib/social/channels'
+import { createMentionNotifications } from '@/lib/social/notifications'
 import type { ChannelType } from '@/types/channels'
 
 interface RouteContext {
@@ -16,6 +21,13 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
     const { searchParams } = new URL(request.url)
     const limit = parseInt(searchParams.get('limit') || '50', 10)
     const offset = parseInt(searchParams.get('offset') || '0', 10)
+    const { user } = await authenticateRequest(request)
+
+    const access = await getChannelAccessForActor(id, user ? { id: user.id, type: user.type } : null)
+
+    if (!access.canView) {
+      return NextResponse.json({ error: 'You do not have access to this room' }, { status: 403 })
+    }
 
     const channel = await prisma.channel.findUnique({
       where: { id },
@@ -41,6 +53,10 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
         channelId: id,
       },
     })
+
+    if (user && access.isMember) {
+      await touchChannelReadState(id, user.id, user.type)
+    }
 
     return NextResponse.json({
       messages: messages.reverse(),
@@ -95,9 +111,9 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
       )
     }
 
-    const membership = await getChannelMembership(id, user.id, user.type)
+    const access = await getChannelAccessForActor(id, { id: user.id, type: user.type })
 
-    if (!membership) {
+    if (!access.isMember) {
       return NextResponse.json(
         { error: 'Join this channel before posting' },
         { status: 403 }
@@ -112,6 +128,14 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
         senderId: user.id,
         senderName: user.name || null,
       },
+    })
+
+    await createMentionNotifications({
+      content,
+      href: `/channels/${channel.type}/${id}`,
+      sender: { id: user.id, type: user.type },
+      title: `#${channel.name}`,
+      body: content.slice(0, 180),
     })
 
     return NextResponse.json(

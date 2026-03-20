@@ -6,6 +6,7 @@ import type {
   SocialMessage,
 } from '@/types/social'
 import { ensureSocialActorExists, getSocialActorPreview } from './follows'
+import { createDmNotification } from './notifications'
 
 interface ActorIdentity {
   id: string
@@ -256,6 +257,24 @@ export async function sendConversationMessage(
     data: {
       lastMessageAt: nextMessage.createdAt,
     },
+  })
+
+  const recipient =
+    conversation.conversation.user1Id === actor.id && conversation.conversation.user1Type === actor.type
+      ? {
+          id: conversation.conversation.user2Id,
+          type: conversation.conversation.user2Type as SocialActorType,
+        }
+      : {
+          id: conversation.conversation.user1Id,
+          type: conversation.conversation.user1Type as SocialActorType,
+        }
+
+  await createDmNotification({
+    recipient,
+    sender: actor,
+    conversationId,
+    content,
   })
 
   return {

@@ -36,3 +36,22 @@ export interface SocialConversationSummary {
   lastMessageAt: string
   unreadCount: number
 }
+
+export type SocialNotificationType =
+  | 'channel_invite'
+  | 'channel_mention'
+  | 'dm_message'
+  | 'channel_role_updated'
+
+export interface SocialNotification {
+  id: string
+  actorId: string
+  actorType: SocialActorType
+  type: SocialNotificationType | string
+  title: string
+  body: string | null
+  href: string | null
+  metadata: string | null
+  readAt: string | null
+  createdAt: string
+}

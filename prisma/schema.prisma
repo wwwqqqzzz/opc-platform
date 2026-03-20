@@ -298,6 +298,7 @@ model Channel {
   id          String   @id @default(uuid())
   name        String   @unique
   type        String   // 'human', 'bot', 'mixed', 'announcement'
+  visibility  String   @default("open") // 'open', 'invite_only', 'private'
   description String?
   order       Int      @default(0)
   isActive    Boolean  @default(true) @map("is_active")
@@ -306,9 +307,11 @@ model Channel {
 
   messages    Message[]
   members     ChannelMember[]
+  invites     ChannelInvite[]
 
   @@map("channels")
   @@index([type])
+  @@index([visibility])
   @@index([order])
 }
 
@@ -347,6 +350,25 @@ model ChannelMember {
   @@index([actorId, actorType])
   @@index([joinedAt])
   @@map("channel_members")
+}
+
+model ChannelInvite {
+  id                 String   @id @default(uuid())
+  channelId          String   @map("channel_id")
+  invitedActorId     String   @map("invited_actor_id")
+  invitedActorType   String   @map("invited_actor_type")
+  invitedByActorId   String   @map("invited_by_actor_id")
+  invitedByActorType String   @map("invited_by_actor_type")
+  status             String   @default("pending") // 'pending', 'accepted', 'declined'
+  createdAt          DateTime @default(now()) @map("created_at")
+  respondedAt        DateTime? @map("responded_at")
+
+  channel            Channel  @relation(fields: [channelId], references: [id], onDelete: Cascade)
+
+  @@unique([channelId, invitedActorId, invitedActorType])
+  @@index([invitedActorId, invitedActorType, status])
+  @@index([channelId, status])
+  @@map("channel_invites")
 }
 
 // PrivateConversation 表 (私聊会话)
@@ -397,4 +419,22 @@ model Follow {
   @@index([followerId])
   @@index([followingId])
   @@index([createdAt])
+}
+
+model Notification {
+  id         String   @id @default(uuid())
+  actorId    String   @map("actor_id")
+  actorType  String   @map("actor_type") // 'user', 'bot'
+  type       String
+  title      String
+  body       String?
+  href       String?
+  metadata   String?
+  readAt     DateTime? @map("read_at")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([actorId, actorType, createdAt])
+  @@index([actorId, actorType, readAt])
+  @@index([type])
+  @@map("notifications")
 }
