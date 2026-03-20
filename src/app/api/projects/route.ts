@@ -1,76 +1,92 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
-import { getAuthenticatedUser } from '@/lib/jwt'
 import type { Prisma } from '@prisma/client'
+import { NextRequest, NextResponse } from 'next/server'
+import { getAuthenticatedUser } from '@/lib/jwt'
+import { mapProjectDto } from '@/lib/github/mappers'
+import { createLifecycleEvent } from '@/lib/projects/lifecycle'
+import { prisma } from '@/lib/prisma'
 
-// GET /api/projects - 获取所有 Projects
+const projectInclude = {
+  user: {
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      githubLogin: true,
+      githubName: true,
+      githubAvatarUrl: true,
+      githubConnectedAt: true,
+    },
+  },
+  idea: {
+    include: {
+      user: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+        },
+      },
+    },
+  },
+  launch: true,
+  githubActivities: {
+    orderBy: { createdAt: 'desc' as const },
+    take: 25,
+  },
+  lifecycleEvents: {
+    orderBy: { createdAt: 'asc' as const },
+  },
+} satisfies Prisma.ProjectInclude
+
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams
     const status = searchParams.get('status')
     const userId = searchParams.get('userId')
+    const deliveryStage = searchParams.get('deliveryStage')
+    const githubWorkflowStatus = searchParams.get('githubWorkflowStatus')
+    const githubSyncStatus = searchParams.get('githubSyncStatus')
 
     const where: Prisma.ProjectWhereInput = {}
     if (status) where.status = status
     if (userId) where.userId = userId
+    if (deliveryStage) where.deliveryStage = deliveryStage
+    if (githubWorkflowStatus) where.githubWorkflowStatus = githubWorkflowStatus
+    if (githubSyncStatus) where.githubSyncStatus = githubSyncStatus
 
     const projects = await prisma.project.findMany({
       where,
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
-        idea: {
-          include: {
-            user: {
-              select: {
-                id: true,
-                name: true,
-                email: true,
-              },
-            },
-          },
-        },
-        launch: true,
-      },
+      include: projectInclude,
       orderBy: { createdAt: 'desc' },
     })
 
-    return NextResponse.json(projects)
-  } catch {
+    return NextResponse.json(projects.map(mapProjectDto))
+  } catch (error) {
+    console.error('Failed to fetch projects:', error)
     return NextResponse.json({ error: 'Failed to fetch projects' }, { status: 500 })
   }
 }
 
-// POST /api/projects - 创建新 Project (认领 Idea)
 export async function POST(request: NextRequest) {
   try {
     const user = await getAuthenticatedUser()
     const body = await request.json()
-    const { ideaId, ownerName, agentTeam } = body
-
-    // Validate required fields
-    if (!ideaId || !ownerName) {
-      return NextResponse.json(
-        { error: 'ideaId and ownerName are required' },
-        { status: 400 }
-      )
+    const { ideaId, ownerName, agentTeam } = body as {
+      ideaId?: string
+      ownerName?: string
+      agentTeam?: unknown
     }
 
-    // Check if idea exists and is in 'idea' status
+    if (!ideaId || !ownerName) {
+      return NextResponse.json({ error: 'ideaId and ownerName are required' }, { status: 400 })
+    }
+
     const idea = await prisma.idea.findUnique({
       where: { id: ideaId },
     })
 
     if (!idea) {
-      return NextResponse.json(
-        { error: 'Idea not found' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Idea not found' }, { status: 404 })
     }
 
     if (idea.status !== 'idea') {
@@ -80,50 +96,61 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Parse agent team array
     const agentTeamArray = Array.isArray(agentTeam)
       ? agentTeam
       : typeof agentTeam === 'string'
-      ? agentTeam.split(',').map(s => s.trim()).filter(Boolean)
+      ? agentTeam
+          .split(',')
+          .map((item) => item.trim())
+          .filter(Boolean)
       : []
 
-    // Update idea status to in_progress
-    await prisma.idea.update({
-      where: { id: ideaId },
-      data: { status: 'in_progress' },
-    })
+    const project = await prisma.$transaction(async (tx) => {
+      await tx.idea.update({
+        where: { id: ideaId },
+        data: { status: 'in_progress' },
+      })
 
-    // Create project from idea
-    const project = await prisma.project.create({
-      data: {
-        ideaId,
-        title: idea.title,
-        description: idea.description,
-        ownerName,
-        agentTeam: JSON.stringify(agentTeamArray),
-        userId: user?.id || null,
-        status: 'in_progress',
+      const createdProject = await tx.project.create({
+        data: {
+          ideaId,
+          title: idea.title,
+          description: idea.description,
+          ownerName,
+          agentTeam: JSON.stringify(agentTeamArray),
+          userId: user?.id || null,
+          status: 'in_progress',
+          deliveryStage: 'project',
+          agentGithubStatus: 'pending',
+          githubSyncStatus: 'idle',
+          githubWorkflowStatus: 'not_started',
+        },
+      })
+
+      await createLifecycleEvent(tx as typeof prisma, {
+        projectId: createdProject.id,
+        eventType: 'project_created',
+        title: 'Project created from idea',
+        description: `The idea "${idea.title}" was claimed and turned into a project.`,
         deliveryStage: 'project',
         agentGithubStatus: 'pending',
-      },
-      include: {
-        idea: true,
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
+        actorType: user ? 'user' : 'system',
+        actorId: user?.id || null,
+        actorName: user?.name || user?.email || ownerName,
+        metadata: {
+          sourceIdeaId: ideaId,
         },
-      },
+      })
+
+      return tx.project.findUniqueOrThrow({
+        where: { id: createdProject.id },
+        include: projectInclude,
+      })
     })
 
-    return NextResponse.json(project, { status: 201 })
+    return NextResponse.json(mapProjectDto(project), { status: 201 })
   } catch (error) {
     console.error('Failed to create project:', error)
-    return NextResponse.json(
-      { error: 'Failed to create project' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Failed to create project' }, { status: 500 })
   }
 }

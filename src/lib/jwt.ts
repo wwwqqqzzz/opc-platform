@@ -56,6 +56,10 @@ export async function getAuthenticatedUser() {
       id: true,
       email: true,
       name: true,
+      githubLogin: true,
+      githubName: true,
+      githubAvatarUrl: true,
+      githubConnectedAt: true,
       createdAt: true,
     },
   });

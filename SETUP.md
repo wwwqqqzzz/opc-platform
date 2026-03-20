@@ -1,107 +1,68 @@
-# OPC Platform - 快速启动指南
+# OPC Platform Setup
 
-## 项目初始化
-
-### 1. 创建 Next.js 项目
+## 1. Install dependencies
 
 ```bash
-npx create-next-app@latest opc-platform --typescript --tailwind --app
-cd opc-platform
+npm install
 ```
 
-### 2. 安装依赖
+## 2. Configure environment
+
+Copy `.env.example` to `.env` and set:
 
 ```bash
-npm install prisma @prisma/client
-npm install -D prisma
+DATABASE_URL="file:./prisma/opc.db"
+JWT_SECRET="replace-me"
+NEXTAUTH_SECRET="replace-me"
+NEXTAUTH_URL="http://localhost:3000"
+GITHUB_CLIENT_ID="your-github-oauth-app-client-id"
+GITHUB_CLIENT_SECRET="your-github-oauth-app-client-secret"
+GITHUB_OAUTH_REDIRECT_URI="http://localhost:3000/api/integrations/github/callback"
+GITHUB_WEBHOOK_SECRET="your-github-webhook-secret"
+GITHUB_API_BASE_URL="https://api.github.com"
 ```
 
-### 3. 初始化 Prisma
+## 3. Run database migrations
 
 ```bash
-npx prisma init --datasource-provider sqlite
-```
-
-### 4. 复制 Schema
-
-把 `prisma/schema.prisma` 内容复制到项目的 `prisma/schema.prisma`
-
-### 5. 创建数据库
-
-```bash
-npx prisma db push
+npx prisma migrate deploy
 npx prisma generate
 ```
 
-### 6. 启动开发服务器
+## 4. Start the dev server
 
 ```bash
 npm run dev
 ```
 
----
+## 5. GitHub OAuth App setup
 
-## 项目结构
+Create a GitHub OAuth App with:
 
-```
-opc-platform/
-├── app/
-│   ├── page.tsx          # 首页 (Idea Board)
-│   ├── idea/
-│   │   └── [id]/
-│   │       └── page.tsx  # Idea 详情页
-│   ├── project/
-│   │   └── [id]/
-│   │       └── page.tsx  # Project 页
-│   ├── launch/
-│   │   └── page.tsx      # Launch 排行榜
-│   └── api/
-│       ├── ideas/
-│       │   └── route.ts  # Ideas CRUD
-│       ├── projects/
-│       │   └── route.ts  # Projects CRUD
-│       └── launches/
-│           └── route.ts  # Launches CRUD
-├── prisma/
-│   ├── schema.prisma
-│   └── opc.db            # SQLite 数据库文件
-├── lib/
-│   └── prisma.ts         # Prisma client
-└── components/
-    ├── IdeaCard.tsx
-    ├── ProjectCard.tsx
-    └── LaunchCard.tsx
+- Homepage URL: `http://localhost:3000`
+- Authorization callback URL: `http://localhost:3000/api/integrations/github/callback`
+
+Recommended OAuth scopes used by OPC:
+
+- `repo`
+- `read:user`
+- `user:email`
+
+## 6. GitHub webhook setup
+
+OPC can register a repository webhook automatically when a project binds a repo, if the authenticated GitHub user has permission to do so.
+
+Webhook endpoint:
+
+```text
+http://localhost:3000/api/integrations/github/webhook
 ```
 
----
+If webhook creation fails, project owners can still use manual sync from the project page.
 
-## Prisma Client 配置
+## Key runtime paths
 
-创建 `lib/prisma.ts`:
-
-```typescript
-import { PrismaClient } from '@prisma/client'
-
-const globalForPrisma = global as unknown as { prisma: PrismaClient }
-
-export const prisma =
-  globalForPrisma.prisma ||
-  new PrismaClient({
-    log: ['query'],
-  })
-
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
-```
-
----
-
-## 下一步
-
-1. 创建 API 路由
-2. 实现页面组件
-3. 导入 seed ideas
-4. 测试完整流程
-
----
-
-*更新于 2026-03-13*
+- [`src/app/api/integrations/github`](c:/Users/wang/Desktop/opc-platform/src/app/api/integrations/github)
+- [`src/app/api/projects/[id]/github`](c:/Users/wang/Desktop/opc-platform/src/app/api/projects/[id]/github)
+- [`src/lib/github`](c:/Users/wang/Desktop/opc-platform/src/lib/github)
+- [`prisma/schema.prisma`](c:/Users/wang/Desktop/opc-platform/prisma/schema.prisma)

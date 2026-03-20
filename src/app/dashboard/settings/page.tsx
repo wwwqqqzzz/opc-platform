@@ -1,26 +1,41 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 
 export default function SettingsPage() {
   const { user, refreshUser } = useAuth()
+  const searchParams = useSearchParams()
   const [loading, setLoading] = useState(false)
+  const [disconnectingGithub, setDisconnectingGithub] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
-
-  // Update name form
   const [showNameModal, setShowNameModal] = useState(false)
   const [newName, setNewName] = useState(user?.name || '')
-
-  // Update password form
   const [showPasswordModal, setShowPasswordModal] = useState(false)
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
 
-  const updateName = async (e: React.FormEvent) => {
-    e.preventDefault()
+  useEffect(() => {
+    const githubStatus = searchParams.get('github')
+    if (githubStatus === 'connected') {
+      setSuccess('GitHub account connected successfully.')
+      void refreshUser()
+    } else if (githubStatus === 'callback_error') {
+      setError('GitHub OAuth callback failed. Please try again.')
+    } else if (githubStatus === 'config_error') {
+      setError('GitHub OAuth is not configured yet. Add the GitHub env vars first.')
+    } else if (githubStatus === 'invalid_state') {
+      setError('GitHub OAuth state validation failed. Please retry the connection flow.')
+    } else if (githubStatus === 'auth_required') {
+      setError('Please sign in before completing GitHub OAuth.')
+    }
+  }, [refreshUser, searchParams])
+
+  const updateName = async (event: React.FormEvent) => {
+    event.preventDefault()
     if (!user) return
 
     try {
@@ -38,7 +53,7 @@ export default function SettingsPage() {
         throw new Error(data.error || 'Failed to update name')
       }
 
-      setSuccess('Name updated successfully!')
+      setSuccess('Name updated successfully.')
       setShowNameModal(false)
       await refreshUser()
     } catch (err) {
@@ -48,8 +63,8 @@ export default function SettingsPage() {
     }
   }
 
-  const updatePassword = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const updatePassword = async (event: React.FormEvent) => {
+    event.preventDefault()
     if (!user) return
 
     if (newPassword !== confirmPassword) {
@@ -80,7 +95,7 @@ export default function SettingsPage() {
         throw new Error(data.error || 'Failed to update password')
       }
 
-      setSuccess('Password updated successfully!')
+      setSuccess('Password updated successfully.')
       setShowPasswordModal(false)
       setCurrentPassword('')
       setNewPassword('')
@@ -92,66 +107,118 @@ export default function SettingsPage() {
     }
   }
 
+  const disconnectGithub = async () => {
+    try {
+      setDisconnectingGithub(true)
+      setError(null)
+
+      const response = await fetch('/api/integrations/github/disconnect', {
+        method: 'POST',
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || 'Failed to disconnect GitHub')
+      }
+
+      setSuccess('GitHub account disconnected.')
+      await refreshUser()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to disconnect GitHub')
+    } finally {
+      setDisconnectingGithub(false)
+    }
+  }
+
   if (!user) {
     return (
-      <div className="text-center py-12">
+      <div className="py-12 text-center">
         <p className="text-gray-400">Please login to view settings</p>
       </div>
     )
   }
 
+  const githubConnected = Boolean(user.githubLogin && user.githubConnectedAt)
+
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-white">Settings</h1>
-        <p className="mt-1 text-sm text-gray-400">
-          Manage your account settings
-        </p>
+        <p className="mt-1 text-sm text-gray-400">Manage your account, security, and GitHub connection.</p>
       </div>
 
-      {/* Alert Messages */}
-      {error && (
-        <div className="bg-red-900/50 border border-red-700 text-red-200 px-4 py-3 rounded-lg flex justify-between items-center">
-          <span>{error}</span>
-          <button
-            onClick={() => setError(null)}
-            className="text-red-300 hover:text-red-100"
-          >
-            ×
-          </button>
-        </div>
-      )}
+      {error && <Banner tone="error" message={error} onClose={() => setError(null)} />}
+      {success && <Banner tone="success" message={success} onClose={() => setSuccess(null)} />}
 
-      {success && (
-        <div className="bg-emerald-900/50 border border-emerald-700 text-emerald-200 px-4 py-3 rounded-lg flex justify-between items-center">
-          <span>{success}</span>
-          <button
-            onClick={() => setSuccess(null)}
-            className="text-emerald-300 hover:text-emerald-100"
-          >
-            ×
-          </button>
-        </div>
-      )}
-
-      {/* Profile Information */}
-      <div className="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden">
-        <div className="p-6 border-b border-gray-700">
-          <h2 className="text-lg font-medium text-white">Profile Information</h2>
+      <section className="overflow-hidden rounded-lg border border-gray-700 bg-gray-800">
+        <div className="border-b border-gray-700 p-6">
+          <h2 className="text-lg font-medium text-white">GitHub Integration</h2>
           <p className="mt-1 text-sm text-gray-400">
-            Update your account's profile information
+            Connect GitHub to bind repositories, bootstrap project workflows, and sync delivery activity back into OPC Platform.
           </p>
         </div>
-        <div className="p-6 space-y-4">
+        <div className="space-y-4 p-6">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div className="flex items-center gap-4">
+              <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-full border border-gray-700 bg-gray-900 text-lg font-semibold">
+                {githubConnected ? (user.githubLogin || 'GH').slice(0, 2).toUpperCase() : 'GH'}
+              </div>
+              <div>
+                <div className="text-sm text-gray-400">Status</div>
+                <div className="text-base font-medium text-white">
+                  {githubConnected ? `Connected as @${user.githubLogin}` : 'Not connected'}
+                </div>
+                <div className="mt-1 text-sm text-gray-500">
+                  {githubConnected
+                    ? `Connected on ${new Date(user.githubConnectedAt as string).toLocaleString()}`
+                    : 'OAuth scopes: repo, read:user, user:email'}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <a
+                href="/api/integrations/github/connect"
+                className="rounded-lg bg-cyan-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-cyan-700"
+              >
+                {githubConnected ? 'Reconnect GitHub' : 'Connect GitHub'}
+              </a>
+              {githubConnected && (
+                <button
+                  onClick={disconnectGithub}
+                  disabled={disconnectingGithub}
+                  className="rounded-lg border border-red-700 px-4 py-2 text-sm font-medium text-red-300 transition hover:bg-red-900/30 disabled:opacity-50"
+                >
+                  {disconnectingGithub ? 'Disconnecting...' : 'Disconnect'}
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div className="rounded-lg border border-gray-700 bg-gray-900/40 p-4 text-sm text-gray-400">
+            <div className="font-medium text-white">What this unlocks</div>
+            <ul className="mt-2 space-y-1">
+              <li>Bind a single GitHub repository to each project</li>
+              <li>Create the bootstrap issue, branch, and pull request from OPC</li>
+              <li>Sync commits, issues, PRs, workflow runs, and releases back into the project timeline</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section className="overflow-hidden rounded-lg border border-gray-700 bg-gray-800">
+        <div className="border-b border-gray-700 p-6">
+          <h2 className="text-lg font-medium text-white">Profile Information</h2>
+          <p className="mt-1 text-sm text-gray-400">Update your account profile information.</p>
+        </div>
+        <div className="space-y-4 p-6">
           <div>
             <label className="block text-sm font-medium text-gray-300">Email</label>
             <p className="mt-1 text-sm text-gray-400">{user.email}</p>
-            <p className="mt-1 text-xs text-gray-500">Email cannot be changed</p>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-300">Display Name</label>
-            <div className="mt-1 flex items-center space-x-3">
+            <div className="mt-1 flex items-center gap-3">
               <p className="text-sm text-gray-400">{user.name || 'Not set'}</p>
               <button
                 onClick={() => {
@@ -168,20 +235,15 @@ export default function SettingsPage() {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-300">Account Created</label>
-            <p className="mt-1 text-sm text-gray-400">
-              {new Date(user.createdAt).toLocaleDateString()}
-            </p>
+            <p className="mt-1 text-sm text-gray-400">{new Date(user.createdAt).toLocaleDateString()}</p>
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* Security */}
-      <div className="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden">
-        <div className="p-6 border-b border-gray-700">
+      <section className="overflow-hidden rounded-lg border border-gray-700 bg-gray-800">
+        <div className="border-b border-gray-700 p-6">
           <h2 className="text-lg font-medium text-white">Security</h2>
-          <p className="mt-1 text-sm text-gray-400">
-            Update your password
-          </p>
+          <p className="mt-1 text-sm text-gray-400">Update your password.</p>
         </div>
         <div className="p-6">
           <button
@@ -193,129 +255,139 @@ export default function SettingsPage() {
               setError(null)
               setSuccess(null)
             }}
-            className="inline-flex items-center px-4 py-2 border border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-300 bg-gray-700 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors"
+            className="inline-flex items-center rounded-md border border-gray-600 bg-gray-700 px-4 py-2 text-sm font-medium text-gray-300 transition-colors hover:bg-gray-600"
           >
-            <svg className="mr-2 -ml-1 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-            </svg>
             Change Password
           </button>
         </div>
-      </div>
+      </section>
 
-      {/* Update Name Modal */}
       {showNameModal && (
-        <div className="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50">
-          <div className="bg-gray-800 rounded-lg shadow-xl max-w-md w-full border border-gray-700">
-            <div className="px-6 py-4 border-b border-gray-700">
-              <h3 className="text-lg font-medium text-white">Update Display Name</h3>
-            </div>
-            <form onSubmit={updateName} className="px-6 py-4 space-y-4">
-              <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-300">
-                  Display Name
-                </label>
-                <input
-                  type="text"
-                  id="name"
-                  value={newName}
-                  onChange={(e) => setNewName(e.target.value)}
-                  className="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md shadow-sm text-white focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
-                />
-              </div>
-              <div className="flex justify-end space-x-3 pt-4">
-                <button
-                  type="button"
-                  onClick={() => setShowNameModal(false)}
-                  className="px-4 py-2 border border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-300 bg-gray-700 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors"
-                  disabled={loading}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors"
-                  disabled={loading}
-                >
-                  {loading ? 'Saving...' : 'Save'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+        <Modal title="Update Display Name" onClose={() => setShowNameModal(false)}>
+          <form onSubmit={updateName} className="space-y-4">
+            <Field id="name" label="Display Name" type="text" value={newName} onChange={setNewName} />
+            <ModalActions loading={loading} primaryLabel={loading ? 'Saving...' : 'Save'} onCancel={() => setShowNameModal(false)} />
+          </form>
+        </Modal>
       )}
 
-      {/* Update Password Modal */}
       {showPasswordModal && (
-        <div className="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50">
-          <div className="bg-gray-800 rounded-lg shadow-xl max-w-md w-full border border-gray-700">
-            <div className="px-6 py-4 border-b border-gray-700">
-              <h3 className="text-lg font-medium text-white">Change Password</h3>
-            </div>
-            <form onSubmit={updatePassword} className="px-6 py-4 space-y-4">
-              <div>
-                <label htmlFor="current-password" className="block text-sm font-medium text-gray-300">
-                  Current Password *
-                </label>
-                <input
-                  type="password"
-                  id="current-password"
-                  required
-                  value={currentPassword}
-                  onChange={(e) => setCurrentPassword(e.target.value)}
-                  className="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md shadow-sm text-white focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
-                />
-              </div>
-              <div>
-                <label htmlFor="new-password" className="block text-sm font-medium text-gray-300">
-                  New Password *
-                </label>
-                <input
-                  type="password"
-                  id="new-password"
-                  required
-                  minLength={6}
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  className="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md shadow-sm text-white focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
-                />
-                <p className="mt-1 text-xs text-gray-500">Must be at least 6 characters long</p>
-              </div>
-              <div>
-                <label htmlFor="confirm-password" className="block text-sm font-medium text-gray-300">
-                  Confirm New Password *
-                </label>
-                <input
-                  type="password"
-                  id="confirm-password"
-                  required
-                  minLength={6}
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md shadow-sm text-white focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
-                />
-              </div>
-              <div className="flex justify-end space-x-3 pt-4">
-                <button
-                  type="button"
-                  onClick={() => setShowPasswordModal(false)}
-                  className="px-4 py-2 border border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-300 bg-gray-700 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors"
-                  disabled={loading}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors"
-                  disabled={loading}
-                >
-                  {loading ? 'Updating...' : 'Update Password'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+        <Modal title="Change Password" onClose={() => setShowPasswordModal(false)}>
+          <form onSubmit={updatePassword} className="space-y-4">
+            <Field id="current-password" label="Current Password" type="password" value={currentPassword} onChange={setCurrentPassword} />
+            <Field id="new-password" label="New Password" type="password" value={newPassword} onChange={setNewPassword} />
+            <Field id="confirm-password" label="Confirm New Password" type="password" value={confirmPassword} onChange={setConfirmPassword} />
+            <ModalActions loading={loading} primaryLabel={loading ? 'Updating...' : 'Update Password'} onCancel={() => setShowPasswordModal(false)} />
+          </form>
+        </Modal>
       )}
+    </div>
+  )
+}
+
+function Banner({
+  tone,
+  message,
+  onClose,
+}: {
+  tone: 'error' | 'success'
+  message: string
+  onClose: () => void
+}) {
+  const className =
+    tone === 'error'
+      ? 'border-red-700 bg-red-900/50 text-red-200'
+      : 'border-emerald-700 bg-emerald-900/50 text-emerald-200'
+
+  return (
+    <div className={`flex items-center justify-between rounded-lg border px-4 py-3 ${className}`}>
+      <span>{message}</span>
+      <button onClick={onClose} className="text-sm">
+        x
+      </button>
+    </div>
+  )
+}
+
+function Modal({
+  title,
+  children,
+  onClose,
+}: {
+  title: string
+  children: React.ReactNode
+  onClose: () => void
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/75 p-4">
+      <div className="w-full max-w-md rounded-lg border border-gray-700 bg-gray-800 shadow-xl">
+        <div className="flex items-center justify-between border-b border-gray-700 px-6 py-4">
+          <h3 className="text-lg font-medium text-white">{title}</h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-white">
+            x
+          </button>
+        </div>
+        <div className="px-6 py-4">{children}</div>
+      </div>
+    </div>
+  )
+}
+
+function Field({
+  id,
+  label,
+  type,
+  value,
+  onChange,
+}: {
+  id: string
+  label: string
+  type: string
+  value: string
+  onChange: (value: string) => void
+}) {
+  return (
+    <div>
+      <label htmlFor={id} className="block text-sm font-medium text-gray-300">
+        {label}
+      </label>
+      <input
+        id={id}
+        type={type}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className="mt-1 block w-full rounded-md border border-gray-600 bg-gray-700 px-3 py-2 text-white focus:border-emerald-500 focus:outline-none"
+      />
+    </div>
+  )
+}
+
+function ModalActions({
+  loading,
+  primaryLabel,
+  onCancel,
+}: {
+  loading: boolean
+  primaryLabel: string
+  onCancel: () => void
+}) {
+  return (
+    <div className="flex justify-end gap-3 pt-4">
+      <button
+        type="button"
+        onClick={onCancel}
+        className="rounded-md border border-gray-600 bg-gray-700 px-4 py-2 text-sm font-medium text-gray-300 hover:bg-gray-600"
+        disabled={loading}
+      >
+        Cancel
+      </button>
+      <button
+        type="submit"
+        className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700"
+        disabled={loading}
+      >
+        {primaryLabel}
+      </button>
     </div>
   )
 }

@@ -44,6 +44,18 @@ model Project {
   ownerName           String?   @map("owner_name")
   agentTeam           String?   @map("agent_team") // JSON as string
   githubUrl           String?   @map("github_url")
+  githubRepoId        String?   @map("github_repo_id")
+  githubRepoOwner     String?   @map("github_repo_owner")
+  githubRepoName      String?   @map("github_repo_name")
+  githubRepoFullName  String?   @map("github_repo_full_name")
+  githubDefaultBranch String?   @map("github_default_branch")
+  githubInstallationType String? @map("github_installation_type")
+  githubConnectedAt   DateTime? @map("github_connected_at")
+  githubLastSyncedAt  DateTime? @map("github_last_synced_at")
+  githubSyncStatus    String    @default("idle") @map("github_sync_status")
+  githubWorkflowStatus String   @default("not_started") @map("github_workflow_status")
+  githubPrimaryIssueNumber Int? @map("github_primary_issue_number")
+  githubPrimaryPrNumber Int?    @map("github_primary_pr_number")
   userId              String?   @map("user_id")
   status              String    @default("in_progress")
   deliveryStage       String    @default("project") @map("delivery_stage") // project, agent_github, launch_ready, launched
@@ -58,8 +70,12 @@ model Project {
   user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
   idea        Idea?    @relation(fields: [ideaId], references: [id])
   launch      Launch?
+  githubActivities ProjectGithubActivity[]
+  lifecycleEvents  ProjectLifecycleEvent[]
 
   @@index([userId])
+  @@index([githubRepoFullName])
+  @@index([githubWorkflowStatus])
   @@map("projects")
 }
 
@@ -176,18 +192,68 @@ model AgentAchievement {
 
 // User 表 (用户系统)
 model User {
-  id           String   @id @default(uuid())
-  email        String   @unique
-  passwordHash String   @map("password_hash")
-  name         String?
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
+  id                  String    @id @default(uuid())
+  email               String    @unique
+  passwordHash        String    @map("password_hash")
+  name                String?
+  githubId            String?   @unique @map("github_id")
+  githubLogin         String?   @map("github_login")
+  githubName          String?   @map("github_name")
+  githubAvatarUrl     String?   @map("github_avatar_url")
+  githubAccessToken   String?   @map("github_access_token")
+  githubRefreshToken  String?   @map("github_refresh_token")
+  githubTokenExpiresAt DateTime? @map("github_token_expires_at")
+  githubConnectedAt   DateTime? @map("github_connected_at")
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
 
-  bots         Bot[]
-  ideas        Idea[]
-  projects     Project[]
+  bots                Bot[]
+  ideas               Idea[]
+  projects            Project[]
 
   @@map("users")
+}
+
+model ProjectGithubActivity {
+  id           String   @id @default(uuid())
+  projectId     String   @map("project_id")
+  githubEventId String?  @map("github_event_id")
+  eventType     String   @map("event_type")
+  title         String
+  url           String?
+  number        Int?
+  status        String?
+  authorLogin   String?  @map("author_login")
+  metadata      String?
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  project       Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId, createdAt])
+  @@index([githubEventId])
+  @@index([eventType])
+  @@map("project_github_activities")
+}
+
+model ProjectLifecycleEvent {
+  id               String   @id @default(uuid())
+  projectId         String   @map("project_id")
+  eventType         String   @map("event_type")
+  title             String
+  description       String?
+  deliveryStage     String?  @map("delivery_stage")
+  agentGithubStatus String?  @map("agent_github_status")
+  actorType         String   @map("actor_type")
+  actorId           String?  @map("actor_id")
+  actorName         String?  @map("actor_name")
+  metadata          String?
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  project           Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId, createdAt])
+  @@index([eventType])
+  @@map("project_lifecycle_events")
 }
 
 // Bot 表 (AI Agent 管理系统)

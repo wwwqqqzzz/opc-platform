@@ -6,6 +6,10 @@ export interface AuthUser {
   id: string
   email: string
   name?: string | null
+  githubLogin?: string | null
+  githubName?: string | null
+  githubAvatarUrl?: string | null
+  githubConnectedAt?: Date | null
   createdAt: Date
 }
 
@@ -36,6 +40,10 @@ export async function verifyAuth(request: NextRequest): Promise<AuthUser | null>
         id: true,
         email: true,
         name: true,
+        githubLogin: true,
+        githubName: true,
+        githubAvatarUrl: true,
+        githubConnectedAt: true,
         createdAt: true,
       },
     })
