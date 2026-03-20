@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
+import { getUserOnboardingState } from '@/lib/projects/onboarding'
 import {
   GITHUB_WORKFLOW_STATUS_LABELS,
   PROJECT_DELIVERY_STAGE_LABELS,
@@ -89,6 +90,7 @@ export default function MyProjectsPage() {
     ).length,
     readyToLaunch: projects.filter((project) => project.deliveryStage === 'launch_ready' && !project.launch).length,
   }
+  const onboarding = getUserOnboardingState(projects, Boolean(user.githubConnectedAt))
 
   return (
     <div className="space-y-6">
@@ -97,6 +99,22 @@ export default function MyProjectsPage() {
         <p className="mt-1 text-sm text-gray-400">
           Track project intake, GitHub execution, and launch readiness in one place.
         </p>
+      </div>
+
+      <div className="rounded-lg border border-cyan-700/40 bg-cyan-900/20 p-5">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+          <div>
+            <div className="text-sm uppercase tracking-wide text-cyan-300">Current onboarding step</div>
+            <div className="mt-1 text-lg font-medium text-white">{onboarding.title}</div>
+            <p className="mt-1 text-sm text-cyan-100/80">{onboarding.description}</p>
+          </div>
+          <Link
+            href={onboarding.ctaHref}
+            className="rounded-lg bg-cyan-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-cyan-700"
+          >
+            {onboarding.ctaLabel}
+          </Link>
+        </div>
       </div>
 
       {error && (
