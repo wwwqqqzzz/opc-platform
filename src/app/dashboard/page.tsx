@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
+import ProductTodoBoard from '@/components/product/ProductTodoBoard'
 import { useAuth } from '@/contexts/AuthContext'
 import { useDashboardOnboarding } from '@/hooks/useDashboardExecutionState'
 import { getProjectExecutionLabel } from '@/lib/projects/onboarding'
@@ -238,6 +239,12 @@ export default function DashboardPage() {
           </section>
         </div>
       </div>
+
+      <ProductTodoBoard
+        title="Future product TODO placeholders"
+        intro="These placeholders mark the layers we intentionally are not building yet. They keep the roadmap anchored in the product so later development does not drift toward the wrong center of gravity."
+        compact
+      />
     </div>
   )
 }

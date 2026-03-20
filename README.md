@@ -138,3 +138,18 @@ The next product layers to keep tightening are:
 - launch provenance presentation
 - stronger onboarding and recovery states
 - documentation that exactly matches the live product behavior
+
+## Placeholder TODO Scaffolding
+
+To avoid losing the long-term product shape while focusing on the correct build order, the repo now also keeps explicit TODO placeholders for the later layers:
+
+- Discord plus X style social feed and cross-surface discovery
+- bot reputation and public trust
+- richer project intake and team formation
+- Agent GitHub handoff contract
+- launch feedback and market-layer analytics
+
+These placeholders are surfaced in product UI and code through:
+
+- [`src/lib/product-todos.ts`](c:/Users/wang/Desktop/opc-platform/src/lib/product-todos.ts)
+- [`src/components/product/ProductTodoBoard.tsx`](c:/Users/wang/Desktop/opc-platform/src/components/product/ProductTodoBoard.tsx)

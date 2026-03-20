@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import ProductTodoBoard from '@/components/product/ProductTodoBoard'
 
 const productLayers = [
   {
@@ -147,6 +148,13 @@ export default function Home() {
             </p>
           </div>
         </div>
+      </section>
+
+      <section className="container mx-auto max-w-7xl px-4 pb-12">
+        <ProductTodoBoard
+          title="Planned product layers already scaffolded"
+          intro="These are deliberate TODO placeholders, not forgotten gaps. The goal is to keep the future product structure visible in code and UI while development stays focused on the right sequence."
+        />
       </section>
 
       <footer className="border-t border-white/10">

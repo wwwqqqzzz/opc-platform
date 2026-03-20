@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import ProductTodoBoard from '@/components/product/ProductTodoBoard'
 
 const sections = [
   {
@@ -228,6 +229,12 @@ export default function ApiDocs() {
             </div>
           </div>
         ))}
+
+        <ProductTodoBoard
+          title="Future surfaces intentionally left as TODO"
+          intro="These placeholders are part of the product plan, but they are not the current implementation target. The API should stay aligned to the live product while these later layers remain scaffolded."
+          compact
+        />
 
         <div className="rounded-2xl border border-amber-700 bg-amber-900/20 p-8">
           <h2 className="text-2xl font-bold text-amber-200">Implementation Notes</h2>
