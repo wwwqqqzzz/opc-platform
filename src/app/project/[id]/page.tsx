@@ -5,7 +5,6 @@ import { notFound, useParams, useRouter, useSearchParams } from 'next/navigation
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import {
-  AGENT_GITHUB_STATUS_LABELS,
   GITHUB_SYNC_STATUS_LABELS,
   GITHUB_WORKFLOW_STATUS_LABELS,
   PROJECT_DELIVERY_STAGE_LABELS,
@@ -307,6 +306,32 @@ export default function ProjectDetailPage() {
       disabled: !canManageProject || Boolean(launchBlocker),
     },
   ]
+  const completedStepCount = executionSteps.filter((step) => step.complete).length
+  const latestActivity = project.githubActivity[0] || null
+  const recentLifecycle = project.lifecycle.slice(-4).reverse()
+  const executionHealth = latestSyncError
+    ? {
+        label: 'Needs attention',
+        description: latestSyncError.description,
+        tone: 'warn' as const,
+      }
+    : launchBlocker
+    ? {
+        label: 'In setup',
+        description: launchBlocker,
+        tone: 'neutral' as const,
+      }
+    : {
+        label: 'Launch ready',
+        description: 'The GitHub execution trail is healthy and this project can be launched now.',
+        tone: 'good' as const,
+      }
+  const commandDeck = [
+    { label: 'Owner', value: project.ownerName || 'Unknown owner' },
+    { label: 'Delivery Stage', value: PROJECT_DELIVERY_STAGE_LABELS[project.deliveryStage] },
+    { label: 'Workflow Status', value: GITHUB_WORKFLOW_STATUS_LABELS[project.githubWorkflowStatus] },
+    { label: 'Last Synced', value: project.githubLastSyncedAt ? new Date(project.githubLastSyncedAt).toLocaleString() : 'Not yet' },
+  ]
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 text-white">
@@ -402,31 +427,30 @@ export default function ProjectDetailPage() {
         <section className="mb-6 rounded-xl border border-gray-700 bg-gray-800/60 p-6">
           <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
             <div>
-              <h2 className="text-xl font-semibold text-white">Execution Stepper</h2>
+              <h2 className="text-xl font-semibold text-white">Execution overview</h2>
               <p className="mt-1 text-sm text-gray-400">
-                Move through these steps in order. OPC will mark them complete as the project becomes launch-ready.
+                This workbench tracks the live path from project intake to GitHub execution to launch.
               </p>
             </div>
             <div className="text-sm text-cyan-300">
-              {executionSteps.filter((step) => step.complete).length}/{executionSteps.length} steps complete
+              {completedStepCount}/{executionSteps.length} milestones complete
             </div>
           </div>
 
-          <div className="mt-5 grid gap-4 xl:grid-cols-5">
-            {executionSteps.map((step) => (
-              <ExecutionStepCard
-                key={step.id}
-                stepNumber={step.order}
-                title={step.title}
-                description={step.description}
-                complete={step.complete}
-                blocker={step.blocker}
-                actionLabel={step.complete ? undefined : step.actionLabel}
-                href={step.complete ? undefined : step.href}
-                onClick={step.complete ? undefined : step.onClick}
-                disabled={Boolean(step.disabled)}
-              />
-            ))}
+          <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <InfoCard label="Owner access" value={canManageProject ? 'You can operate this project' : 'Read-only view'} />
+            <InfoCard label="Repository" value={repoConnected ? 'Connected' : 'Not connected'} />
+            <InfoCard
+              label="Bootstrap"
+              value={project.githubPrimaryIssueNumber && project.githubPrimaryPrNumber ? 'Created' : 'Pending'}
+            />
+            <InfoCard label="Launch gate" value={launchBlocker ? 'Locked' : 'Open'} />
+          </div>
+
+          <div className="mt-4 rounded-lg border border-cyan-700/40 bg-cyan-900/20 p-4">
+            <div className="text-sm text-cyan-200">Current operator guidance</div>
+            <div className="mt-1 font-medium text-white">{nextAction.title}</div>
+            <p className="mt-2 text-sm text-cyan-100/80">{nextAction.description}</p>
           </div>
         </section>
 
@@ -469,40 +493,54 @@ export default function ProjectDetailPage() {
         )}
 
         <div className="space-y-6">
-          <div className="grid gap-6 lg:grid-cols-[1.5fr_1fr]">
-            <section className="rounded-lg bg-gray-800/50 p-6">
-              <h2 className="mb-4 text-xl font-semibold">Project Overview</h2>
-              <p className="leading-relaxed text-gray-300">
-                {project.description || 'No description provided.'}
-              </p>
-              {project.idea && (
-                <div className="mt-6 rounded-lg border border-gray-700 bg-gray-900/40 p-4">
-                  <div className="text-sm text-gray-400">Source Idea</div>
-                  <Link href={`/idea/${project.idea.id}`} className="mt-1 block text-lg font-medium text-cyan-300 hover:text-cyan-200">
-                    {project.idea.title}
-                  </Link>
-                  <p className="mt-2 text-sm text-gray-400">{project.idea.description}</p>
+          <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
+            <div className="rounded-xl border border-gray-700 bg-gray-800/50 p-6">
+              <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                <div>
+                  <div className="text-sm uppercase tracking-wide text-cyan-300">Project Command Deck</div>
+                  <h2 className="mt-1 text-2xl font-semibold text-white">{nextAction.title}</h2>
+                  <p className="mt-2 max-w-2xl text-sm text-gray-300">{nextAction.description}</p>
                 </div>
-              )}
-            </section>
+                <div
+                  className={`rounded-full border px-3 py-1 text-sm ${
+                    executionHealth.tone === 'good'
+                      ? 'border-emerald-700 bg-emerald-900/20 text-emerald-200'
+                      : executionHealth.tone === 'warn'
+                      ? 'border-amber-700 bg-amber-900/20 text-amber-200'
+                      : 'border-gray-700 bg-gray-900/40 text-gray-300'
+                  }`}
+                >
+                  {executionHealth.label}
+                </div>
+              </div>
 
-            <section className="rounded-lg bg-gray-800/50 p-6">
-              <h2 className="mb-4 text-xl font-semibold">Project State</h2>
-              <div className="grid gap-3">
-                <InfoCard label="Owner" value={project.ownerName || 'Unknown owner'} />
-                <InfoCard label="Delivery Stage" value={PROJECT_DELIVERY_STAGE_LABELS[project.deliveryStage]} />
-                <InfoCard label="Workflow Status" value={GITHUB_WORKFLOW_STATUS_LABELS[project.githubWorkflowStatus]} />
-                <InfoCard label="Agent Status" value={AGENT_GITHUB_STATUS_LABELS[project.agentGithubStatus]} />
-                <InfoCard
-                  label="Last Synced"
-                  value={project.githubLastSyncedAt ? new Date(project.githubLastSyncedAt).toLocaleString() : 'Not yet'}
-                />
+              <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                {commandDeck.map((item) => (
+                  <InfoCard key={item.label} label={item.label} value={item.value} />
+                ))}
               </div>
-              <div className="mt-4 rounded-lg border border-cyan-700/40 bg-cyan-900/20 p-4">
-                <div className="text-sm text-cyan-200">Recommended next step</div>
-                <div className="mt-1 font-medium text-white">{nextAction.title}</div>
-                <p className="mt-2 text-sm text-cyan-100/80">{nextAction.description}</p>
+
+              <div className="mt-5 grid gap-4 md:grid-cols-2">
+                <SummaryPanel
+                  eyebrow="Project brief"
+                  title={project.idea ? 'This project came from a source idea' : 'This is a direct project record'}
+                  description={project.description || 'No project description provided.'}
+                >
+                  {project.idea && (
+                    <Link href={`/idea/${project.idea.id}`} className="text-cyan-400 hover:text-cyan-300">
+                      Open source idea: {project.idea.title}
+                    </Link>
+                  )}
+                </SummaryPanel>
+                <SummaryPanel
+                  eyebrow="Execution health"
+                  title={executionHealth.label}
+                  description={executionHealth.description}
+                >
+                  {latestActivity && <span className="text-gray-400">Latest GitHub signal: {latestActivity.title}</span>}
+                </SummaryPanel>
               </div>
+
               {latestSyncError && (
                 <div className="mt-4 rounded-lg border border-red-700 bg-red-900/20 p-4">
                   <div className="text-sm text-red-200">Latest GitHub failure</div>
@@ -510,21 +548,69 @@ export default function ProjectDetailPage() {
                   <p className="mt-2 text-sm text-red-100/80">{latestSyncError.description}</p>
                 </div>
               )}
-            </section>
+            </div>
+
+            <div className="space-y-6">
+              <section className="rounded-xl border border-gray-700 bg-gray-800/50 p-6">
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <div className="text-sm uppercase tracking-wide text-cyan-300">Execution progress</div>
+                    <h2 className="mt-1 text-xl font-semibold text-white">
+                      {completedStepCount}/{executionSteps.length} milestones complete
+                    </h2>
+                  </div>
+                  {canLaunch && canManageProject && (
+                    <button
+                      onClick={() => setShowLaunchDialog(true)}
+                      className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-700"
+                    >
+                      Send to Launch
+                    </button>
+                  )}
+                </div>
+                <div className="mt-5 space-y-3">
+                  {executionSteps.map((step) => (
+                    <ExecutionLaneRow
+                      key={step.id}
+                      stepNumber={step.order}
+                      title={step.title}
+                      description={step.description}
+                      complete={step.complete}
+                      blocker={step.blocker}
+                    />
+                  ))}
+                </div>
+              </section>
+
+              {agentTeam.length > 0 && (
+                <section className="rounded-xl border border-gray-700 bg-gray-800/50 p-6">
+                  <h2 className="text-xl font-semibold text-white">Agent Team</h2>
+                  <div className="mt-4 grid gap-4 md:grid-cols-2">
+                    {agentTeam.map((agent, index) => (
+                      <div key={`${agent.name}-${index}`} className="rounded-lg border border-purple-500/20 bg-purple-500/10 p-4">
+                        <div className="font-medium">{agent.name}</div>
+                        <div className="mt-1 text-sm text-gray-400">{agent.type}</div>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
+            </div>
           </div>
 
-          <section className="rounded-lg bg-gray-800/50 p-6">
-            <div className="mb-4 flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+          <section id="execution-layer" className="rounded-xl border border-gray-700 bg-gray-800/50 p-6">
+            <div className="mb-5 flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
               <div>
-                <h2 className="text-xl font-semibold">GitHub Execution Layer</h2>
-                <p className="mt-1 text-sm text-gray-400">
-                  Connect one repository, bootstrap the build workflow, and sync delivery activity back into OPC Platform.
+                <div className="text-sm uppercase tracking-wide text-cyan-300">Execution Workspace</div>
+                <h2 className="mt-1 text-2xl font-semibold text-white">GitHub delivery control</h2>
+                <p className="mt-2 text-sm text-gray-400">
+                  This is the operational bridge between project intake and launch: connect GitHub, bind one repo, bootstrap, sync, and confirm readiness.
                 </p>
               </div>
               <div className="text-sm text-gray-400">
                 {githubConnected
                   ? `Owner GitHub: @${project.githubConnection?.login}`
-                  : 'Owner has not connected GitHub yet'}
+                  : 'Owner GitHub is not connected yet'}
               </div>
             </div>
 
@@ -538,14 +624,26 @@ export default function ProjectDetailPage() {
               </div>
             )}
 
-            <div className="mt-4 grid gap-4 lg:grid-cols-[1.2fr_1fr]">
+            <div className="grid gap-6 xl:grid-cols-[1.4fr_1fr]">
               <div className="space-y-4">
                 {repoConnected && project.github ? (
                   <div className="rounded-lg border border-gray-700 bg-gray-900/30 p-4">
-                    <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
                       <div>
-                        <div className="text-sm text-gray-400">Connected Repository</div>
-                        <div className="text-lg font-medium">{project.github.connection.fullName}</div>
+                        <div className="text-sm text-gray-400">Connected repository</div>
+                        <div className="mt-1 text-lg font-medium text-white">{project.github.connection.fullName}</div>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          <ChecklistPill label="GitHub account" complete={githubConnected} />
+                          <ChecklistPill label="Repository connected" complete={repoConnected} />
+                          <ChecklistPill
+                            label="Bootstrap created"
+                            complete={Boolean(project.github.bootstrap.issueNumber && project.github.bootstrap.pullRequestNumber)}
+                          />
+                          <ChecklistPill
+                            label="Launch ready"
+                            complete={project.deliveryStage === 'launch_ready' || project.deliveryStage === 'launched'}
+                          />
+                        </div>
                       </div>
                       <div className="flex flex-wrap items-center gap-3">
                         {project.github.connection.url && (
@@ -555,7 +653,7 @@ export default function ProjectDetailPage() {
                             rel="noopener noreferrer"
                             className="text-cyan-400 hover:text-cyan-300"
                           >
-                            Open Repository
+                            Open repository
                           </a>
                         )}
                         {canManageProject && (
@@ -564,7 +662,7 @@ export default function ProjectDetailPage() {
                             disabled={Boolean(repoDisconnectionBlocker) || disconnectingRepo}
                             className="rounded-lg border border-red-700 px-3 py-1.5 text-sm text-red-300 transition hover:bg-red-900/30 disabled:opacity-50"
                           >
-                            {disconnectingRepo ? 'Disconnecting...' : 'Disconnect Repo'}
+                            {disconnectingRepo ? 'Disconnecting...' : 'Disconnect repo'}
                           </button>
                         )}
                       </div>
@@ -591,17 +689,17 @@ export default function ProjectDetailPage() {
                     <div className="mt-4 flex flex-wrap gap-4 text-sm">
                       {project.github.bootstrap.issueUrl && (
                         <a href={project.github.bootstrap.issueUrl} target="_blank" rel="noopener noreferrer" className="text-emerald-400 hover:text-emerald-300">
-                          Open Issue
+                          Bootstrap issue
                         </a>
                       )}
                       {project.github.bootstrap.pullRequestUrl && (
                         <a href={project.github.bootstrap.pullRequestUrl} target="_blank" rel="noopener noreferrer" className="text-purple-400 hover:text-purple-300">
-                          Open Pull Request
+                          Bootstrap pull request
                         </a>
                       )}
                       {project.github.stats.latestCommitUrl && (
                         <a href={project.github.stats.latestCommitUrl} target="_blank" rel="noopener noreferrer" className="text-cyan-400 hover:text-cyan-300">
-                          Latest Commit
+                          Latest commit
                         </a>
                       )}
                     </div>
@@ -613,32 +711,21 @@ export default function ProjectDetailPage() {
                       </p>
                     )}
 
-                    <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-                      <ChecklistPill label="GitHub account" complete={githubConnected} />
-                      <ChecklistPill label="Repository connected" complete={repoConnected} />
-                      <ChecklistPill
-                        label="Bootstrap created"
-                        complete={Boolean(project.github.bootstrap.issueNumber && project.github.bootstrap.pullRequestNumber)}
-                      />
-                      <ChecklistPill
-                        label="Launch ready"
-                        complete={project.deliveryStage === 'launch_ready' || project.deliveryStage === 'launched'}
-                      />
-                    </div>
                   </div>
                 ) : (
-                  <div className="rounded-lg border border-gray-700 bg-gray-900/30 p-4">
-                    <div className="text-sm text-gray-400">Repository Binding</div>
-                    <div className="mt-1 text-lg font-medium">No repository connected</div>
-                    <p className="mt-2 text-sm text-gray-500">
-                      Bind one GitHub repository to turn this project into a real execution workflow.
-                    </p>
-                  </div>
+                  <SummaryPanel
+                    eyebrow="Repository binding"
+                    title="No repository connected"
+                    description="Bind one GitHub repository to turn this project into a traceable execution workflow."
+                  />
                 )}
 
                 {canManageProject && !repoConnected && (
                   <div className="rounded-lg border border-gray-700 bg-gray-900/30 p-4">
-                    <h3 className="mb-4 text-lg font-medium">Connect Repository</h3>
+                    <h3 className="text-lg font-medium text-white">Connect repository</h3>
+                    <p className="mt-1 text-sm text-gray-500">
+                      Enter separate fields, or paste `owner/repo` into the first field.
+                    </p>
                     <div className="grid gap-4 md:grid-cols-2">
                       <DialogField
                         label="Repository Owner"
@@ -660,64 +747,56 @@ export default function ProjectDetailPage() {
                     >
                       {connectingRepo ? 'Connecting...' : 'Connect Repository'}
                     </button>
-                    {repoConnectionBlocker ? (
-                      <p className="mt-3 text-sm text-amber-300">{repoConnectionBlocker}</p>
-                    ) : (
-                      <p className="mt-3 text-sm text-gray-500">You can enter separate fields, or paste `owner/repo` into the first field.</p>
-                    )}
+                    {repoConnectionBlocker && <p className="mt-3 text-sm text-amber-300">{repoConnectionBlocker}</p>}
                   </div>
                 )}
               </div>
 
               <div className="space-y-4">
-                <div className="rounded-lg border border-gray-700 bg-gray-900/30 p-4">
-                  <h3 className="text-lg font-medium">Workflow Actions</h3>
-                  <p className="mt-1 text-sm text-gray-500">
-                    Bootstrap the GitHub side once, then sync activity whenever you want fresh status.
-                  </p>
-                  <div className="mt-4 space-y-3">
-                    <button
-                      onClick={handleBootstrap}
-                      disabled={!canManageProject || !bootstrapReady || bootstrapping}
-                      className="w-full rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-purple-700 disabled:opacity-50"
-                    >
-                      {bootstrapping ? 'Bootstrapping...' : 'Start GitHub Workflow'}
-                    </button>
-                    {!canManageProject ? (
-                      <p className="text-sm text-gray-500">Only the project owner can create the GitHub bootstrap workflow.</p>
-                    ) : bootstrapBlocker ? (
-                      <p className="text-sm text-amber-300">{bootstrapBlocker}</p>
-                    ) : (
-                      <p className="text-sm text-gray-500">This creates the primary issue, bootstrap branch, and first pull request in GitHub.</p>
-                    )}
-                    <button
-                      onClick={handleSync}
-                      disabled={!canManageProject || Boolean(syncBlocker) || syncing}
-                      className="w-full rounded-lg border border-gray-600 px-4 py-2 text-sm font-medium text-gray-200 transition hover:bg-gray-700 disabled:opacity-50"
-                    >
-                      {syncing ? 'Syncing...' : 'Sync GitHub Activity'}
-                    </button>
-                    {!canManageProject ? (
-                      <p className="text-sm text-gray-500">Only the project owner can sync GitHub activity back into OPC.</p>
-                    ) : syncBlocker ? (
-                      <p className="text-sm text-amber-300">{syncBlocker}</p>
-                    ) : (
-                      <p className="text-sm text-gray-500">Use sync whenever you want current commit, issue, PR, workflow, and release status.</p>
-                    )}
-                  </div>
-                </div>
+                <ActionCard
+                  title="Bootstrap GitHub workflow"
+                  description="Create the primary issue, bootstrap branch, and first pull request from OPC."
+                  actionLabel={bootstrapping ? 'Bootstrapping...' : 'Start GitHub Workflow'}
+                  onClick={handleBootstrap}
+                  disabled={!canManageProject || !bootstrapReady || bootstrapping}
+                  hint={
+                    !canManageProject
+                      ? 'Only the project owner can create the GitHub bootstrap workflow.'
+                      : bootstrapBlocker || 'Run this once after the repository is connected.'
+                  }
+                  tone="purple"
+                />
+                <ActionCard
+                  title="Sync GitHub activity"
+                  description="Pull commits, issue state, pull requests, workflow runs, and releases back into OPC."
+                  actionLabel={syncing ? 'Syncing...' : 'Sync GitHub Activity'}
+                  onClick={handleSync}
+                  disabled={!canManageProject || Boolean(syncBlocker) || syncing}
+                  hint={
+                    !canManageProject
+                      ? 'Only the project owner can sync GitHub activity back into OPC.'
+                      : syncBlocker || 'Use sync after meaningful repository changes to refresh launch status.'
+                  }
+                  tone="gray"
+                />
 
                 {project.github?.stats.latestCommitMessage && (
-                  <div className="rounded-lg border border-gray-700 bg-gray-900/30 p-4">
-                    <div className="text-sm text-gray-400">Latest Commit</div>
-                    <div className="mt-1 font-medium text-white">{project.github.stats.latestCommitMessage}</div>
-                    <div className="mt-1 text-xs text-gray-500">{project.github.stats.latestCommitSha}</div>
-                  </div>
+                  <SummaryPanel
+                    eyebrow="Latest commit"
+                    title={project.github.stats.latestCommitMessage}
+                    description={project.github.stats.latestCommitSha || 'No SHA available'}
+                  >
+                    {project.github.stats.latestCommitUrl && (
+                      <a href={project.github.stats.latestCommitUrl} target="_blank" rel="noopener noreferrer" className="text-cyan-400 hover:text-cyan-300">
+                        Open commit
+                      </a>
+                    )}
+                  </SummaryPanel>
                 )}
 
                 {latestSnapshot && (
                   <div className="rounded-lg border border-gray-700 bg-gray-900/30 p-4">
-                    <div className="text-sm text-gray-400">Last Sync Snapshot</div>
+                    <div className="text-sm text-gray-400">Latest sync snapshot</div>
                     <div className="mt-3 grid gap-3 md:grid-cols-2">
                       <InfoCard label="Workflow Runs" value={String(latestSnapshot.workflowRuns)} />
                       <InfoCard label="Tracked Commits" value={String(latestSnapshot.commitCount)} />
@@ -725,12 +804,12 @@ export default function ProjectDetailPage() {
                     <div className="mt-3 flex flex-wrap gap-4 text-sm">
                       {latestSnapshot.latestMergedPullRequestUrl && (
                         <a href={latestSnapshot.latestMergedPullRequestUrl} target="_blank" rel="noopener noreferrer" className="text-purple-400 hover:text-purple-300">
-                          Latest Merged PR
+                          Latest merged PR
                         </a>
                       )}
                       {latestSnapshot.latestReleaseUrl && (
                         <a href={latestSnapshot.latestReleaseUrl} target="_blank" rel="noopener noreferrer" className="text-emerald-400 hover:text-emerald-300">
-                          Latest Release
+                          Latest release
                         </a>
                       )}
                     </div>
@@ -740,12 +819,13 @@ export default function ProjectDetailPage() {
             </div>
           </section>
 
-          <section className="rounded-lg bg-gray-800/50 p-6">
+          <section className="rounded-xl border border-gray-700 bg-gray-800/50 p-6">
             <div className="mb-4 flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
               <div>
-                <h2 className="text-xl font-semibold">Launch Readiness</h2>
-                <p className="mt-1 text-sm text-gray-400">
-                  OPC only opens launch after the GitHub execution trail is complete and current.
+                <div className="text-sm uppercase tracking-wide text-cyan-300">Launch gate</div>
+                <h2 className="mt-1 text-2xl font-semibold text-white">Launch readiness</h2>
+                <p className="mt-2 text-sm text-gray-400">
+                  OPC only opens launch after the GitHub execution trail is complete, current, and publicly attributable.
                 </p>
               </div>
               <div className={`text-sm ${launchBlocker ? 'text-amber-300' : 'text-emerald-300'}`}>
@@ -769,24 +849,20 @@ export default function ProjectDetailPage() {
             )}
           </section>
 
-          {agentTeam.length > 0 && (
-            <section className="rounded-lg bg-gray-800/50 p-6">
-              <h2 className="mb-3 text-xl font-semibold">Agent Team</h2>
-              <div className="grid gap-4 md:grid-cols-2">
-                {agentTeam.map((agent, index) => (
-                  <div key={`${agent.name}-${index}`} className="rounded-lg border border-purple-500/20 bg-purple-500/10 p-4">
-                    <div className="font-medium">{agent.name}</div>
-                    <div className="mt-1 text-sm text-gray-400">{agent.type}</div>
-                  </div>
-                ))}
-              </div>
-            </section>
-          )}
-
           <div className="grid gap-6 lg:grid-cols-2">
-            <section className="rounded-lg bg-gray-800/50 p-6">
-              <h2 className="mb-4 text-xl font-semibold">GitHub Activity</h2>
-              <div className="space-y-4">
+            <section className="rounded-xl border border-gray-700 bg-gray-800/50 p-6">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <div className="text-sm uppercase tracking-wide text-cyan-300">GitHub evidence</div>
+                  <h2 className="mt-1 text-2xl font-semibold text-white">Recent activity</h2>
+                </div>
+                {latestActivity && (
+                  <div className="text-sm text-gray-500">
+                    Latest: {new Date(latestActivity.createdAt).toLocaleString()}
+                  </div>
+                )}
+              </div>
+              <div className="mt-5 space-y-4">
                 {project.githubActivity.length > 0 ? (
                   project.githubActivity.map((activity) => (
                     <TimelineRow
@@ -811,9 +887,15 @@ export default function ProjectDetailPage() {
               </div>
             </section>
 
-            <section className="rounded-lg bg-gray-800/50 p-6">
-              <h2 className="mb-4 text-xl font-semibold">Lifecycle Timeline</h2>
-              <div className="space-y-4">
+            <section className="rounded-xl border border-gray-700 bg-gray-800/50 p-6">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <div className="text-sm uppercase tracking-wide text-cyan-300">Product provenance</div>
+                  <h2 className="mt-1 text-2xl font-semibold text-white">Lifecycle timeline</h2>
+                </div>
+                <div className="text-sm text-gray-500">{recentLifecycle.length} recent milestones</div>
+              </div>
+              <div className="mt-5 space-y-4">
                 {project.lifecycle.length > 0 ? (
                   project.lifecycle.map((event) => (
                     <TimelineRow
@@ -1114,75 +1196,6 @@ function Notice({ tone, message }: { tone: 'error' | 'success'; message: string 
   )
 }
 
-function ExecutionStepCard({
-  stepNumber,
-  title,
-  description,
-  complete,
-  blocker,
-  actionLabel,
-  href,
-  onClick,
-  disabled,
-}: {
-  stepNumber: number
-  title: string
-  description: string
-  complete: boolean
-  blocker?: string | null
-  actionLabel?: string
-  href?: string
-  onClick?: () => void
-  disabled?: boolean
-}) {
-  return (
-    <div
-      className={`rounded-xl border p-4 ${
-        complete
-          ? 'border-emerald-700 bg-emerald-900/15'
-          : 'border-gray-700 bg-gray-900/40'
-      }`}
-    >
-      <div className="flex items-center justify-between gap-3">
-        <span className="rounded-full border border-gray-600 px-2 py-0.5 text-xs text-gray-300">
-          Step {stepNumber}
-        </span>
-        <span
-          className={`rounded-full border px-2 py-0.5 text-xs ${
-            complete
-              ? 'border-emerald-500 text-emerald-200'
-              : 'border-amber-500 text-amber-200'
-          }`}
-        >
-          {complete ? 'Done' : 'Pending'}
-        </span>
-      </div>
-      <div className="mt-3 text-base font-medium text-white">{title}</div>
-      <p className="mt-2 text-sm text-gray-400">{description}</p>
-      {!complete && blocker && <p className="mt-3 text-xs text-amber-300">{blocker}</p>}
-      {complete ? (
-        <div className="mt-4 text-sm text-emerald-300">Completed</div>
-      ) : href ? (
-        <a
-          href={href}
-          className="mt-4 inline-flex rounded-lg bg-cyan-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-cyan-700"
-        >
-          {actionLabel}
-        </a>
-      ) : onClick ? (
-        <button
-          type="button"
-          onClick={onClick}
-          disabled={disabled}
-          className="mt-4 inline-flex rounded-lg bg-cyan-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-cyan-700 disabled:opacity-50"
-        >
-          {actionLabel}
-        </button>
-      ) : null}
-    </div>
-  )
-}
-
 function Dialog({
   title,
   children,
@@ -1237,6 +1250,102 @@ function InfoCard({ label, value }: { label: string; value: string }) {
     <div className="rounded-lg border border-gray-700 bg-gray-900/40 p-4">
       <div className="mb-1 text-sm text-gray-400">{label}</div>
       <div className="font-medium">{value}</div>
+    </div>
+  )
+}
+
+function SummaryPanel({
+  eyebrow,
+  title,
+  description,
+  children,
+}: {
+  eyebrow: string
+  title: string
+  description: string
+  children?: React.ReactNode
+}) {
+  return (
+    <div className="rounded-lg border border-gray-700 bg-gray-900/30 p-4">
+      <div className="text-sm text-gray-400">{eyebrow}</div>
+      <div className="mt-1 text-lg font-medium text-white">{title}</div>
+      <p className="mt-2 text-sm text-gray-400">{description}</p>
+      {children && <div className="mt-3 text-sm">{children}</div>}
+    </div>
+  )
+}
+
+function ActionCard({
+  title,
+  description,
+  actionLabel,
+  onClick,
+  disabled,
+  hint,
+  tone,
+}: {
+  title: string
+  description: string
+  actionLabel: string
+  onClick: () => void
+  disabled: boolean
+  hint: string
+  tone: 'purple' | 'gray'
+}) {
+  return (
+    <div className="rounded-lg border border-gray-700 bg-gray-900/30 p-4">
+      <div className="text-lg font-medium text-white">{title}</div>
+      <p className="mt-1 text-sm text-gray-500">{description}</p>
+      <button
+        onClick={onClick}
+        disabled={disabled}
+        className={`mt-4 w-full rounded-lg px-4 py-2 text-sm font-medium text-white transition disabled:opacity-50 ${
+          tone === 'purple'
+            ? 'bg-purple-600 hover:bg-purple-700'
+            : 'border border-gray-600 bg-transparent text-gray-200 hover:bg-gray-700'
+        }`}
+      >
+        {actionLabel}
+      </button>
+      <p className={`mt-3 text-sm ${disabled ? 'text-amber-300' : 'text-gray-500'}`}>{hint}</p>
+    </div>
+  )
+}
+
+function ExecutionLaneRow({
+  stepNumber,
+  title,
+  description,
+  complete,
+  blocker,
+}: {
+  stepNumber: number
+  title: string
+  description: string
+  complete: boolean
+  blocker?: string | null
+}) {
+  return (
+    <div className="rounded-lg border border-gray-700 bg-gray-900/35 p-4">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <span className="rounded-full border border-gray-600 px-2 py-0.5 text-xs text-gray-300">
+            Step {stepNumber}
+          </span>
+          <div className="font-medium text-white">{title}</div>
+        </div>
+        <span
+          className={`rounded-full border px-2 py-0.5 text-xs ${
+            complete
+              ? 'border-emerald-500 text-emerald-200'
+              : 'border-amber-500 text-amber-200'
+          }`}
+        >
+          {complete ? 'Done' : 'Pending'}
+        </span>
+      </div>
+      <p className="mt-2 text-sm text-gray-400">{description}</p>
+      {!complete && blocker && <p className="mt-2 text-sm text-amber-300">{blocker}</p>}
     </div>
   )
 }
