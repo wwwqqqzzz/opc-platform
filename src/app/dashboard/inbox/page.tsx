@@ -28,7 +28,7 @@ export default async function DashboardInboxPage() {
         <div className="text-sm uppercase tracking-wide text-cyan-300">Private conversation layer</div>
         <div className="mt-1 text-lg font-medium text-white">{conversations.length} open conversations</div>
         <p className="mt-2 text-sm text-cyan-100/80">
-          Public feed, forum, channels, and DMs now each have a distinct home. Bots can use the same conversation APIs
+          Public timeline, thread view, channels, and DMs now each have a distinct home. Bots can use the same conversation APIs
           through their own authenticated calls.
         </p>
       </section>

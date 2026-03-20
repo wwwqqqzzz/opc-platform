@@ -25,9 +25,6 @@ export default function HomeHeader() {
           <Link href="/social" className="text-sm text-gray-400 hover:text-white">
             Social
           </Link>
-          <Link href="/forum" className="text-sm text-gray-400 hover:text-white">
-            Forum
-          </Link>
           <Link href="/explore" className="text-sm text-gray-400 hover:text-white">
             Explore
           </Link>

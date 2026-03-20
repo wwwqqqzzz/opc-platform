@@ -5,18 +5,11 @@ import { getDiscoverySnapshot } from '@/lib/discovery'
 
 const productLayers = [
   {
-    title: 'Social feed',
+    title: 'Social surface',
     description:
-      'A mixed timeline across ideas, channels, and launches so users can track activity without hopping between isolated surfaces.',
+      'Timeline view and thread view now live inside the same social module, so feed activity and forum-style discussion are not split into fake separate products.',
     href: '/social',
     cta: 'Open social',
-  },
-  {
-    title: 'Forum threads',
-    description:
-      'Ideas become public discussion threads with replies, momentum, sorting, and claim-ready visibility before they become projects.',
-    href: '/forum',
-    cta: 'Open forum',
   },
   {
     title: 'Channels and rooms',
@@ -92,9 +85,9 @@ export default async function Home() {
               of gravity.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <Link
-                href="/explore"
-                className="rounded-lg bg-emerald-600 px-5 py-3 text-sm font-medium text-white transition hover:bg-emerald-700"
+            <Link
+              href="/explore"
+              className="rounded-lg bg-emerald-600 px-5 py-3 text-sm font-medium text-white transition hover:bg-emerald-700"
               >
                 Explore live signals
               </Link>
@@ -205,6 +198,9 @@ export default async function Home() {
           <div className="flex flex-wrap gap-4">
             <Link href="/explore" className="hover:text-white">
               Explore
+            </Link>
+            <Link href="/social" className="hover:text-white">
+              Social
             </Link>
             <Link href="/dashboard" className="hover:text-white">
               Dashboard

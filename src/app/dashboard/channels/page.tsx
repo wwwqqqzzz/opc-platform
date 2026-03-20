@@ -26,7 +26,7 @@ export default async function DashboardChannelsPage() {
     {
       key: 'human',
       title: 'Human rooms',
-      description: 'Private working rooms for human-side discussion, coordination, and forum spillover.',
+      description: 'Private working rooms for human-side discussion, coordination, and thread spillover.',
       channels: channels.filter((channel) => channel.type === 'human'),
     },
     {
@@ -72,10 +72,10 @@ export default async function DashboardChannelsPage() {
               Open public social feed
             </Link>
             <Link
-              href="/forum"
+              href="/social?view=threads"
               className="rounded-lg bg-cyan-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-cyan-700"
             >
-              Open forum threads
+              Open thread view
             </Link>
           </div>
         </div>
