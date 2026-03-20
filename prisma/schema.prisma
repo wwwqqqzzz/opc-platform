@@ -1,0 +1,309 @@
+// Prisma Schema - SQLite (Prisma 7.x)
+// 文件位置: prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Idea 表
+model Idea {
+  id          String   @id @default(uuid())
+  title       String
+  description String
+  targetUser  String?  @map("target_user")
+  agentTypes  String?  @map("agent_types") // JSON array as string
+  tags        String?  // JSON array as string
+  authorType  String   @map("author_type") // 'human' or 'agent'
+  authorName  String?  @map("author_name")
+  userId      String?  @map("user_id")
+  status      String   @default("idea") // 'idea', 'in_progress', 'launched'
+  upvotes     Int      @default(0)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  comments    Comment[]
+  project     Project?
+  upvoteRecords Upvote[]
+
+  @@index([userId])
+  @@map("ideas")
+}
+
+// Project 表
+model Project {
+  id          String   @id @default(uuid())
+  ideaId      String?  @map("idea_id") @unique
+  title       String
+  description String?
+  ownerName   String?  @map("owner_name")
+  agentTeam   String?  @map("agent_team") // JSON as string
+  githubUrl   String?  @map("github_url")
+  userId      String?  @map("user_id")
+  status      String   @default("in_progress")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  idea        Idea?    @relation(fields: [ideaId], references: [id])
+  launch      Launch?
+
+  @@index([userId])
+  @@map("projects")
+}
+
+// Launch 表
+model Launch {
+  id           String   @id @default(uuid())
+  projectId    String?  @map("project_id") @unique
+  productName  String   @map("product_name")
+  tagline      String?
+  demoUrl      String?  @map("demo_url")
+  githubUrl    String?  @map("github_url")
+  ownerName    String?  @map("owner_name")
+  agentTeam    String?  @map("agent_team") // JSON as string
+  sourceIdeaId String?  @map("source_idea_id")
+  upvotes      Int      @default(0)
+  viewCount    Int      @default(0) @map("view_count")
+  launchedAt   DateTime @default(now()) @map("launched_at")
+  createdAt    DateTime @default(now()) @map("created_at")
+  
+  project      Project? @relation(fields: [projectId], references: [id])
+  
+  @@map("launches")
+}
+
+// Comment 表
+model Comment {
+  id          String   @id @default(uuid())
+  ideaId      String   @map("idea_id")
+  authorType  String   @map("author_type")
+  authorName  String?  @map("author_name")
+  content     String
+  ipAddress   String?  @map("ip_address") // Client IP address for anti-spam
+  userAgent   String?  @map("user_agent") // Client user agent for bot detection
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  idea        Idea     @relation(fields: [ideaId], references: [id], onDelete: Cascade)
+
+  @@index([ipAddress])
+  @@index([createdAt])
+  @@map("comments")
+}
+
+// Upvote 表
+model Upvote {
+  id        String   @id @default(uuid())
+  ideaId    String   @map("idea_id")
+  userId    String   @map("user_id") // IP or session
+  ipAddress String?  @map("ip_address") // Client IP address for anti-spam
+  userAgent String?  @map("user_agent") // Client user agent for bot detection
+  createdAt DateTime @default(now()) @map("created_at")
+
+  idea      Idea     @relation(fields: [ideaId], references: [id], onDelete: Cascade)
+
+  @@unique([ideaId, userId])
+  @@index([ipAddress])
+  @@index([createdAt])
+  @@map("upvotes")
+}
+
+// Agent 表
+model Agent {
+  id              String    @id @default(uuid())
+  name            String    @unique
+  type            String?   // 'coder', 'marketing', 'research', 'sales', 'design'
+  description     String?
+  ownerId         String?   @map("owner_id")
+  projectsCount   Int       @default(0) @map("projects_count")
+  reputationScore Float     @default(50.0) @map("reputation_score") // 0-100
+  totalReviews    Int       @default(0) @map("total_reviews")
+  successfulProjects Int    @default(0) @map("successful_projects")
+  responseTime    Float?    @map("response_time") // 平均响应时间（小时）
+  lastActiveAt    DateTime? @map("last_active_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  reviews         AgentReview[]
+
+  @@map("agents")
+  @@index([type])
+  @@index([reputationScore])
+}
+
+// Agent 评价表
+model AgentReview {
+  id          String   @id @default(uuid())
+  agentId     String   @map("agent_id")
+  projectId   String   @map("project_id")
+  rating      Int      // 1-5 星评分
+  category    String?  // 'code_quality', 'communication', 'speed', 'problem_solving'
+  comment     String?
+  createdBy   String   @map("created_by") // 评价者
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  agent       Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@unique([agentId, projectId, createdBy])
+  @@map("agent_reviews")
+  @@index([agentId])
+  @@index([rating])
+}
+
+// Agent 成就表
+model AgentAchievement {
+  id          String   @id @default(uuid())
+  agentId     String   @map("agent_id")
+  type        String   // 'top_contributor', 'fast_responder', 'quality_expert', 'team_player'
+  title       String   // 成就标题
+  description String?  // 成就描述
+  earnedAt    DateTime @default(now()) @map("earned_at")
+
+  @@map("agent_achievements")
+  @@index([agentId])
+}
+
+// User 表 (用户系统)
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  name         String?
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  bots         Bot[]
+  ideas        Idea[]
+  projects     Project[]
+
+  @@map("users")
+}
+
+// Bot 表 (AI Agent 管理系统)
+model Bot {
+  id              String    @id @default(uuid())
+  name            String
+  description     String?
+  apiKey          String    @unique @map("api_key")
+  ownerId         String    @map("owner_id")
+  config          String?   // JSON string for bot configuration
+  isActive        Boolean   @default(true) @map("is_active")
+  lastUsedAt      DateTime? @map("last_used_at")
+
+  // 验证相关字段
+  isVerified      Boolean   @default(false) @map("is_verified")
+  verificationCode String?  @unique @map("verification_code")
+  verificationCodeExpiresAt DateTime? @map("verification_code_expires_at")
+  verifiedAt      DateTime? @map("verified_at")
+  verificationUrl String?   @map("verification_url")
+  
+  // 新增：验证流程优化字段（方案D + 混合验证）
+  webhookUrl      String?   @map("webhook_url") // Bot的webhook地址
+  lastVerificationCheck DateTime? @map("last_verification_check") // 最后检查时间
+  verificationStatus String   @default("pending") @map("verification_status") // pending/required/verified/expired
+  canAutoVerify   Boolean   @default(true) @map("can_auto_verify") // 是否允许自动验证
+  autoPublishEnabled Boolean @default(false) @map("auto_publish_enabled") // 是否自动发布验证内容
+
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  owner           User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  messages        Message[]
+
+  @@map("bots")
+  @@index([ownerId])
+  @@index([apiKey])
+  @@index([verificationCode])
+}
+
+// Channel 表 (社区频道)
+model Channel {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  type        String   // 'human', 'bot', 'announcement'
+  description String?
+  order       Int      @default(0)
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  messages    Message[]
+
+  @@map("channels")
+  @@index([type])
+  @@index([order])
+}
+
+// Message 表 (频道消息)
+model Message {
+  id          String   @id @default(uuid())
+  channelId   String   @map("channel_id")
+  content     String
+  senderType  String   @map("sender_type") // 'user', 'bot'
+  senderId    String?  @map("sender_id")
+  senderName  String?  @map("sender_name")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  channel     Channel  @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  bot         Bot?     @relation(fields: [senderId], references: [id], onDelete: SetNull)
+
+  @@map("messages")
+  @@index([channelId])
+  @@index([createdAt])
+  @@index([senderType])
+}
+
+// PrivateConversation 表 (私聊会话)
+model PrivateConversation {
+  id          String   @id @default(uuid())
+  user1Id     String   @map("user1_id")
+  user2Id     String   @map("user2_id")
+  user1Type   String   @map("user1_type") // 'user', 'bot'
+  user2Type   String   @map("user2_type") // 'user', 'bot'
+  lastMessageAt DateTime @map("last_message_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@unique([user1Id, user2Id])
+  @@map("private_conversations")
+  @@index([user1Id])
+  @@index([user2Id])
+  @@index([lastMessageAt])
+}
+
+// PrivateMessage 表 (私聊消息)
+model PrivateMessage {
+  id              String   @id @default(uuid())
+  conversationId  String   @map("conversation_id")
+  senderId        String   @map("sender_id")
+  senderType      String   @map("sender_type") // 'user', 'bot'
+  content         String
+  isRead          Boolean  @default(false) @map("is_read")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  @@map("private_messages")
+  @@index([conversationId])
+  @@index([createdAt])
+  @@index([senderId])
+}
+
+// Follow 表 (关注系统)
+model Follow {
+  id          String   @id @default(uuid())
+  followerId  String   @map("follower_id")
+  followerType String  @map("follower_type") // 'user', 'bot'
+  followingId String   @map("following_id")
+  followingType String  @map("following_type") // 'user', 'bot'
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@unique([followerId, followingId])
+  @@map("follows")
+  @@index([followerId])
+  @@index([followingId])
+  @@index([createdAt])
+}
