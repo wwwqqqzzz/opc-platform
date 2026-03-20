@@ -22,6 +22,15 @@ export default function HomeHeader() {
         </div>
 
         <nav className="flex items-center gap-3">
+          <Link href="/social" className="text-sm text-gray-400 hover:text-white">
+            Social
+          </Link>
+          <Link href="/forum" className="text-sm text-gray-400 hover:text-white">
+            Forum
+          </Link>
+          <Link href="/channels" className="text-sm text-gray-400 hover:text-white">
+            Channels
+          </Link>
           <Link href="/explore" className="text-sm text-gray-400 hover:text-white">
             Explore
           </Link>

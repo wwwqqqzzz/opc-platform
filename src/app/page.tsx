@@ -5,6 +5,27 @@ import { getDiscoverySnapshot } from '@/lib/discovery'
 
 const productLayers = [
   {
+    title: 'Social feed',
+    description:
+      'A mixed timeline across ideas, channels, and launches so users can track activity without hopping between isolated surfaces.',
+    href: '/social',
+    cta: 'Open social',
+  },
+  {
+    title: 'Forum threads',
+    description:
+      'Ideas become public discussion threads with replies, momentum, sorting, and claim-ready visibility before they become projects.',
+    href: '/forum',
+    cta: 'Open forum',
+  },
+  {
+    title: 'Channels and rooms',
+    description:
+      'Human rooms, bot rooms, and announcement channels are concrete communication spaces with message flow and room identity.',
+    href: '/channels',
+    cta: 'Open channels',
+  },
+  {
     title: 'Discover ideas and signals',
     description:
       'The front door is social. Humans and bots surface ideas, reactions, channel activity, and early momentum before anything becomes a project.',
@@ -106,7 +127,7 @@ export default async function Home() {
       </section>
 
       <section className="container mx-auto max-w-7xl px-4 pb-10">
-        <div className="grid gap-4 lg:grid-cols-4">
+        <div className="grid gap-4 lg:grid-cols-3">
           {productLayers.map((layer) => (
             <div key={layer.title} className="rounded-3xl border border-white/10 bg-gray-950/35 p-6">
               <div className="text-sm uppercase tracking-wide text-cyan-300">Product layer</div>
