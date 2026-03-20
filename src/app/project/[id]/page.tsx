@@ -247,6 +247,7 @@ export default function ProjectDetailPage() {
   const launchChecklist = getLaunchChecklist(project)
   const latestSyncError = getLatestSyncError(project)
   const latestSnapshot = getLatestSnapshot(project)
+  const intakeBrief = getProjectIntakeBrief(project)
   const onboardingMode = searchParams.get('onboarding') === '1'
   const claimedMode = searchParams.get('claimed') === '1'
   const githubConnectedMode = searchParams.get('github_connected') === '1'
@@ -453,6 +454,47 @@ export default function ProjectDetailPage() {
             <p className="mt-2 text-sm text-cyan-100/80">{nextAction.description}</p>
           </div>
         </section>
+
+        {intakeBrief && (
+          <section className="mb-6 rounded-xl border border-gray-700 bg-gray-800/60 p-6">
+            <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+              <div>
+                <div className="text-sm uppercase tracking-wide text-cyan-300">Project intake brief</div>
+                <h2 className="mt-1 text-xl font-semibold text-white">Why this project exists</h2>
+                <p className="mt-1 text-sm text-gray-400">
+                  This context was captured at claim time so the project keeps its social and operator context after intake.
+                </p>
+              </div>
+              <div className="rounded-full border border-gray-700 bg-gray-900/40 px-3 py-1 text-sm text-gray-300">
+                {intakeBrief.ownerRole}
+              </div>
+            </div>
+
+            <div className="mt-5 grid gap-4 lg:grid-cols-3">
+              <SummaryPanel
+                eyebrow="Initial goal"
+                title="What should happen first"
+                description={intakeBrief.initialGoal}
+              />
+              <SummaryPanel
+                eyebrow="Why now"
+                title="Why this moved out of the feed"
+                description={intakeBrief.whyNow}
+              />
+              <SummaryPanel
+                eyebrow="Execution expectation"
+                title={intakeBrief.executionPath}
+                description="This is an intake expectation captured at claim time, not a permanent lock on execution."
+              >
+                {intakeBrief.initialAgentTeam.length > 0 && (
+                  <span className="text-gray-400">
+                    Initial team: {intakeBrief.initialAgentTeam.map((agent) => agent.name).join(', ')}
+                  </span>
+                )}
+              </SummaryPanel>
+            </div>
+          </section>
+        )}
 
         {showLaunchDialog && (
           <Dialog title="Create Launch" onClose={() => setShowLaunchDialog(false)}>
@@ -1378,6 +1420,49 @@ function TimelineRow({
       {content}
     </a>
   )
+}
+
+function getProjectIntakeBrief(project: ProjectDto) {
+  const createdEvent = project.lifecycle.find((event) => event.eventType === 'project_created')
+  const metadata = createdEvent?.metadata
+
+  if (!metadata) {
+    return null
+  }
+
+  const ownerRole = typeof metadata.ownerRole === 'string' ? metadata.ownerRole : null
+  const initialGoal = typeof metadata.initialGoal === 'string' ? metadata.initialGoal : null
+  const whyNow = typeof metadata.whyNow === 'string' ? metadata.whyNow : null
+  const executionPath =
+    typeof metadata.executionPath === 'string' ? metadata.executionPath : 'GitHub bridge now, Agent GitHub later'
+
+  const initialAgentTeam =
+    Array.isArray(metadata.initialAgentTeam)
+      ? metadata.initialAgentTeam
+          .map((agent) =>
+            typeof agent === 'string'
+              ? { name: agent, type: 'unspecified' }
+              : typeof agent === 'object' && agent && 'name' in agent
+              ? {
+                  name: typeof agent.name === 'string' ? agent.name : 'Unnamed agent',
+                  type: typeof agent.type === 'string' ? agent.type : 'unspecified',
+                }
+              : null
+          )
+          .filter((agent): agent is { name: string; type: string } => Boolean(agent))
+      : []
+
+  if (!ownerRole || !initialGoal || !whyNow) {
+    return null
+  }
+
+  return {
+    ownerRole,
+    initialGoal,
+    whyNow,
+    executionPath,
+    initialAgentTeam,
+  }
 }
 
 function safeParseTeam(value: string | null) {

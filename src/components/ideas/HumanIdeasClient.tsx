@@ -1,10 +1,10 @@
 'use client'
 
 import Link from 'next/link'
-import UpvoteButton from './UpvoteButton'
-import NewIdeaModal from './NewIdeaModal'
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
+import NewIdeaModal from './NewIdeaModal'
+import UpvoteButton from './UpvoteButton'
 
 interface Idea {
   id: string
@@ -26,18 +26,13 @@ export default function HumanIdeasClient({ ideas }: HumanIdeasClientProps) {
   const { user } = useAuth()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [ideaList, setIdeaList] = useState<Idea[]>(ideas)
-  const [, setError] = useState<string | null>(null)
-  const [, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
 
   const fetchIdeas = async () => {
-    if (!user) {
-      window.location.href = '/login?redirect=/ideas/human'
-      return
-    }
-
     setIsLoading(true)
     try {
-      const response = await fetch('/api/ideas/human', {
+      const response = await fetch('/api/ideas', {
         headers: {
           'Content-Type': 'application/json',
         },
@@ -48,22 +43,23 @@ export default function HumanIdeasClient({ ideas }: HumanIdeasClientProps) {
         return
       }
 
-      const data = await response.json()
-      setIdeaList(data.ideas)
+      const data = (await response.json()) as Idea[]
+      setIdeaList(data.filter((idea) => idea.authorType === 'human'))
+      setError(null)
     } finally {
       setIsLoading(false)
     }
   }
 
   useEffect(() => {
-    fetchIdeas()
-  }, [user])
+    void fetchIdeas()
+  }, [])
 
   return (
     <>
-      <div className="flex justify-between items-center mb-6">
-        <div className="text-gray-400">
-          {ideaList.length} ideas
+      <div className="mb-6 flex items-center justify-between">
+        <div className="text-sm text-gray-400">
+          {isLoading ? 'Refreshing ideas...' : `${ideaList.length} human ideas`}
         </div>
         <button
           onClick={() => {
@@ -73,43 +69,44 @@ export default function HumanIdeasClient({ ideas }: HumanIdeasClientProps) {
             }
             setIsModalOpen(true)
           }}
-          className="px-6 py-2 bg-emerald-500 hover:bg-emerald-600 rounded-lg font-semibold transition"
+          className="rounded-lg bg-emerald-500 px-6 py-2 font-semibold transition hover:bg-emerald-600"
+          type="button"
         >
           + New Idea
         </button>
       </div>
+
+      {error && (
+        <div className="mb-4 rounded-lg border border-red-700 bg-red-900/20 p-4 text-sm text-red-200">
+          {error}
+        </div>
+      )}
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {ideaList.length > 0 ? (
           ideaList.map((idea) => {
             const statusBadge =
               idea.status === 'launched'
-                ? { text: '🚀 Launched', className: 'bg-green-500/20 text-green-400' }
+                ? { text: 'Launched', className: 'bg-green-500/20 text-green-400' }
                 : idea.status === 'in_progress'
-                ? { text: '🔨 In Progress', className: 'bg-yellow-500/20 text-yellow-400' }
-                : { text: '📝 Idea', className: 'bg-gray-500/20 text-gray-400' }
+                ? { text: 'In Progress', className: 'bg-yellow-500/20 text-yellow-400' }
+                : { text: 'Idea', className: 'bg-gray-500/20 text-gray-300' }
 
             return (
-              <div
-                key={idea.id}
-                className="bg-gray-800/50 hover:bg-gray-800 rounded-lg p-6 transition"
-              >
+              <div key={idea.id} className="rounded-lg bg-gray-800/50 p-6 transition hover:bg-gray-800">
                 <Link href={`/idea/${idea.id}`} className="block">
                   <div className="mb-3">
-                    <span className={`px-2 py-1 text-xs rounded ${statusBadge.className}`}>
+                    <span className={`rounded px-2 py-1 text-xs ${statusBadge.className}`}>
                       {statusBadge.text}
                     </span>
                   </div>
 
-                  <h3 className="font-semibold text-lg mb-2 line-clamp-2">
-                    {idea.title}
-                  </h3>
+                  <h3 className="mb-2 line-clamp-2 text-lg font-semibold">{idea.title}</h3>
 
-                  <p className="text-gray-400 text-sm mb-4 line-clamp-3">
-                    {idea.description}
-                  </p>
+                  <p className="mb-4 line-clamp-3 text-sm text-gray-400">{idea.description}</p>
 
-                  <div className="text-sm text-gray-500">
+                  <div className="flex items-center justify-between text-sm text-gray-500">
+                    <span>{idea._count.comments} comments</span>
                     <UpvoteButton ideaId={idea.id} initialCount={idea._count.upvoteRecords} />
                   </div>
                 </Link>
@@ -117,13 +114,19 @@ export default function HumanIdeasClient({ ideas }: HumanIdeasClientProps) {
             )
           })
         ) : (
-          <div className="col-span-full text-center py-16">
-            <div className="text-6xl mb-4">👤</div>
-            <h2 className="text-2xl font-bold mb-2">No human ideas yet</h2>
-            <p className="text-gray-400 mb-4">Be the first to share their idea!</p>
+          <div className="col-span-full py-16 text-center">
+            <div className="mb-4 text-2xl font-semibold text-white">No human ideas yet</div>
+            <p className="mb-4 text-gray-400">Be the first person to seed the discovery layer.</p>
             <button
-              onClick={() => setIsModalOpen(true)}
-              className="px-6 py-3 bg-emerald-500 hover:bg-emerald-600 rounded-lg font-semibold transition"
+              onClick={() => {
+                if (!user) {
+                  window.location.href = '/login?redirect=/ideas/human'
+                  return
+                }
+                setIsModalOpen(true)
+              }}
+              className="rounded-lg bg-emerald-500 px-6 py-3 font-semibold transition hover:bg-emerald-600"
+              type="button"
             >
               + New Idea
             </button>
@@ -131,10 +134,7 @@ export default function HumanIdeasClient({ ideas }: HumanIdeasClientProps) {
         )}
       </div>
 
-      <NewIdeaModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-      />
+      <NewIdeaModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </>
   )
 }

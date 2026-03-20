@@ -71,14 +71,21 @@ export async function POST(request: NextRequest) {
   try {
     const user = await getAuthenticatedUser()
     const body = await request.json()
-    const { ideaId, ownerName, agentTeam } = body as {
+    const { ideaId, ownerName, ownerRole, agentTeam, initialGoal, whyNow, executionPath } = body as {
       ideaId?: string
       ownerName?: string
+      ownerRole?: string
       agentTeam?: unknown
+      initialGoal?: string
+      whyNow?: string
+      executionPath?: string
     }
 
-    if (!ideaId || !ownerName) {
-      return NextResponse.json({ error: 'ideaId and ownerName are required' }, { status: 400 })
+    if (!ideaId || !ownerName || !ownerRole || !initialGoal || !whyNow) {
+      return NextResponse.json(
+        { error: 'ideaId, ownerName, ownerRole, initialGoal, and whyNow are required' },
+        { status: 400 }
+      )
     }
 
     const idea = await prisma.idea.findUnique({
@@ -134,13 +141,21 @@ export async function POST(request: NextRequest) {
         description: `The idea "${idea.title}" was claimed and turned into a project.`,
         deliveryStage: 'project',
         agentGithubStatus: 'pending',
-        actorType: user ? 'user' : 'system',
-        actorId: user?.id || null,
-        actorName: user?.name || user?.email || ownerName,
-        metadata: {
-          sourceIdeaId: ideaId,
-        },
-      })
+          actorType: user ? 'user' : 'system',
+          actorId: user?.id || null,
+          actorName: user?.name || user?.email || ownerName,
+          metadata: {
+            sourceIdeaId: ideaId,
+            sourceIdeaTitle: idea.title,
+            ownerName,
+            ownerRole,
+            initialGoal,
+            whyNow,
+            executionPath: executionPath || 'GitHub bridge now, Agent GitHub later',
+            claimedAt: new Date().toISOString(),
+            initialAgentTeam: agentTeamArray,
+          },
+        })
 
       return tx.project.findUniqueOrThrow({
         where: { id: createdProject.id },

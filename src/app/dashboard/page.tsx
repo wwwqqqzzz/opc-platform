@@ -6,6 +6,7 @@ import ProductTodoBoard from '@/components/product/ProductTodoBoard'
 import { useAuth } from '@/contexts/AuthContext'
 import { useDashboardOnboarding } from '@/hooks/useDashboardExecutionState'
 import { getProjectExecutionLabel } from '@/lib/projects/onboarding'
+import type { DiscoverySnapshot } from '@/types/discovery'
 
 interface Stats {
   botsCount: number
@@ -21,6 +22,8 @@ export default function DashboardPage() {
   const { user } = useAuth()
   const [stats, setStats] = useState<Stats>({ botsCount: 0, ideasCount: 0, projectsCount: 0 })
   const [statsLoading, setStatsLoading] = useState(true)
+  const [discovery, setDiscovery] = useState<DiscoverySnapshot | null>(null)
+  const [discoveryLoading, setDiscoveryLoading] = useState(true)
   const { projects, githubStatus, onboarding } = useDashboardOnboarding()
 
   useEffect(() => {
@@ -65,6 +68,27 @@ export default function DashboardPage() {
     }
   }
 
+  useEffect(() => {
+    void fetchDiscoveryData()
+  }, [])
+
+  const fetchDiscoveryData = async () => {
+    try {
+      setDiscoveryLoading(true)
+      const response = await fetch('/api/discovery')
+      if (!response.ok) {
+        throw new Error('Failed to fetch discovery data')
+      }
+
+      const data: DiscoverySnapshot = await response.json()
+      setDiscovery(data)
+    } catch (error) {
+      console.error('Failed to fetch discovery data:', error)
+    } finally {
+      setDiscoveryLoading(false)
+    }
+  }
+
   const launchReadyProjects = projects.filter(
     (project) => project.deliveryStage === 'launch_ready' && !project.launch
   )
@@ -75,7 +99,7 @@ export default function DashboardPage() {
       <div>
         <h1 className="text-3xl font-bold text-white">Welcome back, {user?.name || 'User'}!</h1>
         <p className="mt-2 text-gray-400">
-          This dashboard now guides your first execution loop from project claim to launch.
+          This dashboard keeps the whole product loop visible: discovery, intake, execution bridge, and launch.
         </p>
       </div>
 
@@ -135,6 +159,99 @@ export default function DashboardPage() {
           value={statsLoading ? '...' : String(stats.projectsCount)}
           tone="yellow"
         />
+      </div>
+
+      <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
+        <section className="rounded-lg border border-gray-700 bg-gray-800 p-6">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <h2 className="text-xl font-semibold text-white">Social Pulse</h2>
+              <p className="mt-1 text-sm text-gray-400">
+                The social layer should stay visible here, not only on the public pages.
+              </p>
+            </div>
+            <Link href="/explore" className="text-sm text-cyan-400 hover:text-cyan-300">
+              Open explore
+            </Link>
+          </div>
+
+          {discoveryLoading ? (
+            <div className="mt-5 text-sm text-gray-500">Loading social pulse...</div>
+          ) : discovery ? (
+            <>
+              <div className="mt-5 grid gap-3 md:grid-cols-4">
+                <PulseCard label="Ideas in feed" value={String(discovery.stats.totalIdeas)} />
+                <PulseCard label="Claim-ready" value={String(discovery.stats.openIdeas)} />
+                <PulseCard label="Active channels" value={String(discovery.stats.channels)} />
+                <PulseCard label="Recent launches" value={String(discovery.stats.launches)} />
+              </div>
+
+              <div className="mt-5 grid gap-4 lg:grid-cols-2">
+                <div className="rounded-lg border border-gray-700 bg-gray-900/40 p-4">
+                  <div className="text-sm font-medium text-white">Top claim-ready ideas</div>
+                  <div className="mt-3 space-y-3">
+                    {discovery.claimReadyIdeas.slice(0, 3).map((idea) => (
+                      <div key={idea.id} className="rounded-lg border border-gray-800 bg-gray-950/35 p-3">
+                        <div className="font-medium text-white">{idea.title}</div>
+                        <p className="mt-1 line-clamp-2 text-sm text-gray-400">{idea.description}</p>
+                        <div className="mt-2 flex gap-4 text-xs text-gray-500">
+                          <span>{idea.upvotes} upvotes</span>
+                          <span>{idea.commentCount} comments</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="rounded-lg border border-gray-700 bg-gray-900/40 p-4">
+                  <div className="text-sm font-medium text-white">Active channels</div>
+                  <div className="mt-3 space-y-3">
+                    {discovery.activeChannels.slice(0, 3).map((channel) => (
+                      <div key={channel.id} className="rounded-lg border border-gray-800 bg-gray-950/35 p-3">
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="font-medium text-white">#{channel.name}</div>
+                          <div className="text-xs text-gray-500">{channel.messageCount} messages</div>
+                        </div>
+                        <p className="mt-1 text-sm text-gray-400">
+                          {channel.description || 'No description yet.'}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </>
+          ) : (
+            <div className="mt-5 text-sm text-gray-500">Social pulse is temporarily unavailable.</div>
+          )}
+        </section>
+
+        <section className="rounded-lg border border-gray-700 bg-gray-800 p-6">
+          <div>
+            <h2 className="text-xl font-semibold text-white">Intake Truth</h2>
+            <p className="mt-1 text-sm text-gray-400">
+              Projects should start with social context, not jump straight into execution tooling.
+            </p>
+          </div>
+
+          <div className="mt-5 space-y-3">
+            <IntakeRow
+              label="Discovery surface"
+              value="Live"
+              note="Explore now combines ideas, channels, project momentum, and launches."
+            />
+            <IntakeRow
+              label="Claim brief"
+              value="Live"
+              note="Claiming an idea now captures owner role, why-now context, and an initial goal."
+            />
+            <IntakeRow
+              label="Execution bridge"
+              value="Secondary"
+              note="GitHub remains the bridge layer after intake, not the first experience."
+            />
+          </div>
+        </section>
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[1.3fr_1fr]">
@@ -242,9 +359,40 @@ export default function DashboardPage() {
 
       <ProductTodoBoard
         title="Future product TODO placeholders"
-        intro="These placeholders mark the layers we intentionally are not building yet. They keep the roadmap anchored in the product so later development does not drift toward the wrong center of gravity."
+        intro="These placeholders now sit after a live social feed and project intake layer. They keep the roadmap anchored in the product so later development does not drift toward the wrong center of gravity."
         compact
       />
+    </div>
+  )
+}
+
+function PulseCard({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-lg border border-gray-700 bg-gray-900/40 p-4">
+      <div className="text-xs uppercase tracking-wide text-gray-500">{label}</div>
+      <div className="mt-2 text-2xl font-semibold text-white">{value}</div>
+    </div>
+  )
+}
+
+function IntakeRow({
+  label,
+  value,
+  note,
+}: {
+  label: string
+  value: string
+  note: string
+}) {
+  return (
+    <div className="rounded-lg border border-gray-700 bg-gray-900/40 p-4">
+      <div className="flex items-center justify-between gap-3">
+        <div className="font-medium text-white">{label}</div>
+        <div className="rounded-full border border-cyan-700 bg-cyan-900/20 px-3 py-1 text-xs text-cyan-200">
+          {value}
+        </div>
+      </div>
+      <p className="mt-2 text-sm text-gray-400">{note}</p>
     </div>
   )
 }

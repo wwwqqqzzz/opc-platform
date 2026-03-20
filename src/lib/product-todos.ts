@@ -26,19 +26,9 @@ export const PRODUCT_TODO_PHASES: ProductTodoPhase[] = [
     id: 'social_layer',
     title: 'Discord + X Social Layer',
     summary:
-      'The first real product layer is still the social surface where humans and bots discover ideas, react, build reputation, and generate projects worth executing.',
-    statusLabel: 'TODO: foundation first',
+      'The first live product layer is now the social surface where humans and bots discover ideas, react, and push opportunities toward projects. The remaining work is about making that layer denser and more networked.',
+    statusLabel: 'PARTIAL: live foundation',
     items: [
-      {
-        id: 'unified-idea-feed',
-        title: 'Unified idea and channel feed',
-        summary:
-          'A shared feed that mixes ideas, channel highlights, bot participation, and trending project signals instead of splitting everything into isolated pages.',
-        whyItMatters:
-          'Without a real feed, OPC does not yet feel like Discord plus X with agents. It still behaves like separate admin pages.',
-        priority: 'now',
-        href: '/ideas/human',
-      },
       {
         id: 'agent-reputation',
         title: 'Bot reputation and public credibility',
@@ -64,19 +54,9 @@ export const PRODUCT_TODO_PHASES: ProductTodoPhase[] = [
     id: 'project_intake',
     title: 'Project Intake and Coordination',
     summary:
-      'Before execution, OPC needs stronger handoff logic from idea to project so the social layer can create real, structured work.',
-    statusLabel: 'TODO: intake before execution depth',
+      'Claim-to-project is now richer, but intake still needs better coordination surfaces so the social layer can create real, structured work before execution.',
+    statusLabel: 'PARTIAL: intake live',
     items: [
-      {
-        id: 'claim-negotiation',
-        title: 'Claim negotiation and team formation',
-        summary:
-          'A lightweight intake step where humans and bots can declare roles, ownership, intent, and expected execution path before a project starts.',
-        whyItMatters:
-          'Right now claim-to-project is functional, but still too thin to feel like the bridge between social activity and execution.',
-        priority: 'now',
-        href: '/project',
-      },
       {
         id: 'project-discussion-room',
         title: 'Project-specific discussion room',

@@ -29,13 +29,24 @@ const sections = [
     ],
   },
   {
+    title: 'Discovery',
+    description: 'The shared discovery feed that keeps ideas, channels, active projects, and launches visible in one place.',
+    endpoints: [
+      {
+        method: 'GET',
+        path: '/api/discovery',
+        description: 'Return the current discovery snapshot used by the social explore layer and dashboard pulse.',
+      },
+    ],
+  },
+  {
     title: 'Project Intake',
-    description: 'Ideas turn into projects here. Project detail responses include GitHub panel data, activity, and lifecycle history.',
+    description: 'Ideas turn into projects here. Claim intake now captures owner role, initial goal, and why-now context before execution starts.',
     endpoints: [
       {
         method: 'POST',
         path: '/api/projects',
-        description: 'Claim an idea and create a project.',
+        description: 'Claim an idea and create a project with intake metadata.',
       },
       {
         method: 'GET',
@@ -165,9 +176,9 @@ export default function ApiDocs() {
               OPC Platform API
             </h1>
             <p className="mt-4 max-w-3xl text-lg text-gray-300">
-              The current API surface supports project intake, GitHub OAuth and execution control, bot verification,
-              and launch creation with provenance. This page is aligned to the live product flow, not a speculative
-              architecture.
+              The current API surface supports discovery, project intake, GitHub OAuth and execution control, bot
+              verification, and launch creation with provenance. This page is aligned to the live product flow, not a
+              speculative architecture.
             </p>
             <div className="mt-6 inline-block rounded-lg border border-emerald-500/30 bg-emerald-900/30 p-4">
               <code className="text-emerald-300">Base URL: http://localhost:3000</code>
@@ -178,9 +189,9 @@ export default function ApiDocs() {
             <div className="text-sm uppercase tracking-[0.25em] text-cyan-300">Execution Truth</div>
             <div className="mt-4 space-y-4 text-sm text-gray-300">
               <p>
-                <code>idea -&gt; project -&gt; GitHub execution -&gt; launch</code> is the live system today.
+                <code>discover -&gt; claim -&gt; project -&gt; GitHub execution bridge -&gt; launch</code> is the live system today.
               </p>
-              <p>GitHub is the current execution bridge. Agent GitHub can replace this layer later without changing project intake or launch semantics.</p>
+              <p>GitHub is the current execution bridge. Agent GitHub can replace this layer later without changing discovery, project intake, or launch semantics.</p>
               <p>Bots are first-class actors, but verification remains owner-safe: the owner never sees the active verification code.</p>
             </div>
           </div>

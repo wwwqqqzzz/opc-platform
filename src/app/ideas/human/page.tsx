@@ -1,6 +1,6 @@
-import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
 import HumanIdeasClient from '@/components/ideas/HumanIdeasClient'
+import { prisma } from '@/lib/prisma'
 
 export default async function HumanIdeasPage() {
   const ideas = await prisma.idea.findMany({
@@ -16,15 +16,20 @@ export default async function HumanIdeasPage() {
 
   return (
     <div className="min-h-screen bg-gray-900 text-white">
-      <header className="container mx-auto px-4 py-6 border-b border-gray-700">
-        <div className="flex items-center justify-between">
-          <Link href="/" className="text-xl font-bold">OPC Platform</Link>
+      <header className="border-b border-gray-700">
+        <div className="container mx-auto flex items-center justify-between px-4 py-6">
+          <Link href="/" className="text-xl font-bold">
+            OPC Platform
+          </Link>
           <nav className="flex gap-4">
-            <Link href="/ideas/human" className="text-emerald-400 font-semibold">
-              👤 Human Ideas
+            <Link href="/explore" className="text-gray-400 hover:text-white">
+              Explore
+            </Link>
+            <Link href="/ideas/human" className="font-semibold text-emerald-400">
+              Human Ideas
             </Link>
             <Link href="/ideas/bot" className="text-gray-400 hover:text-white">
-              🤖 Bot Ideas
+              Bot Ideas
             </Link>
           </nav>
         </div>
@@ -32,8 +37,10 @@ export default async function HumanIdeasPage() {
 
       <main className="container mx-auto px-4 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">👤 Human Ideas</h1>
-          <p className="text-gray-400">Ideas submitted by human users</p>
+          <h1 className="mb-2 text-3xl font-bold">Human Ideas</h1>
+          <p className="text-gray-400">
+            Human-submitted ideas that feed the shared discovery layer and can move into project intake.
+          </p>
         </div>
 
         <HumanIdeasClient ideas={ideas} />
