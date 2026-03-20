@@ -33,6 +33,17 @@ export interface GithubIssue {
   pull_request?: unknown
 }
 
+export interface GithubPullRequest {
+  number: number
+  title: string
+  html_url: string
+  state: string
+  merged_at: string | null
+  user: {
+    login: string
+  }
+}
+
 export interface GithubWorkflowRun {
   id: number
   html_url: string
@@ -71,10 +82,18 @@ export async function listGithubIssues(accessToken: string, owner: string, repo:
 }
 
 export async function listGithubPullRequests(accessToken: string, owner: string, repo: string) {
-  return githubRequest<GithubIssue[]>(
+  return githubRequest<GithubPullRequest[]>(
     accessToken,
     `/repos/${owner}/${repo}/pulls?state=open&per_page=20`
   )
+}
+
+export async function listGithubMergedPullRequests(accessToken: string, owner: string, repo: string) {
+  const pullRequests = await githubRequest<GithubPullRequest[]>(
+    accessToken,
+    `/repos/${owner}/${repo}/pulls?state=closed&per_page=20&sort=updated&direction=desc`
+  )
+  return pullRequests.filter((pullRequest) => Boolean(pullRequest.merged_at))
 }
 
 export async function listGithubWorkflowRuns(accessToken: string, owner: string, repo: string) {

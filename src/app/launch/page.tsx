@@ -40,6 +40,8 @@ export default async function LaunchPage() {
             {launches.map((launch, index) => {
               const agentTeam = safeParseTeam(launch.agentTeam)
               const latestActivity = launch.project?.githubActivities[0] || null
+              const latestSnapshot = getLatestSnapshot(launch.project?.githubActivities)
+              const latestFailure = getLatestSyncFailure(launch.project?.lifecycleEvents)
 
               return (
                 <article key={launch.id} id={launch.id} className="rounded-lg bg-gray-800/50 p-6 transition hover:bg-gray-800">
@@ -94,6 +96,66 @@ export default async function LaunchPage() {
                           )}
                         </div>
                       </div>
+
+                      <div className="grid gap-4 lg:grid-cols-4">
+                        <EvidenceCard
+                          label="Last Sync"
+                          value={
+                            launch.project?.githubLastSyncedAt
+                              ? new Date(launch.project.githubLastSyncedAt).toLocaleString()
+                              : 'Not available'
+                          }
+                        />
+                        <EvidenceCard
+                          label="Tracked Commits"
+                          value={latestSnapshot ? String(latestSnapshot.commitCount) : 'Not available'}
+                        />
+                        <EvidenceCard
+                          label="Workflow Runs"
+                          value={latestSnapshot ? String(latestSnapshot.workflowRuns) : 'Not available'}
+                        />
+                        <EvidenceCard
+                          label="Primary Bootstrap"
+                          value={
+                            launch.project?.githubPrimaryIssueNumber && launch.project.githubPrimaryPrNumber
+                              ? `Issue #${launch.project.githubPrimaryIssueNumber} + PR #${launch.project.githubPrimaryPrNumber}`
+                              : 'Not available'
+                          }
+                        />
+                      </div>
+
+                      {(latestSnapshot?.latestMergedPullRequestUrl || latestSnapshot?.latestReleaseUrl || latestFailure) && (
+                        <div className="rounded-lg border border-gray-700 bg-gray-900/30 p-4">
+                          <div className="mb-3 text-sm font-medium text-white">Launch Evidence</div>
+                          <div className="flex flex-wrap gap-4 text-sm">
+                            {latestSnapshot?.latestMergedPullRequestUrl && (
+                              <a
+                                href={latestSnapshot.latestMergedPullRequestUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-purple-400 hover:text-purple-300"
+                              >
+                                Latest Merged PR
+                              </a>
+                            )}
+                            {latestSnapshot?.latestReleaseUrl && (
+                              <a
+                                href={latestSnapshot.latestReleaseUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-emerald-400 hover:text-emerald-300"
+                              >
+                                Latest Release
+                              </a>
+                            )}
+                          </div>
+                          {latestFailure && (
+                            <p className="mt-3 text-sm text-amber-300">
+                              Historical note: {latestFailure}
+                            </p>
+                          )}
+                        </div>
+                      )}
 
                       {agentTeam.length > 0 && (
                         <div>
@@ -179,6 +241,15 @@ export default async function LaunchPage() {
   )
 }
 
+function EvidenceCard({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-lg border border-gray-700 bg-gray-900/30 p-4">
+      <div className="text-sm text-gray-400">{label}</div>
+      <div className="mt-1 font-medium text-white">{value}</div>
+    </div>
+  )
+}
+
 function safeParseTeam(value: string | null) {
   if (!value) {
     return [] as Array<{ name: string; type: string }>
@@ -194,4 +265,48 @@ function safeParseTeam(value: string | null) {
   } catch {
     return []
   }
+}
+
+function getLatestSnapshot(
+  activities:
+    | Array<{
+        eventType: string
+        metadata: string | null
+      }>
+    | undefined
+) {
+  const snapshot = activities?.find((activity) => activity.eventType === 'sync_snapshot')
+  if (!snapshot?.metadata) {
+    return null
+  }
+
+  try {
+    const parsed = JSON.parse(snapshot.metadata) as Record<string, unknown>
+    return {
+      commitCount: Number(parsed.commitCount || 0),
+      workflowRuns: Number(parsed.workflowRuns || 0),
+      latestMergedPullRequestUrl:
+        typeof parsed.latestMergedPullRequestUrl === 'string' ? parsed.latestMergedPullRequestUrl : null,
+      latestReleaseUrl:
+        typeof parsed.latestReleaseUrl === 'string' ? parsed.latestReleaseUrl : null,
+    }
+  } catch {
+    return null
+  }
+}
+
+function getLatestSyncFailure(
+  lifecycleEvents:
+    | Array<{
+        eventType: string
+        description: string | null
+      }>
+    | undefined
+) {
+  const failure = lifecycleEvents
+    ?.slice()
+    .reverse()
+    .find((event) => event.eventType === 'github_sync_failed')
+
+  return failure?.description || null
 }

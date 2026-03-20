@@ -36,6 +36,7 @@ export async function POST(request: NextRequest) {
   const signature = request.headers.get('x-hub-signature-256')
   const event = request.headers.get('x-github-event') || 'unknown'
   const deliveryId = request.headers.get('x-github-delivery')
+  let projectId: string | null = null
 
   try {
     if (!verifyGithubWebhookSignature(payloadText, signature)) {
@@ -55,6 +56,8 @@ export async function POST(request: NextRequest) {
     if (!project) {
       return NextResponse.json({ ignored: true })
     }
+
+    projectId = project.id
 
     const sender = payload.sender as { login?: string } | undefined
     const issue = payload.issue as { number?: number; html_url?: string; state?: string } | undefined
@@ -148,6 +151,52 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('GitHub webhook failed:', error)
+    if (projectId) {
+      const project = await prisma.project.findUnique({
+        where: { id: projectId },
+        select: {
+          id: true,
+          deliveryStage: true,
+          agentGithubStatus: true,
+        },
+      })
+
+      if (project) {
+        const message = error instanceof Error ? error.message : 'Failed to process GitHub webhook'
+        await prisma.project.update({
+          where: { id: project.id },
+          data: {
+            githubSyncStatus: 'error',
+          },
+        })
+
+        await createGithubActivity(prisma, {
+          projectId: project.id,
+          githubEventId: deliveryId,
+          eventType: 'sync_error',
+          title: `GitHub webhook failed: ${event}`,
+          status: 'error',
+          metadata: {
+            message,
+            event,
+          },
+        })
+
+        await createLifecycleEvent(prisma, {
+          projectId: project.id,
+          eventType: 'github_sync_failed',
+          title: 'GitHub webhook processing failed',
+          description: message,
+          deliveryStage: project.deliveryStage,
+          agentGithubStatus: project.agentGithubStatus,
+          metadata: {
+            event,
+            deliveryId,
+            message,
+          },
+        })
+      }
+    }
     return NextResponse.json({ error: 'Failed to process GitHub webhook' }, { status: 500 })
   }
 }

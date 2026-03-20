@@ -47,6 +47,7 @@ export const PROJECT_LIFECYCLE_EVENT_TYPES = [
   'github_issue_created',
   'github_pr_created',
   'github_progress_detected',
+  'github_sync_failed',
   'github_ready_for_launch',
   'launch_created',
 ] as const
@@ -63,6 +64,7 @@ export const PROJECT_GITHUB_ACTIVITY_TYPES = [
   'workflow_run',
   'release',
   'sync_snapshot',
+  'sync_error',
 ] as const
 
 export type ProjectGithubActivityType = (typeof PROJECT_GITHUB_ACTIVITY_TYPES)[number]

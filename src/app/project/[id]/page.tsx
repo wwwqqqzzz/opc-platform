@@ -220,6 +220,8 @@ export default function ProjectDetailPage() {
   const canLaunch = project.status === 'in_progress' && !project.launch && project.deliveryStage === 'launch_ready'
   const nextAction = getNextAction(project, githubConnected)
   const launchChecklist = getLaunchChecklist(project)
+  const latestSyncError = getLatestSyncError(project)
+  const latestSnapshot = getLatestSnapshot(project)
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 text-white">
@@ -345,6 +347,13 @@ export default function ProjectDetailPage() {
                 <div className="mt-1 font-medium text-white">{nextAction.title}</div>
                 <p className="mt-2 text-sm text-cyan-100/80">{nextAction.description}</p>
               </div>
+              {latestSyncError && (
+                <div className="mt-4 rounded-lg border border-red-700 bg-red-900/20 p-4">
+                  <div className="text-sm text-red-200">Latest GitHub failure</div>
+                  <div className="mt-1 font-medium text-white">{latestSyncError.title}</div>
+                  <p className="mt-2 text-sm text-red-100/80">{latestSyncError.description}</p>
+                </div>
+              )}
             </section>
           </div>
 
@@ -545,6 +554,28 @@ export default function ProjectDetailPage() {
                     <div className="mt-1 text-xs text-gray-500">{project.github.stats.latestCommitSha}</div>
                   </div>
                 )}
+
+                {latestSnapshot && (
+                  <div className="rounded-lg border border-gray-700 bg-gray-900/30 p-4">
+                    <div className="text-sm text-gray-400">Last Sync Snapshot</div>
+                    <div className="mt-3 grid gap-3 md:grid-cols-2">
+                      <InfoCard label="Workflow Runs" value={String(latestSnapshot.workflowRuns)} />
+                      <InfoCard label="Tracked Commits" value={String(latestSnapshot.commitCount)} />
+                    </div>
+                    <div className="mt-3 flex flex-wrap gap-4 text-sm">
+                      {latestSnapshot.latestMergedPullRequestUrl && (
+                        <a href={latestSnapshot.latestMergedPullRequestUrl} target="_blank" rel="noopener noreferrer" className="text-purple-400 hover:text-purple-300">
+                          Latest Merged PR
+                        </a>
+                      )}
+                      {latestSnapshot.latestReleaseUrl && (
+                        <a href={latestSnapshot.latestReleaseUrl} target="_blank" rel="noopener noreferrer" className="text-emerald-400 hover:text-emerald-300">
+                          Latest Release
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </section>
@@ -609,7 +640,7 @@ export default function ProjectDetailPage() {
                           activity.status || null,
                         ]
                           .filter(Boolean)
-                          .join(' • ') || 'GitHub activity'
+                          .join(' | ') || 'GitHub activity'
                       }
                       url={activity.url}
                     />
@@ -817,6 +848,41 @@ function getLaunchChecklist(project: ProjectDto) {
       complete: !project.launch,
     },
   ]
+}
+
+function getLatestSyncError(project: ProjectDto) {
+  const syncFailure = [...project.lifecycle]
+    .reverse()
+    .find((event) => event.eventType === 'github_sync_failed')
+
+  if (!syncFailure) {
+    return null
+  }
+
+  return {
+    title: syncFailure.title,
+    description: syncFailure.description || 'GitHub sync failed and needs attention.',
+  }
+}
+
+function getLatestSnapshot(project: ProjectDto) {
+  const snapshot = project.githubActivity.find((activity) => activity.eventType === 'sync_snapshot')
+  if (!snapshot?.metadata) {
+    return null
+  }
+
+  return {
+    workflowRuns: Number(snapshot.metadata.workflowRuns || 0),
+    commitCount: Number(snapshot.metadata.commitCount || 0),
+    latestMergedPullRequestUrl:
+      typeof snapshot.metadata.latestMergedPullRequestUrl === 'string'
+        ? snapshot.metadata.latestMergedPullRequestUrl
+        : null,
+    latestReleaseUrl:
+      typeof snapshot.metadata.latestReleaseUrl === 'string'
+        ? snapshot.metadata.latestReleaseUrl
+        : null,
+  }
 }
 
 function getNextAction(project: ProjectDto, githubConnected: boolean) {

@@ -1,6 +1,13 @@
 import type { Project } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
-import { listGithubCommits, listGithubIssues, listGithubPullRequests, listGithubReleases, listGithubWorkflowRuns } from '@/lib/github/repos'
+import {
+  listGithubCommits,
+  listGithubIssues,
+  listGithubMergedPullRequests,
+  listGithubPullRequests,
+  listGithubReleases,
+  listGithubWorkflowRuns,
+} from '@/lib/github/repos'
 import { deriveWorkflowStatusFromSnapshot, deriveAgentGithubStatusFromGithubWorkflowStatus, deriveDeliveryStageFromGithubWorkflowStatus } from '@/lib/projects/github-state'
 import { createGithubActivity, createLifecycleEvent } from '@/lib/projects/lifecycle'
 
@@ -21,10 +28,11 @@ export async function syncProjectGithubState(project: Project, accessToken: stri
     throw new Error('Project repository is not connected')
   }
 
-  const [commits, issues, pullRequests, workflowRuns, releases] = await Promise.all([
+  const [commits, issues, pullRequests, mergedPullRequests, workflowRuns, releases] = await Promise.all([
     listGithubCommits(accessToken, project.githubRepoOwner, project.githubRepoName),
     listGithubIssues(accessToken, project.githubRepoOwner, project.githubRepoName),
     listGithubPullRequests(accessToken, project.githubRepoOwner, project.githubRepoName),
+    listGithubMergedPullRequests(accessToken, project.githubRepoOwner, project.githubRepoName).catch(() => []),
     listGithubWorkflowRuns(accessToken, project.githubRepoOwner, project.githubRepoName).catch(() => []),
     listGithubReleases(accessToken, project.githubRepoOwner, project.githubRepoName).catch(() => []),
   ])
@@ -38,13 +46,13 @@ export async function syncProjectGithubState(project: Project, accessToken: stri
     latestCommitSha: commits[0]?.sha || null,
     latestCommitMessage: commits[0]?.commit.message || null,
     latestCommitUrl: commits[0]?.html_url || null,
-    latestMergedPullRequestUrl: null,
+    latestMergedPullRequestUrl: mergedPullRequests[0]?.html_url || null,
     latestReleaseUrl: releases[0]?.html_url || null,
   }
 
   const workflowStatus = deriveWorkflowStatusFromSnapshot({
     hasRelease: Boolean(releases[0]),
-    latestMergedPullRequest: false,
+    latestMergedPullRequest: Boolean(mergedPullRequests[0]),
     openPullRequests: pullRequests.length,
     recentCommits: commits.length,
     openIssues: openIssues.length,
