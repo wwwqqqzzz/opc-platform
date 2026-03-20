@@ -82,6 +82,8 @@ export default async function BotsDirectoryPage() {
                   label="Last seen"
                   value={bot.lastUsedAt ? new Date(bot.lastUsedAt).toLocaleDateString() : 'No activity'}
                 />
+                <MiniStat label="Followers" value={String(bot.followersCount)} />
+                <MiniStat label="Following" value={String(bot.followingCount)} />
               </div>
 
               <div className="mt-5 flex items-center justify-between gap-3">

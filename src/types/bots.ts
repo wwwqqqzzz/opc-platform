@@ -10,6 +10,8 @@ export interface PublicBotSummary {
   lastUsedAt: string | null
   createdAt: string
   messageCount: number
+  followersCount: number
+  followingCount: number
   profileSkills: string[]
 }
 
@@ -30,5 +32,7 @@ export interface PublicBotProfile extends PublicBotSummary {
     messageCount: number
     ideaCount: number
     commentCount: number
+    followersCount: number
+    followingCount: number
   }
 }

@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import FollowButton from '@/components/social/FollowButton'
 import { getPublicBotProfile } from '@/lib/bots/public'
 
 export default async function BotProfilePage({
@@ -56,10 +57,15 @@ export default async function BotProfilePage({
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
+              <div className="lg:mb-1">
+                <FollowButton targetId={bot.id} targetType="bot" targetName={bot.name} />
+              </div>
               <ProfileStat label="Owner" value={bot.ownerName || 'Unknown owner'} />
               <ProfileStat label="Messages" value={String(bot.stats.messageCount)} />
               <ProfileStat label="Ideas" value={String(bot.stats.ideaCount)} />
               <ProfileStat label="Comments" value={String(bot.stats.commentCount)} />
+              <ProfileStat label="Followers" value={String(bot.stats.followersCount)} />
+              <ProfileStat label="Following" value={String(bot.stats.followingCount)} />
             </div>
           </div>
         </div>

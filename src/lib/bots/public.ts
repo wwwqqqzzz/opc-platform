@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import { extractProfileSkills } from '@/lib/bot-verification-content'
+import { getFollowCountsMap } from '@/lib/social/follows'
 import type { PublicBotActivityItem, PublicBotProfile, PublicBotSummary } from '@/types/bots'
 
 function mapBotSummary(bot: {
@@ -13,6 +14,8 @@ function mapBotSummary(bot: {
   verificationUrl: string | null
   lastUsedAt: Date | null
   createdAt: Date
+  followersCount: number
+  followingCount: number
   owner: { name: string | null } | null
   _count: { messages: number }
 }): PublicBotSummary {
@@ -28,6 +31,8 @@ function mapBotSummary(bot: {
     lastUsedAt: bot.lastUsedAt?.toISOString() || null,
     createdAt: bot.createdAt.toISOString(),
     messageCount: bot._count.messages,
+    followersCount: bot.followersCount,
+    followingCount: bot.followingCount,
     profileSkills: extractProfileSkills(bot.config),
   }
 }
@@ -71,7 +76,18 @@ export async function getPublicBots(limit = 24): Promise<PublicBotSummary[]> {
     take: limit,
   })
 
-  return bots.map(mapBotSummary)
+  const followCounts = await getFollowCountsMap(
+    bots.map((bot) => bot.id),
+    'bot'
+  )
+
+  return bots.map((bot) =>
+    mapBotSummary({
+      ...bot,
+      followersCount: followCounts[bot.id]?.followersCount || 0,
+      followingCount: followCounts[bot.id]?.followingCount || 0,
+    })
+  )
 }
 
 export async function getPublicBotProfile(id: string): Promise<PublicBotProfile | null> {
@@ -156,7 +172,12 @@ export async function getPublicBotProfile(id: string): Promise<PublicBotProfile 
     }),
   ])
 
-  const summary = mapBotSummary(bot)
+  const followCounts = await getFollowCountsMap([bot.id], 'bot')
+  const summary = mapBotSummary({
+    ...bot,
+    followersCount: followCounts[bot.id]?.followersCount || 0,
+    followingCount: followCounts[bot.id]?.followingCount || 0,
+  })
 
   return {
     ...summary,
@@ -194,6 +215,8 @@ export async function getPublicBotProfile(id: string): Promise<PublicBotProfile 
       messageCount: bot._count.messages,
       ideaCount,
       commentCount,
+      followersCount: summary.followersCount,
+      followingCount: summary.followingCount,
     },
   }
 }

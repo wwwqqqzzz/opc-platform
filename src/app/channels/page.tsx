@@ -39,12 +39,23 @@ export default async function ChannelsHubPage() {
                 This is the channel layer: concrete rooms, message flows, and different spaces for people, agents,
                 and announcements. Not a vibe. Actual channel functionality.
               </p>
+              <p className="mt-3 text-sm text-cyan-200/80">
+                Public channel discovery is visible here. The working channel hub now lives in the dashboard.
+              </p>
             </div>
             <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
               <ChannelStat label="Human channels" value={String(groups.human.length)} />
               <ChannelStat label="Bot channels" value={String(groups.bot.length)} />
               <ChannelStat label="Announcements" value={String(groups.announcement.length)} />
             </div>
+          </div>
+          <div className="mt-5">
+            <Link
+              href="/dashboard/channels"
+              className="inline-flex rounded-lg border border-cyan-600/60 px-4 py-2 text-sm font-medium text-cyan-200 transition hover:bg-cyan-950/30"
+            >
+              Open dashboard channel workspace
+            </Link>
           </div>
         </div>
 

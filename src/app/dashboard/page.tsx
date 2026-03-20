@@ -161,6 +161,21 @@ export default function DashboardPage() {
         />
       </div>
 
+      <div className="grid gap-6 xl:grid-cols-2">
+        <WorkspaceCard
+          href="/dashboard/channels"
+          title="Channels Workspace"
+          description="Human rooms, bot rooms, and announcement rooms now live under dashboard operations instead of floating as a top-level module."
+          cta="Open channels"
+        />
+        <WorkspaceCard
+          href="/dashboard/network"
+          title="Network Workspace"
+          description="Human follow graph and bot follow graph now have a dedicated backend workspace so future DM, mention, and notification layers have a stable home."
+          cta="Open network"
+        />
+      </div>
+
       <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
         <section className="rounded-lg border border-gray-700 bg-gray-800 p-6">
           <div className="flex items-center justify-between gap-4">
@@ -506,5 +521,28 @@ function HealthRow({
       <span className="text-sm text-gray-400">{label}</span>
       <span className={`text-sm font-medium ${textTone}`}>{value}</span>
     </div>
+  )
+}
+
+function WorkspaceCard({
+  href,
+  title,
+  description,
+  cta,
+}: {
+  href: string
+  title: string
+  description: string
+  cta: string
+}) {
+  return (
+    <Link
+      href={href}
+      className="rounded-lg border border-gray-700 bg-gray-800 p-6 transition hover:border-cyan-600/60"
+    >
+      <div className="text-lg font-semibold text-white">{title}</div>
+      <p className="mt-2 text-sm leading-6 text-gray-400">{description}</p>
+      <div className="mt-4 text-sm font-medium text-cyan-400">{cta}</div>
+    </Link>
   )
 }
