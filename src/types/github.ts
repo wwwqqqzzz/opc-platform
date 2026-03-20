@@ -14,6 +14,19 @@ export interface GithubConnection {
   scopes: string[]
 }
 
+export interface GithubIntegrationStatus {
+  configured: boolean
+  missingEnv: string[]
+  connection: GithubConnection
+  connectedProjectCount: number
+  blockingProjectCount: number
+  blockingProjects: Array<{
+    id: string
+    title: string
+    githubRepoFullName: string
+  }>
+}
+
 export interface GithubRepoBinding {
   repoId: string | null
   owner: string | null

@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma'
 import { requireGithubAccessToken } from '@/lib/github/auth'
 import { getOwnedProject } from '@/lib/github/guards'
 import { createGithubRepositoryWebhook, getGithubRepository } from '@/lib/github/repos'
-import { canConnectGithubRepo } from '@/lib/projects/transitions'
+import { getGithubRepoConnectionBlocker } from '@/lib/projects/transitions'
 import { createLifecycleEvent } from '@/lib/projects/lifecycle'
 import { mapProjectDto } from '@/lib/github/mappers'
 
@@ -20,16 +20,33 @@ export async function POST(
 
     const { id } = await params
     const body = await request.json()
-    const { repoOwner, repoName } = body as { repoOwner?: string; repoName?: string }
+    const rawRepoOwner = typeof body.repoOwner === 'string' ? body.repoOwner.trim() : ''
+    const rawRepoName = typeof body.repoName === 'string' ? body.repoName.trim() : ''
+    const [parsedOwner, parsedName] = rawRepoOwner.includes('/') && !rawRepoName
+      ? rawRepoOwner.split('/', 2)
+      : [rawRepoOwner, rawRepoName]
+    const repoOwner = parsedOwner?.trim()
+    const repoName = parsedName?.trim()
 
     if (!repoOwner || !repoName) {
-      return NextResponse.json({ error: 'repoOwner and repoName are required' }, { status: 400 })
+      return NextResponse.json(
+        { error: 'Provide both repository owner and repository name, or paste owner/repo into the first field.' },
+        { status: 400 }
+      )
+    }
+
+    if (!/^[A-Za-z0-9_.-]+$/.test(repoOwner) || !/^[A-Za-z0-9_.-]+$/.test(repoName)) {
+      return NextResponse.json(
+        { error: 'Repository owner and name may only contain letters, numbers, dots, underscores, and hyphens.' },
+        { status: 400 }
+      )
     }
 
     const project = await getOwnedProject(id, user.id)
-    if (!canConnectGithubRepo(project)) {
+    const connectionBlocker = getGithubRepoConnectionBlocker(project)
+    if (connectionBlocker) {
       return NextResponse.json(
-        { error: 'This project can no longer change its connected repository.' },
+        { error: connectionBlocker },
         { status: 400 }
       )
     }

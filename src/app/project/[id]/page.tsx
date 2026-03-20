@@ -95,8 +95,9 @@ export default function ProjectDetailPage() {
 
   const handleConnectRepo = async () => {
     if (!project) return
-    if (!repoForm.repoOwner || !repoForm.repoName) {
-      setActionError('Repository owner and repository name are required.')
+    const canParseCombinedRepo = repoForm.repoOwner.includes('/') && !repoForm.repoName
+    if (!repoForm.repoOwner || (!repoForm.repoName && !canParseCombinedRepo)) {
+      setActionError('Provide both repository owner and repository name, or paste owner/repo into the first field.')
       return
     }
 
@@ -191,8 +192,13 @@ export default function ProjectDetailPage() {
   const canManageProject = Boolean(user?.id && project.user?.id === user.id)
   const githubConnected = Boolean(project.githubConnection?.connected)
   const repoConnected = Boolean(project.github?.connection.fullName)
-  const bootstrapReady = repoConnected && !project.github?.bootstrap.issueNumber && !project.launch
+  const repoConnectionBlocker = getRepoConnectionBlocker(project, githubConnected)
+  const bootstrapBlocker = getBootstrapBlocker(project)
+  const syncBlocker = getSyncBlocker(project)
+  const launchBlocker = getLaunchBlocker(project)
+  const bootstrapReady = bootstrapBlocker === null
   const canLaunch = project.status === 'in_progress' && !project.launch && project.deliveryStage === 'launch_ready'
+  const nextAction = getNextAction(project, githubConnected)
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 text-white">
@@ -279,6 +285,7 @@ export default function ProjectDetailPage() {
                 {launching ? 'Launching...' : 'Create Launch'}
               </button>
             </div>
+            {launchBlocker && <p className="mt-3 text-sm text-amber-300">{launchBlocker}</p>}
           </Dialog>
         )}
 
@@ -311,6 +318,11 @@ export default function ProjectDetailPage() {
                   label="Last Synced"
                   value={project.githubLastSyncedAt ? new Date(project.githubLastSyncedAt).toLocaleString() : 'Not yet'}
                 />
+              </div>
+              <div className="mt-4 rounded-lg border border-cyan-700/40 bg-cyan-900/20 p-4">
+                <div className="text-sm text-cyan-200">Recommended next step</div>
+                <div className="mt-1 font-medium text-white">{nextAction.title}</div>
+                <p className="mt-2 text-sm text-cyan-100/80">{nextAction.description}</p>
               </div>
             </section>
           </div>
@@ -392,6 +404,19 @@ export default function ProjectDetailPage() {
                         </a>
                       )}
                     </div>
+
+                    <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                      <ChecklistPill label="GitHub account" complete={githubConnected} />
+                      <ChecklistPill label="Repository connected" complete={repoConnected} />
+                      <ChecklistPill
+                        label="Bootstrap created"
+                        complete={Boolean(project.github.bootstrap.issueNumber && project.github.bootstrap.pullRequestNumber)}
+                      />
+                      <ChecklistPill
+                        label="Launch ready"
+                        complete={project.deliveryStage === 'launch_ready' || project.deliveryStage === 'launched'}
+                      />
+                    </div>
                   </div>
                 ) : (
                   <div className="rounded-lg border border-gray-700 bg-gray-900/30 p-4">
@@ -411,7 +436,7 @@ export default function ProjectDetailPage() {
                         label="Repository Owner"
                         value={repoForm.repoOwner}
                         onChange={(value) => setRepoForm((prev) => ({ ...prev, repoOwner: value }))}
-                        placeholder="octocat"
+                        placeholder="octocat or octocat/hello-world"
                       />
                       <DialogField
                         label="Repository Name"
@@ -422,11 +447,16 @@ export default function ProjectDetailPage() {
                     </div>
                     <button
                       onClick={handleConnectRepo}
-                      disabled={!githubConnected || connectingRepo}
+                      disabled={Boolean(repoConnectionBlocker) || connectingRepo}
                       className="mt-4 rounded-lg bg-cyan-600 px-5 py-2 font-medium text-white transition hover:bg-cyan-700 disabled:opacity-50"
                     >
                       {connectingRepo ? 'Connecting...' : 'Connect Repository'}
                     </button>
+                    {repoConnectionBlocker ? (
+                      <p className="mt-3 text-sm text-amber-300">{repoConnectionBlocker}</p>
+                    ) : (
+                      <p className="mt-3 text-sm text-gray-500">You can enter separate fields, or paste `owner/repo` into the first field.</p>
+                    )}
                   </div>
                 )}
               </div>
@@ -445,13 +475,27 @@ export default function ProjectDetailPage() {
                     >
                       {bootstrapping ? 'Bootstrapping...' : 'Start GitHub Workflow'}
                     </button>
+                    {!canManageProject ? (
+                      <p className="text-sm text-gray-500">Only the project owner can create the GitHub bootstrap workflow.</p>
+                    ) : bootstrapBlocker ? (
+                      <p className="text-sm text-amber-300">{bootstrapBlocker}</p>
+                    ) : (
+                      <p className="text-sm text-gray-500">This creates the primary issue, bootstrap branch, and first pull request in GitHub.</p>
+                    )}
                     <button
                       onClick={handleSync}
-                      disabled={!canManageProject || !repoConnected || syncing}
+                      disabled={!canManageProject || Boolean(syncBlocker) || syncing}
                       className="w-full rounded-lg border border-gray-600 px-4 py-2 text-sm font-medium text-gray-200 transition hover:bg-gray-700 disabled:opacity-50"
                     >
                       {syncing ? 'Syncing...' : 'Sync GitHub Activity'}
                     </button>
+                    {!canManageProject ? (
+                      <p className="text-sm text-gray-500">Only the project owner can sync GitHub activity back into OPC.</p>
+                    ) : syncBlocker ? (
+                      <p className="text-sm text-amber-300">{syncBlocker}</p>
+                    ) : (
+                      <p className="text-sm text-gray-500">Use sync whenever you want current commit, issue, PR, workflow, and release status.</p>
+                    )}
                   </div>
                 </div>
 
@@ -530,6 +574,118 @@ export default function ProjectDetailPage() {
       </div>
     </main>
   )
+}
+
+function ChecklistPill({ label, complete }: { label: string; complete: boolean }) {
+  return (
+    <div
+      className={`rounded-lg border px-3 py-2 text-sm ${
+        complete
+          ? 'border-emerald-700 bg-emerald-900/20 text-emerald-200'
+          : 'border-gray-700 bg-gray-950/40 text-gray-400'
+      }`}
+    >
+      {label}: {complete ? 'Done' : 'Pending'}
+    </div>
+  )
+}
+
+function getRepoConnectionBlocker(project: ProjectDto, githubConnected: boolean) {
+  if (!githubConnected) {
+    return 'Connect your GitHub account in Settings before binding a repository.'
+  }
+
+  if (project.status === 'launched') {
+    return 'Launched projects keep their repository history locked for provenance.'
+  }
+
+  if (project.githubPrimaryIssueNumber || project.githubPrimaryPrNumber) {
+    return 'This project already created GitHub bootstrap artifacts, so the connected repository is fixed.'
+  }
+
+  return null
+}
+
+function getBootstrapBlocker(project: ProjectDto) {
+  if (!project.githubRepoFullName) {
+    return 'Connect a GitHub repository before starting the workflow.'
+  }
+
+  if (project.status === 'launched') {
+    return 'Launched projects cannot start a new GitHub workflow.'
+  }
+
+  if (project.githubPrimaryIssueNumber || project.githubPrimaryPrNumber) {
+    return 'GitHub bootstrap already exists for this project.'
+  }
+
+  return null
+}
+
+function getSyncBlocker(project: ProjectDto) {
+  if (!project.githubRepoFullName) {
+    return 'Connect a GitHub repository before running sync.'
+  }
+
+  if (project.status === 'launched') {
+    return 'Launched projects are read-only in OPC.'
+  }
+
+  return null
+}
+
+function getLaunchBlocker(project: ProjectDto) {
+  if (project.launch) {
+    return 'This project already has a launch entry.'
+  }
+
+  if (project.deliveryStage !== 'launch_ready') {
+    return 'Launch opens after GitHub activity reaches the launch-ready state.'
+  }
+
+  return null
+}
+
+function getNextAction(project: ProjectDto, githubConnected: boolean) {
+  if (!githubConnected) {
+    return {
+      title: 'Connect GitHub in Settings',
+      description: 'The owner account needs GitHub OAuth before this project can bind a repository or create bootstrap artifacts.',
+    }
+  }
+
+  if (!project.githubRepoFullName) {
+    return {
+      title: 'Bind the project repository',
+      description: 'Connect one repository to establish the single development source of truth for this project.',
+    }
+  }
+
+  if (!project.githubPrimaryIssueNumber || !project.githubPrimaryPrNumber) {
+    return {
+      title: 'Start the GitHub workflow',
+      description: 'Create the primary issue, bootstrap branch, and first pull request so development activity can be tracked from OPC.',
+    }
+  }
+
+  if (project.deliveryStage === 'launch_ready' && !project.launch) {
+    return {
+      title: 'Send this project to Launch',
+      description: 'GitHub activity already marked the project as ready. Create the launch entry while the delivery history is fresh.',
+    }
+  }
+
+  if (project.launch) {
+    return {
+      title: 'Monitor launch performance',
+      description: 'The build already launched. Use the timeline and launch page as the public provenance record.',
+    }
+  }
+
+  return {
+    title: 'Keep GitHub activity in sync',
+    description: 'Use manual sync after meaningful repo changes so OPC reflects the latest execution state and launch readiness.',
+  }
 }
 
 function Badge({ label, tone }: { label: string; tone: 'yellow' | 'cyan' | 'blue' | 'gray' }) {

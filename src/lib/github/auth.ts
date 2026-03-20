@@ -1,6 +1,12 @@
 import { prisma } from '@/lib/prisma'
 import type { GithubConnection } from '@/types/github'
 
+const REQUIRED_GITHUB_ENV_VARS = [
+  'GITHUB_CLIENT_ID',
+  'GITHUB_CLIENT_SECRET',
+  'GITHUB_OAUTH_REDIRECT_URI',
+] as const
+
 export const GITHUB_USER_SELECT = {
   id: true,
   email: true,
@@ -47,6 +53,14 @@ export async function requireGithubAccessToken(userId: string) {
   return {
     accessToken: user.githubAccessToken,
     user,
+  }
+}
+
+export function getGithubConfigStatus() {
+  const missingEnv = REQUIRED_GITHUB_ENV_VARS.filter((key) => !process.env[key])
+  return {
+    configured: missingEnv.length === 0,
+    missingEnv,
   }
 }
 

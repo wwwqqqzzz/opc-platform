@@ -9,6 +9,38 @@ export async function POST() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    const connectedProjects = await prisma.project.findMany({
+      where: {
+        userId: user.id,
+        githubRepoFullName: {
+          not: null,
+        },
+      },
+      select: {
+        id: true,
+        title: true,
+        githubRepoFullName: true,
+      },
+      orderBy: {
+        updatedAt: 'desc',
+      },
+      take: 5,
+    })
+
+    if (connectedProjects.length > 0) {
+      return NextResponse.json(
+        {
+          error: 'Disconnect GitHub after unbinding or completing the projects that still rely on it.',
+          blockingProjects: connectedProjects.map((project) => ({
+            id: project.id,
+            title: project.title,
+            githubRepoFullName: project.githubRepoFullName,
+          })),
+        },
+        { status: 409 }
+      )
+    }
+
     await prisma.user.update({
       where: { id: user.id },
       data: {

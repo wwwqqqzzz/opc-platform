@@ -3,10 +3,13 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
+import type { GithubIntegrationStatus } from '@/types/github'
 
 export default function SettingsPage() {
   const { user, refreshUser } = useAuth()
   const searchParams = useSearchParams()
+  const [githubStatus, setGithubStatus] = useState<GithubIntegrationStatus | null>(null)
+  const [githubStatusLoading, setGithubStatusLoading] = useState(true)
   const [loading, setLoading] = useState(false)
   const [disconnectingGithub, setDisconnectingGithub] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -33,6 +36,32 @@ export default function SettingsPage() {
       setError('Please sign in before completing GitHub OAuth.')
     }
   }, [refreshUser, searchParams])
+
+  useEffect(() => {
+    if (user) {
+      void fetchGithubStatus()
+    } else {
+      setGithubStatus(null)
+      setGithubStatusLoading(false)
+    }
+  }, [user])
+
+  const fetchGithubStatus = async () => {
+    try {
+      setGithubStatusLoading(true)
+      const response = await fetch('/api/integrations/github/me')
+      if (!response.ok) {
+        throw new Error('Failed to load GitHub integration status')
+      }
+
+      const data: GithubIntegrationStatus = await response.json()
+      setGithubStatus(data)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load GitHub integration status')
+    } finally {
+      setGithubStatusLoading(false)
+    }
+  }
 
   const updateName = async (event: React.FormEvent) => {
     event.preventDefault()
@@ -123,6 +152,7 @@ export default function SettingsPage() {
 
       setSuccess('GitHub account disconnected.')
       await refreshUser()
+      await fetchGithubStatus()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to disconnect GitHub')
     } finally {
@@ -138,7 +168,10 @@ export default function SettingsPage() {
     )
   }
 
-  const githubConnected = Boolean(user.githubLogin && user.githubConnectedAt)
+  const githubConnected = Boolean(githubStatus?.connection.connected)
+  const githubConfigured = githubStatus?.configured ?? false
+  const blockingProjects = githubStatus?.blockingProjects ?? []
+  const githubScopes = githubStatus?.connection.scopes ?? []
 
   return (
     <div className="space-y-6">
@@ -158,41 +191,86 @@ export default function SettingsPage() {
           </p>
         </div>
         <div className="space-y-4 p-6">
+          {githubStatusLoading ? (
+            <div className="rounded-lg border border-gray-700 bg-gray-900/40 p-4 text-sm text-gray-400">
+              Loading GitHub integration status...
+            </div>
+          ) : null}
+
+          {!githubConfigured && githubStatus && (
+            <div className="rounded-lg border border-amber-700 bg-amber-900/30 p-4 text-sm text-amber-100">
+              GitHub OAuth is not fully configured yet. Missing environment variables:{' '}
+              {githubStatus.missingEnv.join(', ')}
+            </div>
+          )}
+
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div className="flex items-center gap-4">
               <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-full border border-gray-700 bg-gray-900 text-lg font-semibold">
-                {githubConnected ? (user.githubLogin || 'GH').slice(0, 2).toUpperCase() : 'GH'}
+                {githubConnected ? (githubStatus?.connection.login || 'GH').slice(0, 2).toUpperCase() : 'GH'}
               </div>
               <div>
                 <div className="text-sm text-gray-400">Status</div>
                 <div className="text-base font-medium text-white">
-                  {githubConnected ? `Connected as @${user.githubLogin}` : 'Not connected'}
+                  {githubConnected ? `Connected as @${githubStatus?.connection.login}` : 'Not connected'}
                 </div>
                 <div className="mt-1 text-sm text-gray-500">
                   {githubConnected
-                    ? `Connected on ${new Date(user.githubConnectedAt as string).toLocaleString()}`
+                    ? `Connected on ${new Date(githubStatus?.connection.connectedAt as string).toLocaleString()}`
                     : 'OAuth scopes: repo, read:user, user:email'}
                 </div>
               </div>
             </div>
 
             <div className="flex gap-3">
-              <a
-                href="/api/integrations/github/connect"
-                className="rounded-lg bg-cyan-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-cyan-700"
-              >
-                {githubConnected ? 'Reconnect GitHub' : 'Connect GitHub'}
-              </a>
+              {githubConfigured ? (
+                <a
+                  href="/api/integrations/github/connect"
+                  className="rounded-lg bg-cyan-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-cyan-700"
+                >
+                  {githubConnected ? 'Reconnect GitHub' : 'Connect GitHub'}
+                </a>
+              ) : (
+                <button
+                  type="button"
+                  disabled
+                  className="rounded-lg bg-gray-700 px-4 py-2 text-sm font-medium text-gray-400"
+                >
+                  Connect GitHub
+                </button>
+              )}
               {githubConnected && (
                 <button
                   onClick={disconnectGithub}
-                  disabled={disconnectingGithub}
+                  disabled={disconnectingGithub || blockingProjects.length > 0}
                   className="rounded-lg border border-red-700 px-4 py-2 text-sm font-medium text-red-300 transition hover:bg-red-900/30 disabled:opacity-50"
                 >
                   {disconnectingGithub ? 'Disconnecting...' : 'Disconnect'}
                 </button>
               )}
             </div>
+          </div>
+
+          <div className="grid gap-4 lg:grid-cols-3">
+            <ChecklistCard
+              title="1. Connect account"
+              status={githubConnected ? 'done' : githubConfigured ? 'current' : 'blocked'}
+              description={
+                githubConfigured
+                  ? 'Authorize GitHub once so OPC can access repositories you choose.'
+                  : 'Add the required GitHub env vars before OAuth can be used.'
+              }
+            />
+            <ChecklistCard
+              title="2. Bind one repo per project"
+              status={githubConnected ? 'current' : 'blocked'}
+              description="Each project gets a single source of truth repository for provenance and launch history."
+            />
+            <ChecklistCard
+              title="3. Bootstrap and sync"
+              status={githubConnected ? 'current' : 'blocked'}
+              description="Create the initial issue and PR from OPC, then sync GitHub activity back into project status."
+            />
           </div>
 
           <div className="rounded-lg border border-gray-700 bg-gray-900/40 p-4 text-sm text-gray-400">
@@ -202,7 +280,24 @@ export default function SettingsPage() {
               <li>Create the bootstrap issue, branch, and pull request from OPC</li>
               <li>Sync commits, issues, PRs, workflow runs, and releases back into the project timeline</li>
             </ul>
+            {githubScopes.length > 0 && (
+              <div className="mt-3 text-xs text-gray-500">Scopes in use: {githubScopes.join(', ')}</div>
+            )}
           </div>
+
+          {blockingProjects.length > 0 && (
+            <div className="rounded-lg border border-blue-700 bg-blue-900/20 p-4 text-sm text-blue-100">
+              GitHub disconnect is locked while {blockingProjects.length} project
+              {blockingProjects.length === 1 ? ' is' : 's are'} still connected:
+              <ul className="mt-2 space-y-1 text-blue-200">
+                {blockingProjects.map((project) => (
+                  <li key={project.id}>
+                    {project.title} ({project.githubRepoFullName})
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
       </section>
 
@@ -281,6 +376,36 @@ export default function SettingsPage() {
           </form>
         </Modal>
       )}
+    </div>
+  )
+}
+
+function ChecklistCard({
+  title,
+  status,
+  description,
+}: {
+  title: string
+  status: 'done' | 'current' | 'blocked'
+  description: string
+}) {
+  const tone =
+    status === 'done'
+      ? 'border-emerald-700 bg-emerald-900/20 text-emerald-100'
+      : status === 'current'
+      ? 'border-cyan-700 bg-cyan-900/20 text-cyan-100'
+      : 'border-gray-700 bg-gray-900/40 text-gray-300'
+
+  const badge =
+    status === 'done' ? 'Done' : status === 'current' ? 'Next' : 'Blocked'
+
+  return (
+    <div className={`rounded-lg border p-4 ${tone}`}>
+      <div className="flex items-center justify-between gap-3">
+        <div className="font-medium text-white">{title}</div>
+        <span className="rounded-full border border-current px-2 py-0.5 text-xs">{badge}</span>
+      </div>
+      <p className="mt-2 text-sm">{description}</p>
     </div>
   )
 }

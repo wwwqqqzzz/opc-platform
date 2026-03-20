@@ -6,7 +6,7 @@ import { requireGithubAccessToken } from '@/lib/github/auth'
 import { getOwnedProject } from '@/lib/github/guards'
 import { createGithubIssue } from '@/lib/github/issues'
 import { createGithubPullRequest } from '@/lib/github/pulls'
-import { canBootstrapGithubWorkflow } from '@/lib/projects/transitions'
+import { getGithubBootstrapBlocker } from '@/lib/projects/transitions'
 import { createGithubActivity, createLifecycleEvent } from '@/lib/projects/lifecycle'
 import { mapProjectDto } from '@/lib/github/mappers'
 
@@ -53,9 +53,10 @@ export async function POST(
     const { id } = await params
     const project = await getOwnedProject(id, user.id)
 
-    if (!canBootstrapGithubWorkflow(project)) {
+    const bootstrapBlocker = getGithubBootstrapBlocker(project)
+    if (bootstrapBlocker) {
       return NextResponse.json(
-        { error: 'Project is not ready for GitHub bootstrap.' },
+        { error: bootstrapBlocker },
         { status: 400 }
       )
     }

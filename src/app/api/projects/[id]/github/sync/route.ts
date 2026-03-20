@@ -5,6 +5,7 @@ import { requireGithubAccessToken } from '@/lib/github/auth'
 import { getOwnedProject } from '@/lib/github/guards'
 import { mapProjectDto } from '@/lib/github/mappers'
 import { syncProjectGithubState } from '@/lib/github/sync'
+import { getGithubSyncBlocker } from '@/lib/projects/transitions'
 
 export async function POST(
   request: NextRequest,
@@ -18,6 +19,11 @@ export async function POST(
 
     const { id } = await params
     const project = await getOwnedProject(id, user.id)
+    const syncBlocker = getGithubSyncBlocker(project)
+    if (syncBlocker) {
+      return NextResponse.json({ error: syncBlocker }, { status: 400 })
+    }
+
     const { accessToken } = await requireGithubAccessToken(user.id)
 
     await prisma.project.update({
@@ -58,6 +64,13 @@ export async function POST(
     return NextResponse.json({ project: mapProjectDto(refreshedProject) })
   } catch (error) {
     console.error('Failed to sync GitHub project data:', error)
+    const { id } = await params
+    await prisma.project.updateMany({
+      where: { id },
+      data: {
+        githubSyncStatus: 'error',
+      },
+    })
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Failed to sync GitHub data' },
       { status: error instanceof Error && error.message === 'Unauthorized' ? 403 : 500 }
