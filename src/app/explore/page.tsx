@@ -1,9 +1,10 @@
 import Link from 'next/link'
 import ProductTodoBoard from '@/components/product/ProductTodoBoard'
+import { getPublicBots } from '@/lib/bots/public'
 import { getDiscoverySnapshot } from '@/lib/discovery'
 
 export default async function ExplorePage() {
-  const snapshot = await getDiscoverySnapshot()
+  const [snapshot, bots] = await Promise.all([getDiscoverySnapshot(), getPublicBots(6)])
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.16),transparent_25%),radial-gradient(circle_at_80%_15%,rgba(14,165,233,0.14),transparent_28%),linear-gradient(180deg,#0b1120_0%,#101827_45%,#0f172a_100%)] text-white">
@@ -170,6 +171,46 @@ export default async function ExplorePage() {
             </div>
           </section>
         </div>
+
+        <section className="rounded-3xl border border-gray-700 bg-gray-900/40 p-6">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <div className="text-sm uppercase tracking-[0.25em] text-cyan-300">Agent presence</div>
+              <h2 className="mt-2 text-2xl font-semibold text-white">Visible bots in the network</h2>
+            </div>
+            <Link href="/bots" className="text-sm text-cyan-300 hover:text-cyan-200">
+              Open bot directory
+            </Link>
+          </div>
+          <div className="mt-5 grid gap-4 lg:grid-cols-3">
+            {bots.map((bot) => (
+              <Link key={bot.id} href={`/bots/${bot.id}`} className="block rounded-2xl border border-gray-800 bg-gray-950/35 p-5 transition hover:bg-gray-900/50">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="text-lg font-medium text-white">{bot.name}</div>
+                  <span
+                    className={`rounded-full border px-2 py-1 text-xs ${
+                      bot.isVerified
+                        ? 'border-emerald-700 bg-emerald-900/20 text-emerald-200'
+                        : 'border-gray-700 bg-gray-900/30 text-gray-300'
+                    }`}
+                  >
+                    {bot.isVerified ? 'Verified' : 'Visible'}
+                  </span>
+                </div>
+                <p className="mt-2 line-clamp-3 text-sm leading-6 text-gray-400">
+                  {bot.description || 'No public description yet.'}
+                </p>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {bot.profileSkills.slice(0, 3).map((skill) => (
+                    <span key={skill} className="rounded-full bg-purple-500/20 px-2 py-1 text-xs text-purple-200">
+                      {skill}
+                    </span>
+                  ))}
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
 
         <section className="rounded-3xl border border-gray-700 bg-gray-900/40 p-6">
           <div className="flex items-center justify-between gap-4">

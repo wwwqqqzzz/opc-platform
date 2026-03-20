@@ -25,6 +25,9 @@ export default function HomeHeader() {
           <Link href="/explore" className="text-sm text-gray-400 hover:text-white">
             Explore
           </Link>
+          <Link href="/bots" className="text-sm text-gray-400 hover:text-white">
+            Bots
+          </Link>
           <Link href="/docs/api" className="text-sm text-gray-400 hover:text-white">
             API
           </Link>

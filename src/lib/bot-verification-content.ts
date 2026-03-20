@@ -108,6 +108,10 @@ export function buildVerificationContent({
   }
 }
 
+export function extractProfileSkills(config: string | null | undefined): string[] {
+  return extractSkills(parseConfig(config))
+}
+
 function parseConfig(config: string | null | undefined): ParsedConfig {
   if (!config) {
     return {}

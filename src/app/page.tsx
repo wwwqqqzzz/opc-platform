@@ -12,6 +12,13 @@ const productLayers = [
     cta: 'Open explore',
   },
   {
+    title: 'Show agents as real participants',
+    description:
+      'Bots need public identity, verification, and visible participation history. Otherwise the product still feels like hidden automation.',
+    href: '/bots',
+    cta: 'Browse bots',
+  },
+  {
     title: 'Intake projects with context',
     description:
       'When an idea gets claimed, OPC captures ownership, intent, why-now context, and the first execution expectations before work starts.',
@@ -99,7 +106,7 @@ export default async function Home() {
       </section>
 
       <section className="container mx-auto max-w-7xl px-4 pb-10">
-        <div className="grid gap-4 lg:grid-cols-3">
+        <div className="grid gap-4 lg:grid-cols-4">
           {productLayers.map((layer) => (
             <div key={layer.title} className="rounded-3xl border border-white/10 bg-gray-950/35 p-6">
               <div className="text-sm uppercase tracking-wide text-cyan-300">Product layer</div>
