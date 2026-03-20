@@ -43,6 +43,28 @@ export default function ProjectDetailPage() {
     void fetchProject()
   }, [params.id])
 
+  useEffect(() => {
+    if (!project) {
+      return
+    }
+
+    const shouldClear =
+      searchParams.get('claimed') === '1' ||
+      searchParams.get('github_connected') === '1'
+
+    if (!shouldClear) {
+      return
+    }
+
+    const nextParams = new URLSearchParams(searchParams.toString())
+    nextParams.delete('claimed')
+    nextParams.delete('github_connected')
+    const query = nextParams.toString()
+    router.replace(query ? `/project/${params.id}?${query}` : `/project/${params.id}`, {
+      scroll: false,
+    })
+  }, [params.id, project, router, searchParams])
+
   const fetchProject = async () => {
     try {
       const response = await fetch(`/api/projects/${params.id}`)
@@ -230,6 +252,61 @@ export default function ProjectDetailPage() {
   const claimedMode = searchParams.get('claimed') === '1'
   const githubConnectedMode = searchParams.get('github_connected') === '1'
   const githubConnectHref = `/api/integrations/github/connect?redirect=${encodeURIComponent(`/project/${project.id}?onboarding=1`)}`
+  const executionSteps = [
+    {
+      id: 'github_account',
+      order: 1,
+      title: 'Connect GitHub account',
+      description: 'Authorize GitHub once so OPC can work with repositories on your behalf.',
+      complete: githubConnected,
+      actionLabel: 'Connect GitHub',
+      href: githubConnectHref,
+      blocker: githubConnected ? null : null,
+    },
+    {
+      id: 'repository',
+      order: 2,
+      title: 'Bind project repository',
+      description: 'Choose one repository as the single source of truth for this build.',
+      complete: repoConnected,
+      actionLabel: 'Connect repository below',
+      href: '#execution-layer',
+      blocker: repoConnectionBlocker,
+    },
+    {
+      id: 'bootstrap',
+      order: 3,
+      title: 'Create bootstrap issue and PR',
+      description: 'Generate the first issue, branch, and pull request from OPC.',
+      complete: Boolean(project.githubPrimaryIssueNumber && project.githubPrimaryPrNumber),
+      actionLabel: bootstrapping ? 'Bootstrapping...' : 'Start bootstrap',
+      blocker: bootstrapBlocker,
+      onClick: handleBootstrap,
+      disabled: !canManageProject || Boolean(bootstrapBlocker) || bootstrapping,
+    },
+    {
+      id: 'sync',
+      order: 4,
+      title: 'Sync GitHub execution data',
+      description: 'Pull commits, PR state, workflows, and releases back into OPC.',
+      complete: Boolean(project.githubLastSyncedAt) && project.githubSyncStatus !== 'error',
+      actionLabel: syncing ? 'Syncing...' : 'Run sync',
+      blocker: syncBlocker,
+      onClick: handleSync,
+      disabled: !canManageProject || Boolean(syncBlocker) || syncing,
+    },
+    {
+      id: 'launch',
+      order: 5,
+      title: 'Create launch entry',
+      description: 'Once GitHub reaches launch-ready state, publish the build to the launch board.',
+      complete: Boolean(project.launch),
+      actionLabel: 'Open launch dialog',
+      blocker: launchBlocker,
+      onClick: () => setShowLaunchDialog(true),
+      disabled: !canManageProject || Boolean(launchBlocker),
+    },
+  ]
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 text-white">
@@ -321,6 +398,37 @@ export default function ProjectDetailPage() {
             {actionMessage && <Notice tone="success" message={actionMessage} />}
           </div>
         )}
+
+        <section className="mb-6 rounded-xl border border-gray-700 bg-gray-800/60 p-6">
+          <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+            <div>
+              <h2 className="text-xl font-semibold text-white">Execution Stepper</h2>
+              <p className="mt-1 text-sm text-gray-400">
+                Move through these steps in order. OPC will mark them complete as the project becomes launch-ready.
+              </p>
+            </div>
+            <div className="text-sm text-cyan-300">
+              {executionSteps.filter((step) => step.complete).length}/{executionSteps.length} steps complete
+            </div>
+          </div>
+
+          <div className="mt-5 grid gap-4 xl:grid-cols-5">
+            {executionSteps.map((step) => (
+              <ExecutionStepCard
+                key={step.id}
+                stepNumber={step.order}
+                title={step.title}
+                description={step.description}
+                complete={step.complete}
+                blocker={step.blocker}
+                actionLabel={step.complete ? undefined : step.actionLabel}
+                href={step.complete ? undefined : step.href}
+                onClick={step.complete ? undefined : step.onClick}
+                disabled={Boolean(step.disabled)}
+              />
+            ))}
+          </div>
+        </section>
 
         {showLaunchDialog && (
           <Dialog title="Create Launch" onClose={() => setShowLaunchDialog(false)}>
@@ -1002,6 +1110,75 @@ function Notice({ tone, message }: { tone: 'error' | 'success'; message: string 
       }`}
     >
       {message}
+    </div>
+  )
+}
+
+function ExecutionStepCard({
+  stepNumber,
+  title,
+  description,
+  complete,
+  blocker,
+  actionLabel,
+  href,
+  onClick,
+  disabled,
+}: {
+  stepNumber: number
+  title: string
+  description: string
+  complete: boolean
+  blocker?: string | null
+  actionLabel?: string
+  href?: string
+  onClick?: () => void
+  disabled?: boolean
+}) {
+  return (
+    <div
+      className={`rounded-xl border p-4 ${
+        complete
+          ? 'border-emerald-700 bg-emerald-900/15'
+          : 'border-gray-700 bg-gray-900/40'
+      }`}
+    >
+      <div className="flex items-center justify-between gap-3">
+        <span className="rounded-full border border-gray-600 px-2 py-0.5 text-xs text-gray-300">
+          Step {stepNumber}
+        </span>
+        <span
+          className={`rounded-full border px-2 py-0.5 text-xs ${
+            complete
+              ? 'border-emerald-500 text-emerald-200'
+              : 'border-amber-500 text-amber-200'
+          }`}
+        >
+          {complete ? 'Done' : 'Pending'}
+        </span>
+      </div>
+      <div className="mt-3 text-base font-medium text-white">{title}</div>
+      <p className="mt-2 text-sm text-gray-400">{description}</p>
+      {!complete && blocker && <p className="mt-3 text-xs text-amber-300">{blocker}</p>}
+      {complete ? (
+        <div className="mt-4 text-sm text-emerald-300">Completed</div>
+      ) : href ? (
+        <a
+          href={href}
+          className="mt-4 inline-flex rounded-lg bg-cyan-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-cyan-700"
+        >
+          {actionLabel}
+        </a>
+      ) : onClick ? (
+        <button
+          type="button"
+          onClick={onClick}
+          disabled={disabled}
+          className="mt-4 inline-flex rounded-lg bg-cyan-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-cyan-700 disabled:opacity-50"
+        >
+          {actionLabel}
+        </button>
+      ) : null}
     </div>
   )
 }

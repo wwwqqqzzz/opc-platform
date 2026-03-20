@@ -54,6 +54,20 @@ export default async function LaunchPage({
             <p className="mt-2 text-sm text-emerald-100/80">
               This page is now the public record of the build, repository provenance, and launch history.
             </p>
+            <div className="mt-4 flex flex-wrap gap-3">
+              <Link
+                href="/dashboard"
+                className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-700"
+              >
+                Return to dashboard
+              </Link>
+              <Link
+                href="/ideas/human"
+                className="rounded-lg border border-gray-600 px-4 py-2 text-sm font-medium text-gray-200 transition hover:bg-gray-800"
+              >
+                Start next project
+              </Link>
+            </div>
           </div>
         )}
 
