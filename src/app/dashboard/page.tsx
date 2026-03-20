@@ -11,11 +11,11 @@ interface Stats {
 }
 
 interface DashboardIdeaSummary {
-  authorId?: string | null
+  userId?: string | null
 }
 
 interface DashboardProjectSummary {
-  ownerId?: string | null
+  userId?: string | null
 }
 
 export default function DashboardPage() {
@@ -42,7 +42,7 @@ export default function DashboardPage() {
       const ideasRes = await fetch('/api/ideas')
       if (ideasRes.ok) {
         const ideas: DashboardIdeaSummary[] = await ideasRes.json()
-        const userIdeas = ideas.filter((idea) => idea.authorId === user?.id)
+        const userIdeas = ideas.filter((idea) => idea.userId === user?.id)
         setStats(prev => ({ ...prev, ideasCount: userIdeas.length }))
       }
 
@@ -50,7 +50,7 @@ export default function DashboardPage() {
       const projectsRes = await fetch('/api/projects')
       if (projectsRes.ok) {
         const projects: DashboardProjectSummary[] = await projectsRes.json()
-        const userProjects = projects.filter((project) => project.ownerId === user?.id)
+        const userProjects = projects.filter((project) => project.userId === user?.id)
         setStats(prev => ({ ...prev, projectsCount: userProjects.length }))
       }
     } catch (error) {

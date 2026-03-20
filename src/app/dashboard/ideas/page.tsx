@@ -9,7 +9,7 @@ interface Idea {
   title: string
   description: string
   authorType: string
-  authorId: string
+  userId: string
   status: string
   createdAt: string
   updatedAt: string
@@ -45,7 +45,7 @@ export default function MyIdeasPage() {
       if (!response.ok) throw new Error('Failed to fetch ideas')
       const data = await response.json()
       // Filter only user's ideas
-      const userIdeas = data.filter((idea: Idea) => idea.authorId === user.id)
+      const userIdeas = data.filter((idea: Idea) => idea.userId === user.id)
       setIdeas(userIdeas)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch ideas')

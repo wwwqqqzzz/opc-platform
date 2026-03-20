@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAuthenticatedUser } from '@/lib/jwt'
+import type { Prisma } from '@prisma/client'
 
 // GET /api/projects - 获取所有 Projects
 export async function GET(request: NextRequest) {
@@ -9,7 +10,7 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get('status')
     const userId = searchParams.get('userId')
 
-    const where: any = {}
+    const where: Prisma.ProjectWhereInput = {}
     if (status) where.status = status
     if (userId) where.userId = userId
 
@@ -102,6 +103,8 @@ export async function POST(request: NextRequest) {
         agentTeam: JSON.stringify(agentTeamArray),
         userId: user?.id || null,
         status: 'in_progress',
+        deliveryStage: 'project',
+        agentGithubStatus: 'pending',
       },
       include: {
         idea: true,

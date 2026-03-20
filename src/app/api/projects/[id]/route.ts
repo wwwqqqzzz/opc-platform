@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAuthenticatedUser } from '@/lib/jwt'
+import {
+  isAgentGithubStatus,
+  isProjectDeliveryStage,
+} from '@/lib/project-stage'
 
 export async function GET(
   request: NextRequest,
@@ -68,7 +72,28 @@ export async function PUT(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
     }
 
-    const { title, description, ownerName, agentTeam, githubUrl, status } = body
+    const {
+      title,
+      description,
+      ownerName,
+      agentTeam,
+      githubUrl,
+      status,
+      deliveryStage,
+      agentGithubStatus,
+      agentGithubUrl,
+      agentGithubNotes,
+      handoffRequestedAt,
+      handoffCompletedAt,
+    } = body
+
+    if (deliveryStage && !isProjectDeliveryStage(deliveryStage)) {
+      return NextResponse.json({ error: 'Invalid delivery stage' }, { status: 400 })
+    }
+
+    if (agentGithubStatus && !isAgentGithubStatus(agentGithubStatus)) {
+      return NextResponse.json({ error: 'Invalid Agent GitHub status' }, { status: 400 })
+    }
 
     const project = await prisma.project.update({
       where: { id },
@@ -79,6 +104,12 @@ export async function PUT(
         agentTeam: agentTeam ? JSON.stringify(agentTeam) : undefined,
         githubUrl,
         status,
+        deliveryStage,
+        agentGithubStatus,
+        agentGithubUrl,
+        agentGithubNotes,
+        handoffRequestedAt: handoffRequestedAt ? new Date(handoffRequestedAt) : undefined,
+        handoffCompletedAt: handoffCompletedAt ? new Date(handoffCompletedAt) : undefined,
       },
       include: {
         user: {

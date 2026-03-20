@@ -1,17 +1,20 @@
 'use client'
 
+import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
-import Link from 'next/link'
+import { PROJECT_DELIVERY_STAGE_LABELS, type ProjectDeliveryStage } from '@/lib/project-stage'
 
 interface Project {
   id: string
   title: string
   description: string
-  ownerId: string
+  userId: string
   ownerName: string
   status: string
+  deliveryStage: ProjectDeliveryStage
   ideaId: string
+  agentGithubUrl?: string | null
   createdAt: string
   updatedAt: string
   idea?: {
@@ -29,7 +32,7 @@ export default function MyProjectsPage() {
 
   useEffect(() => {
     if (user) {
-      fetchProjects()
+      void fetchProjects()
     }
   }, [user])
 
@@ -40,9 +43,9 @@ export default function MyProjectsPage() {
       setLoading(true)
       const response = await fetch('/api/projects')
       if (!response.ok) throw new Error('Failed to fetch projects')
-      const data = await response.json()
-      // Filter only user's projects
-      const userProjects = data.filter((project: Project) => project.ownerId === user.id)
+
+      const data: Project[] = await response.json()
+      const userProjects = data.filter((project) => project.userId === user.id)
       setProjects(userProjects)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch projects')
@@ -60,7 +63,6 @@ export default function MyProjectsPage() {
       })
 
       if (!response.ok) throw new Error('Failed to delete project')
-
       await fetchProjects()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete project')
@@ -70,44 +72,31 @@ export default function MyProjectsPage() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'in_progress':
-        return 'bg-blue-900/50 text-blue-400 border border-blue-700'
+        return 'border-blue-700 bg-blue-900/50 text-blue-400'
       case 'completed':
-        return 'bg-emerald-900/50 text-emerald-400 border border-emerald-700'
+        return 'border-emerald-700 bg-emerald-900/50 text-emerald-400'
       case 'cancelled':
-        return 'bg-red-900/50 text-red-400 border border-red-700'
+        return 'border-red-700 bg-red-900/50 text-red-400'
       default:
         return 'bg-gray-700 text-gray-300'
     }
   }
 
-  const getStatusLabel = (status: string) => {
-    switch (status) {
-      case 'in_progress':
-        return 'In Progress'
-      case 'completed':
-        return 'Completed'
-      case 'cancelled':
-        return 'Cancelled'
-      default:
-        return status
-    }
-  }
-
-  const filteredProjects = projects.filter(project => {
+  const filteredProjects = projects.filter((project) => {
     if (filter === 'all') return true
     return project.status === filter
   })
 
   const stats = {
     total: projects.length,
-    inProgress: projects.filter(p => p.status === 'in_progress').length,
-    completed: projects.filter(p => p.status === 'completed').length,
-    cancelled: projects.filter(p => p.status === 'cancelled').length,
+    inProgress: projects.filter((project) => project.status === 'in_progress').length,
+    completed: projects.filter((project) => project.status === 'completed').length,
+    cancelled: projects.filter((project) => project.status === 'cancelled').length,
   }
 
   if (!user) {
     return (
-      <div className="text-center py-12">
+      <div className="py-12 text-center">
         <p className="text-gray-400">Please login to view your projects</p>
       </div>
     )
@@ -123,77 +112,49 @@ export default function MyProjectsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-white">My Projects</h1>
-          <p className="mt-1 text-sm text-gray-400">
-            Manage your startup projects
-          </p>
-        </div>
+      <div>
+        <h1 className="text-2xl font-bold text-white">My Projects</h1>
+        <p className="mt-1 text-sm text-gray-400">
+          Track projects as they move through OPC Platform and Agent GitHub.
+        </p>
       </div>
 
       {error && (
-        <div className="bg-red-900/50 border border-red-700 text-red-200 px-4 py-3 rounded-lg flex justify-between items-center">
+        <div className="flex items-center justify-between rounded-lg border border-red-700 bg-red-900/50 px-4 py-3 text-red-200">
           <span>{error}</span>
-          <button
-            onClick={() => setError(null)}
-            className="text-red-300 hover:text-red-100"
-          >
-            ×
+          <button onClick={() => setError(null)} className="text-red-300 hover:text-red-100">
+            x
           </button>
         </div>
       )}
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <button
-          onClick={() => setFilter('all')}
-          className={`bg-gray-800 rounded-lg p-4 border text-left transition-all ${
-            filter === 'all' ? 'border-yellow-500' : 'border-gray-700 hover:border-gray-500'
-          }`}
-        >
-          <p className="text-sm font-medium text-gray-400">Total</p>
-          <p className="mt-2 text-2xl font-bold text-white">{stats.total}</p>
-        </button>
-        <button
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+        <StatButton label="Total" value={stats.total} active={filter === 'all'} onClick={() => setFilter('all')} />
+        <StatButton
+          label="In Progress"
+          value={stats.inProgress}
+          active={filter === 'in_progress'}
           onClick={() => setFilter('in_progress')}
-          className={`bg-gray-800 rounded-lg p-4 border text-left transition-all ${
-            filter === 'in_progress' ? 'border-blue-500' : 'border-gray-700 hover:border-gray-500'
-          }`}
-        >
-          <p className="text-sm font-medium text-gray-400">In Progress</p>
-          <p className="mt-2 text-2xl font-bold text-white">{stats.inProgress}</p>
-        </button>
-        <button
+        />
+        <StatButton
+          label="Completed"
+          value={stats.completed}
+          active={filter === 'completed'}
           onClick={() => setFilter('completed')}
-          className={`bg-gray-800 rounded-lg p-4 border text-left transition-all ${
-            filter === 'completed' ? 'border-emerald-500' : 'border-gray-700 hover:border-gray-500'
-          }`}
-        >
-          <p className="text-sm font-medium text-gray-400">Completed</p>
-          <p className="mt-2 text-2xl font-bold text-white">{stats.completed}</p>
-        </button>
-        <button
+        />
+        <StatButton
+          label="Cancelled"
+          value={stats.cancelled}
+          active={filter === 'cancelled'}
           onClick={() => setFilter('cancelled')}
-          className={`bg-gray-800 rounded-lg p-4 border text-left transition-all ${
-            filter === 'cancelled' ? 'border-red-500' : 'border-gray-700 hover:border-gray-500'
-          }`}
-        >
-          <p className="text-sm font-medium text-gray-400">Cancelled</p>
-          <p className="mt-2 text-2xl font-bold text-white">{stats.cancelled}</p>
-        </button>
+        />
       </div>
 
-      {/* Projects List */}
-      <div className="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden">
+      <div className="overflow-hidden rounded-lg border border-gray-700 bg-gray-800">
         {filteredProjects.length === 0 ? (
           <div className="p-12 text-center">
-            <svg className="mx-auto h-12 w-12 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
-            </svg>
             <p className="mt-2 text-lg text-gray-400">No projects yet</p>
-            <p className="mt-1 text-sm text-gray-500">Projects will be created from ideas</p>
+            <p className="mt-1 text-sm text-gray-500">Projects will be created from claimed ideas</p>
           </div>
         ) : (
           <div className="divide-y divide-gray-700">
@@ -201,23 +162,33 @@ export default function MyProjectsPage() {
               <div key={project.id} className="p-6">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <div className="flex items-center space-x-3">
-                      <h3 className="text-lg font-medium text-white">
-                        {project.title}
-                      </h3>
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(project.status)}`}>
-                        {getStatusLabel(project.status)}
+                    <div className="flex flex-wrap items-center gap-3">
+                      <h3 className="text-lg font-medium text-white">{project.title}</h3>
+                      <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusColor(project.status)}`}>
+                        {project.status}
+                      </span>
+                      <span className="inline-flex items-center rounded-full border border-cyan-700 px-2.5 py-0.5 text-xs font-medium text-cyan-300">
+                        {PROJECT_DELIVERY_STAGE_LABELS[project.deliveryStage]}
                       </span>
                     </div>
-                    <p className="mt-2 text-sm text-gray-400 line-clamp-2">
-                      {project.description}
-                    </p>
-                    <div className="mt-3 flex items-center space-x-6 text-sm text-gray-500">
+                    <p className="mt-2 line-clamp-2 text-sm text-gray-400">{project.description}</p>
+                    <div className="mt-3 flex flex-wrap items-center gap-6 text-sm text-gray-500">
                       <span>Created: {new Date(project.createdAt).toLocaleDateString()}</span>
                       <span>Owner: {project.ownerName}</span>
+                      {project.agentGithubUrl && (
+                        <a
+                          href={project.agentGithubUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-cyan-400 hover:underline"
+                        >
+                          Agent GitHub
+                        </a>
+                      )}
                       {project.idea && (
                         <span className="text-purple-400">
-                          From Idea: <Link href={`/idea/${project.idea.id}`} className="hover:underline">
+                          From Idea:{' '}
+                          <Link href={`/idea/${project.idea.id}`} className="hover:underline">
                             {project.idea.title}
                           </Link>
                         </span>
@@ -227,13 +198,13 @@ export default function MyProjectsPage() {
                   <div className="ml-4 flex items-center space-x-2">
                     <Link
                       href={`/project/${project.id}`}
-                      className="inline-flex items-center px-3 py-1.5 border border-gray-600 text-xs font-medium rounded text-gray-300 hover:bg-gray-700 transition-colors"
+                      className="inline-flex items-center rounded border border-gray-600 px-3 py-1.5 text-xs font-medium text-gray-300 transition-colors hover:bg-gray-700"
                     >
                       View
                     </Link>
                     <button
                       onClick={() => deleteProject(project.id)}
-                      className="inline-flex items-center px-3 py-1.5 border border-red-700 text-xs font-medium rounded text-red-400 hover:bg-red-900/30 transition-colors"
+                      className="inline-flex items-center rounded border border-red-700 px-3 py-1.5 text-xs font-medium text-red-400 transition-colors hover:bg-red-900/30"
                     >
                       Delete
                     </button>
@@ -245,5 +216,29 @@ export default function MyProjectsPage() {
         )}
       </div>
     </div>
+  )
+}
+
+function StatButton({
+  label,
+  value,
+  active,
+  onClick,
+}: {
+  label: string
+  value: number
+  active: boolean
+  onClick: () => void
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`rounded-lg border bg-gray-800 p-4 text-left transition-all ${
+        active ? 'border-yellow-500' : 'border-gray-700 hover:border-gray-500'
+      }`}
+    >
+      <p className="text-sm font-medium text-gray-400">{label}</p>
+      <p className="mt-2 text-2xl font-bold text-white">{value}</p>
+    </button>
   )
 }

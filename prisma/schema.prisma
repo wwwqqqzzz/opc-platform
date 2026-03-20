@@ -37,17 +37,23 @@ model Idea {
 
 // Project 表
 model Project {
-  id          String   @id @default(uuid())
-  ideaId      String?  @map("idea_id") @unique
-  title       String
-  description String?
-  ownerName   String?  @map("owner_name")
-  agentTeam   String?  @map("agent_team") // JSON as string
-  githubUrl   String?  @map("github_url")
-  userId      String?  @map("user_id")
-  status      String   @default("in_progress")
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  id                  String    @id @default(uuid())
+  ideaId              String?   @map("idea_id") @unique
+  title               String
+  description         String?
+  ownerName           String?   @map("owner_name")
+  agentTeam           String?   @map("agent_team") // JSON as string
+  githubUrl           String?   @map("github_url")
+  userId              String?   @map("user_id")
+  status              String    @default("in_progress")
+  deliveryStage       String    @default("project") @map("delivery_stage") // project, agent_github, launch_ready, launched
+  agentGithubStatus   String    @default("pending") @map("agent_github_status") // pending, queued, in_progress, review, blocked, complete
+  agentGithubUrl      String?   @map("agent_github_url")
+  agentGithubNotes    String?   @map("agent_github_notes")
+  handoffRequestedAt  DateTime? @map("handoff_requested_at")
+  handoffCompletedAt  DateTime? @map("handoff_completed_at")
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
 
   user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
   idea        Idea?    @relation(fields: [ideaId], references: [id])

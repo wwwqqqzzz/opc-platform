@@ -77,6 +77,16 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    if (project.deliveryStage !== 'launch_ready') {
+      return NextResponse.json(
+        {
+          error: 'Project is not launch ready yet',
+          details: 'Projects must complete the Agent GitHub stage before launch.',
+        },
+        { status: 400 }
+      )
+    }
+
     // Check if launch already exists
     const existingLaunch = await prisma.launch.findUnique({
       where: { projectId },
@@ -108,7 +118,10 @@ export async function POST(request: NextRequest) {
       // Update project status to 'launched'
       await tx.project.update({
         where: { id: projectId },
-        data: { status: 'launched' },
+        data: {
+          status: 'launched',
+          deliveryStage: 'launched',
+        },
       })
 
       // Update idea status if it exists
