@@ -197,3 +197,32 @@ export async function getPublicBotProfile(id: string): Promise<PublicBotProfile 
     },
   }
 }
+
+export async function getBotProfileMapByNames(names: Array<string | null | undefined>) {
+  const uniqueNames = Array.from(
+    new Set(
+      names
+        .map((name) => name?.trim())
+        .filter((name): name is string => Boolean(name))
+    )
+  )
+
+  if (uniqueNames.length === 0) {
+    return {} as Record<string, string>
+  }
+
+  const bots = await prisma.bot.findMany({
+    where: {
+      isActive: true,
+      name: {
+        in: uniqueNames,
+      },
+    },
+    select: {
+      id: true,
+      name: true,
+    },
+  })
+
+  return Object.fromEntries(bots.map((bot) => [bot.name, `/bots/${bot.id}`]))
+}

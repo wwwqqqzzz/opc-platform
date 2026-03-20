@@ -1,10 +1,10 @@
 'use client'
 
-import { useState } from 'react'
-import UpvoteButton from './UpvoteButton'
-import CommentForm from './CommentForm'
-import ClaimIdeaModal from './ClaimIdeaModal'
 import Link from 'next/link'
+import { useState } from 'react'
+import ClaimIdeaModal from './ClaimIdeaModal'
+import CommentForm from './CommentForm'
+import UpvoteButton from './UpvoteButton'
 
 interface Comment {
   id: string
@@ -49,9 +49,14 @@ interface User {
 interface IdeaDetailClientProps {
   idea: Idea
   currentUser: User | null
+  botProfileMap: Record<string, string>
 }
 
-export default function IdeaDetailClient({ idea, currentUser: _currentUser }: IdeaDetailClientProps) {
+export default function IdeaDetailClient({
+  idea,
+  currentUser,
+  botProfileMap,
+}: IdeaDetailClientProps) {
   const tags = JSON.parse(idea.tags || '[]')
   const agentTypes = JSON.parse(idea.agentTypes || '[]')
   const [isClaimModalOpen, setIsClaimModalOpen] = useState(false)
@@ -62,49 +67,51 @@ export default function IdeaDetailClient({ idea, currentUser: _currentUser }: Id
 
   return (
     <>
-      {/* Header */}
-      <div className="bg-gray-800/50 rounded-lg p-8 mb-8">
-        <div className="flex items-start justify-between mb-4">
+      <div className="mb-8 rounded-lg bg-gray-800/50 p-8">
+        <div className="mb-4 flex items-start justify-between">
           <div className="flex items-center gap-3">
             <span
-              className={`px-3 py-1 text-sm rounded ${
+              className={`rounded px-3 py-1 text-sm ${
                 idea.authorType === 'agent'
                   ? 'bg-purple-500/20 text-purple-400'
                   : 'bg-emerald-500/20 text-emerald-400'
               }`}
             >
-              {idea.authorType === 'agent' ? '🤖 Agent' : '👤 Human'}
+              {idea.authorType === 'agent' ? 'Agent' : 'Human'}
             </span>
             <span
-              className={`px-3 py-1 text-sm rounded ${
+              className={`rounded px-3 py-1 text-sm ${
                 idea.status === 'launched'
                   ? 'bg-green-500/20 text-green-400'
                   : idea.status === 'in_progress'
                   ? 'bg-yellow-500/20 text-yellow-400'
-                  : 'bg-gray-500/20 text-gray-400'
+                  : 'bg-gray-500/20 text-gray-300'
               }`}
             >
-              {idea.status === 'in_progress' ? '🔨 In Progress' : idea.status === 'launched' ? '🚀 Launched' : '📝 Idea'}
+              {idea.status === 'in_progress'
+                ? 'In Progress'
+                : idea.status === 'launched'
+                ? 'Launched'
+                : 'Idea'}
             </span>
           </div>
           <UpvoteButton ideaId={idea.id} initialCount={idea._count.upvoteRecords} />
         </div>
 
-        <h1 className="text-3xl font-bold mb-4">{idea.title}</h1>
-        <p className="text-gray-300 text-lg mb-6">{idea.description}</p>
+        <h1 className="mb-4 text-3xl font-bold">{idea.title}</h1>
+        <p className="mb-6 text-lg text-gray-300">{idea.description}</p>
 
-        {/* Meta info */}
-        <div className="grid md:grid-cols-3 gap-4 text-sm">
-          <div className="bg-gray-900/50 rounded p-4">
-            <div className="text-gray-400 mb-1">Target Users</div>
+        <div className="grid gap-4 text-sm md:grid-cols-3">
+          <div className="rounded bg-gray-900/50 p-4">
+            <div className="mb-1 text-gray-400">Target Users</div>
             <div className="font-medium">{idea.targetUser || 'Not specified'}</div>
           </div>
-          <div className="bg-gray-900/50 rounded p-4">
-            <div className="text-gray-400 mb-1">Agent Types Needed</div>
+          <div className="rounded bg-gray-900/50 p-4">
+            <div className="mb-1 text-gray-400">Agent Types Needed</div>
             <div className="flex flex-wrap gap-2">
               {agentTypes.length > 0 ? (
                 agentTypes.map((type: string) => (
-                  <span key={type} className="px-2 py-1 bg-cyan-500/20 text-cyan-400 rounded text-xs">
+                  <span key={type} className="rounded bg-cyan-500/20 px-2 py-1 text-xs text-cyan-400">
                     {type}
                   </span>
                 ))
@@ -113,12 +120,12 @@ export default function IdeaDetailClient({ idea, currentUser: _currentUser }: Id
               )}
             </div>
           </div>
-          <div className="bg-gray-900/50 rounded p-4">
-            <div className="text-gray-400 mb-1">Tags</div>
+          <div className="rounded bg-gray-900/50 p-4">
+            <div className="mb-1 text-gray-400">Tags</div>
             <div className="flex flex-wrap gap-2">
               {tags.length > 0 ? (
                 tags.map((tag: string) => (
-                  <span key={tag} className="px-2 py-1 bg-gray-700 rounded text-xs">
+                  <span key={tag} className="rounded bg-gray-700 px-2 py-1 text-xs">
                     {tag}
                   </span>
                 ))
@@ -129,84 +136,89 @@ export default function IdeaDetailClient({ idea, currentUser: _currentUser }: Id
           </div>
         </div>
 
-        {/* Author & Date */}
-        <div className="mt-6 text-gray-500 text-sm">
-          Posted by <span className="text-white">{idea.authorName || 'Anonymous'}</span> on{' '}
-          {new Date(idea.createdAt).toLocaleDateString()}
+        <div className="mt-6 text-sm text-gray-500">
+          Posted by{' '}
+          <IdentityLink
+            authorType={idea.authorType}
+            authorName={idea.authorName}
+            botProfileMap={botProfileMap}
+          />{' '}
+          on {new Date(idea.createdAt).toLocaleDateString()}
         </div>
 
-        {/* Claim Button or Project Link */}
         {canClaim && (
           <div className="mt-6">
             <button
               onClick={() => setIsClaimModalOpen(true)}
-              className="w-full px-6 py-3 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 rounded-lg font-semibold transition flex items-center justify-center gap-2"
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-yellow-500 to-orange-500 px-6 py-3 font-semibold transition hover:from-yellow-600 hover:to-orange-600"
             >
-              🤝 认领这个 Idea
+              Claim this idea
             </button>
-            <p className="text-xs text-gray-500 mt-2 text-center">
-              Claim this idea to start building it with AI agents
+            <p className="mt-2 text-center text-xs text-gray-500">
+              Claim this idea to start moving it toward project intake and execution.
             </p>
           </div>
         )}
 
         {isInProgress && idea.project && (
-          <div className="mt-6 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
+          <div className="mt-6 rounded-lg border border-yellow-500/30 bg-yellow-500/10 p-4">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-sm text-gray-400 mb-1">Status</div>
-                <div className="font-medium text-yellow-400">🔨 已进入开发</div>
+                <div className="mb-1 text-sm text-gray-400">Status</div>
+                <div className="font-medium text-yellow-400">This idea is now in project intake</div>
                 {idea.project.ownerName && (
-                  <div className="text-xs text-gray-500 mt-1">
-                    OPC Owner: {idea.project.ownerName}
-                  </div>
+                  <div className="mt-1 text-xs text-gray-500">OPC Owner: {idea.project.ownerName}</div>
                 )}
               </div>
               <Link
                 href={`/project/${idea.project.id}`}
-                className="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 rounded-lg font-medium transition text-sm"
+                className="rounded-lg bg-yellow-500 px-4 py-2 text-sm font-medium transition hover:bg-yellow-600"
               >
-                View Project →
+                View project
               </Link>
             </div>
           </div>
         )}
 
         {isLaunched && (
-          <div className="mt-6 p-4 bg-green-500/10 border border-green-500/30 rounded-lg">
-            <div className="font-medium text-green-400 mb-2">🚀 This idea has been launched!</div>
-            <p className="text-sm text-gray-400">Check out the Launch page to see the final product.</p>
+          <div className="mt-6 rounded-lg border border-green-500/30 bg-green-500/10 p-4">
+            <div className="mb-2 font-medium text-green-400">This idea has been launched.</div>
+            <p className="text-sm text-gray-400">Check the launch board to see the final product record.</p>
           </div>
         )}
       </div>
 
-      {/* Claim Modal */}
       <ClaimIdeaModal
         isOpen={isClaimModalOpen}
         onClose={() => setIsClaimModalOpen(false)}
         ideaId={idea.id}
         ideaTitle={idea.title}
-        defaultOwnerName={_currentUser?.name || null}
+        defaultOwnerName={currentUser?.name || null}
       />
 
-      {/* Comments */}
-      <div className="bg-gray-800/50 rounded-lg p-8">
-        <h2 className="text-xl font-bold mb-4">Comments ({idea._count.comments})</h2>
+      <div className="rounded-lg bg-gray-800/50 p-8">
+        <h2 className="mb-4 text-xl font-bold">Comments ({idea._count.comments})</h2>
         {idea.comments.length > 0 ? (
-          <div className="space-y-4 mb-6">
+          <div className="mb-6 space-y-4">
             {idea.comments.map((comment) => (
-              <div key={comment.id} className="bg-gray-900/50 rounded p-4">
-                <div className="flex items-center gap-2 mb-2">
+              <div key={comment.id} className="rounded bg-gray-900/50 p-4">
+                <div className="mb-2 flex items-center gap-2">
                   <span
-                    className={`text-xs px-2 py-1 rounded ${
+                    className={`rounded px-2 py-1 text-xs ${
                       comment.authorType === 'agent'
                         ? 'bg-purple-500/20 text-purple-400'
                         : 'bg-emerald-500/20 text-emerald-400'
                     }`}
                   >
-                    {comment.authorType === 'agent' ? '🤖' : '👤'} {comment.authorName || 'Anonymous'}
+                    {comment.authorType === 'agent' ? 'Agent' : 'Human'}
                   </span>
-                  <span className="text-gray-500 text-xs">
+                  <IdentityLink
+                    authorType={comment.authorType}
+                    authorName={comment.authorName}
+                    botProfileMap={botProfileMap}
+                    className="text-sm"
+                  />
+                  <span className="text-xs text-gray-500">
                     {new Date(comment.createdAt).toLocaleDateString()}
                   </span>
                 </div>
@@ -215,12 +227,35 @@ export default function IdeaDetailClient({ idea, currentUser: _currentUser }: Id
             ))}
           </div>
         ) : (
-          <p className="text-gray-500 mb-6">No comments yet. Be the first to comment!</p>
+          <p className="mb-6 text-gray-500">No comments yet. Be the first to comment.</p>
         )}
 
-        {/* Comment Form */}
         <CommentForm ideaId={idea.id} />
       </div>
     </>
   )
+}
+
+function IdentityLink({
+  authorType,
+  authorName,
+  botProfileMap,
+  className = 'text-white',
+}: {
+  authorType: string
+  authorName: string | null
+  botProfileMap: Record<string, string>
+  className?: string
+}) {
+  const label = authorName || 'Anonymous'
+
+  if (authorType === 'agent' && authorName && botProfileMap[authorName]) {
+    return (
+      <Link href={botProfileMap[authorName]} className={`text-purple-300 hover:text-purple-200 ${className}`}>
+        {label}
+      </Link>
+    )
+  }
+
+  return <span className={className}>{label}</span>
 }

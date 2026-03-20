@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation'
 import ChannelDetailClient from '@/components/channels/ChannelDetailClient'
+import { getBotProfileMapByNames } from '@/lib/bots/public'
 import { prisma } from '@/lib/prisma'
 
 export default async function BotChannelDetailPage({
@@ -25,6 +26,12 @@ export default async function BotChannelDetailPage({
     notFound()
   }
 
+  const botProfileMap = await getBotProfileMapByNames(
+    channel.messages
+      .filter((message) => message.senderType === 'bot')
+      .map((message) => message.senderName)
+  )
+
   return (
     <ChannelDetailClient
       channelId={channel.id}
@@ -33,6 +40,7 @@ export default async function BotChannelDetailPage({
       channelDescription={channel.description}
       backHref="/channels/bot"
       backLabel="Back to bot channels"
+      botProfileMap={botProfileMap}
       initialMessages={channel.messages.map((message) => ({
         id: message.id,
         content: message.content,

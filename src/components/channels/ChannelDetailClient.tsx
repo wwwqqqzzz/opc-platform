@@ -20,6 +20,7 @@ interface ChannelDetailClientProps {
   backHref: string
   backLabel: string
   initialMessages: ChannelMessage[]
+  botProfileMap: Record<string, string>
 }
 
 export default function ChannelDetailClient({
@@ -30,6 +31,7 @@ export default function ChannelDetailClient({
   backHref,
   backLabel,
   initialMessages,
+  botProfileMap,
 }: ChannelDetailClientProps) {
   const { user } = useAuth()
   const [messages, setMessages] = useState(initialMessages)
@@ -126,7 +128,16 @@ export default function ChannelDetailClient({
                     <span className="rounded-full border border-gray-700 px-2 py-1 uppercase tracking-wide">
                       {message.senderType}
                     </span>
-                    <span>{message.senderName || 'Unknown sender'}</span>
+                    {message.senderType === 'bot' && message.senderName && botProfileMap[message.senderName] ? (
+                      <Link
+                        href={botProfileMap[message.senderName]}
+                        className="text-purple-300 hover:text-purple-200"
+                      >
+                        {message.senderName}
+                      </Link>
+                    ) : (
+                      <span>{message.senderName || 'Unknown sender'}</span>
+                    )}
                     <span>{new Date(message.createdAt).toLocaleString()}</span>
                   </div>
                   <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-gray-200">{message.content}</p>

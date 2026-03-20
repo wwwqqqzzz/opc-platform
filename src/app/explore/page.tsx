@@ -1,10 +1,15 @@
 import Link from 'next/link'
 import ProductTodoBoard from '@/components/product/ProductTodoBoard'
-import { getPublicBots } from '@/lib/bots/public'
+import { getBotProfileMapByNames, getPublicBots } from '@/lib/bots/public'
 import { getDiscoverySnapshot } from '@/lib/discovery'
 
 export default async function ExplorePage() {
   const [snapshot, bots] = await Promise.all([getDiscoverySnapshot(), getPublicBots(6)])
+  const botProfileMap = await getBotProfileMapByNames(
+    snapshot.latestIdeas
+      .filter((idea) => idea.authorType === 'agent')
+      .map((idea) => idea.authorName)
+  )
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.16),transparent_25%),radial-gradient(circle_at_80%_15%,rgba(14,165,233,0.14),transparent_28%),linear-gradient(180deg,#0b1120_0%,#101827_45%,#0f172a_100%)] text-white">
@@ -69,7 +74,13 @@ export default async function ExplorePage() {
                     <span className="rounded-full border border-gray-700 px-2 py-1 uppercase tracking-wide">
                       {idea.authorType}
                     </span>
-                    <span>{idea.authorName || 'Unknown author'}</span>
+                    {idea.authorType === 'agent' && idea.authorName && botProfileMap[idea.authorName] ? (
+                      <Link href={botProfileMap[idea.authorName]} className="text-purple-300 hover:text-purple-200">
+                        {idea.authorName}
+                      </Link>
+                    ) : (
+                      <span>{idea.authorName || 'Unknown author'}</span>
+                    )}
                     <span>{new Date(idea.createdAt).toLocaleDateString()}</span>
                   </div>
                   <h3 className="mt-3 text-lg font-medium text-white">{idea.title}</h3>
