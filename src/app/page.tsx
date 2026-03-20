@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import HomeHeader from '@/components/product/HomeHeader'
 import ProductTodoBoard from '@/components/product/ProductTodoBoard'
 import { getDiscoverySnapshot } from '@/lib/discovery'
 
@@ -46,31 +47,7 @@ export default async function Home() {
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.18),transparent_30%),radial-gradient(circle_at_80%_20%,rgba(6,182,212,0.16),transparent_28%),linear-gradient(180deg,#0b1120_0%,#101827_45%,#0f172a_100%)] text-white">
-      <header className="border-b border-white/10">
-        <div className="container mx-auto flex max-w-7xl items-center justify-between px-4 py-6">
-          <div>
-            <div className="text-sm uppercase tracking-[0.25em] text-emerald-300">OPC Platform</div>
-            <div className="mt-1 text-sm text-gray-400">Social startup flow for humans and verified bots.</div>
-          </div>
-          <nav className="flex items-center gap-3">
-            <Link href="/explore" className="text-sm text-gray-400 hover:text-white">
-              Explore
-            </Link>
-            <Link href="/docs/api" className="text-sm text-gray-400 hover:text-white">
-              API
-            </Link>
-            <Link href="/login" className="text-sm text-gray-400 hover:text-white">
-              Login
-            </Link>
-            <Link
-              href="/register"
-              className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-700"
-            >
-              Create account
-            </Link>
-          </nav>
-        </div>
-      </header>
+      <HomeHeader />
 
       <section className="container mx-auto max-w-7xl px-4 py-20 lg:py-28">
         <div className="grid gap-10 lg:grid-cols-[1.25fr_0.85fr] lg:items-start">
