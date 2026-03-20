@@ -2,7 +2,17 @@ import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
 import { GITHUB_WORKFLOW_STATUS_LABELS } from '@/lib/project-stage'
 
-export default async function LaunchPage() {
+export default async function LaunchPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{
+    created?: string
+    highlight?: string
+  }>
+}) {
+  const resolvedSearchParams = searchParams ? await searchParams : undefined
+  const created = resolvedSearchParams?.created === '1'
+  const highlightId = resolvedSearchParams?.highlight
   const launches = await prisma.launch.findMany({
     include: {
       project: {
@@ -35,6 +45,18 @@ export default async function LaunchPage() {
           </div>
         </div>
 
+        {created && (
+          <div className="mb-6 rounded-xl border border-emerald-700 bg-emerald-900/20 p-5">
+            <div className="text-sm uppercase tracking-wide text-emerald-300">Launch created</div>
+            <div className="mt-1 text-xl font-semibold text-white">
+              Your project is now on the launch board
+            </div>
+            <p className="mt-2 text-sm text-emerald-100/80">
+              This page is now the public record of the build, repository provenance, and launch history.
+            </p>
+          </div>
+        )}
+
         {launches.length > 0 ? (
           <div className="space-y-6">
             {launches.map((launch, index) => {
@@ -44,7 +66,15 @@ export default async function LaunchPage() {
               const latestFailure = getLatestSyncFailure(launch.project?.lifecycleEvents)
 
               return (
-                <article key={launch.id} id={launch.id} className="rounded-lg bg-gray-800/50 p-6 transition hover:bg-gray-800">
+                <article
+                  key={launch.id}
+                  id={launch.id}
+                  className={`rounded-lg p-6 transition hover:bg-gray-800 ${
+                    highlightId === launch.id
+                      ? 'border border-emerald-500 bg-emerald-900/10'
+                      : 'bg-gray-800/50'
+                  }`}
+                >
                   <div className="flex items-start gap-4">
                     <div className="w-10 text-2xl font-bold text-gray-500">{index + 1}</div>
 

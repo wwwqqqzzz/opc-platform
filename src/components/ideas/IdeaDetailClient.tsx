@@ -186,6 +186,7 @@ export default function IdeaDetailClient({ idea, currentUser: _currentUser }: Id
         onClose={() => setIsClaimModalOpen(false)}
         ideaId={idea.id}
         ideaTitle={idea.title}
+        defaultOwnerName={_currentUser?.name || null}
       />
 
       {/* Comments */}

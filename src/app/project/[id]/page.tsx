@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { notFound, useParams } from 'next/navigation'
+import { notFound, useParams, useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import {
@@ -19,6 +19,8 @@ interface RepoFormState {
 
 export default function ProjectDetailPage() {
   const params = useParams<{ id: string }>()
+  const router = useRouter()
+  const searchParams = useSearchParams()
   const { user } = useAuth()
   const [project, setProject] = useState<ProjectDto | null>(null)
   const [loading, setLoading] = useState(true)
@@ -174,7 +176,7 @@ export default function ProjectDetailPage() {
     try {
       setLaunching(true)
       setActionError(null)
-      await runProjectAction(
+      const launch = await runProjectAction(
         '/api/launches',
         {
           projectId: project.id,
@@ -186,6 +188,8 @@ export default function ProjectDetailPage() {
       )
       setShowLaunchDialog(false)
       setLaunchForm({ productName: '', tagline: '', demoUrl: '' })
+      router.push(`/launch?created=1&highlight=${launch.id}`)
+      router.refresh()
     } catch (error) {
       setActionError(error instanceof Error ? error.message : 'Failed to create launch')
     } finally {
@@ -222,6 +226,10 @@ export default function ProjectDetailPage() {
   const launchChecklist = getLaunchChecklist(project)
   const latestSyncError = getLatestSyncError(project)
   const latestSnapshot = getLatestSnapshot(project)
+  const onboardingMode = searchParams.get('onboarding') === '1'
+  const claimedMode = searchParams.get('claimed') === '1'
+  const githubConnectedMode = searchParams.get('github_connected') === '1'
+  const githubConnectHref = `/api/integrations/github/connect?redirect=${encodeURIComponent(`/project/${project.id}?onboarding=1`)}`
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 text-white">
@@ -230,6 +238,46 @@ export default function ProjectDetailPage() {
           <Link href="/project" className="mb-4 inline-block text-gray-400 hover:text-white">
             Back to Projects
           </Link>
+
+          {(claimedMode || onboardingMode || githubConnectedMode) && (
+            <div className="mb-6 rounded-xl border border-cyan-700/40 bg-cyan-900/20 p-5">
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                <div>
+                  <div className="text-sm uppercase tracking-wide text-cyan-300">Execution onboarding</div>
+                  <div className="mt-1 text-xl font-semibold text-white">
+                    {claimedMode
+                      ? 'Project claimed successfully'
+                      : githubConnectedMode
+                      ? 'GitHub connected successfully'
+                      : 'Continue project execution setup'}
+                  </div>
+                  <p className="mt-2 text-sm text-cyan-100/80">
+                    {claimedMode
+                      ? 'You are now inside the execution flow. The next step is to connect GitHub, bind a repository, and create the first execution artifacts.'
+                      : githubConnectedMode
+                      ? 'GitHub is now connected. Bind a repository next so this project gets a real execution trail.'
+                      : 'This page guides the first setup flow from repository connection to launch readiness.'}
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-3">
+                  {!githubConnected && (
+                    <a
+                      href={githubConnectHref}
+                      className="rounded-lg bg-cyan-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-cyan-700"
+                    >
+                      Connect GitHub
+                    </a>
+                  )}
+                  <Link
+                    href="/dashboard"
+                    className="rounded-lg border border-gray-600 px-4 py-2 text-sm font-medium text-gray-200 transition hover:bg-gray-800"
+                  >
+                    View onboarding dashboard
+                  </Link>
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div className="flex-1">
@@ -374,7 +422,11 @@ export default function ProjectDetailPage() {
 
             {!githubConnected && canManageProject && (
               <div className="rounded-lg border border-amber-700 bg-amber-900/20 p-4 text-sm text-amber-100">
-                Connect GitHub in <Link href="/dashboard/settings" className="underline">Settings</Link> before binding a repository.
+                Connect GitHub with{' '}
+                <a href={githubConnectHref} className="underline">
+                  one click
+                </a>{' '}
+                before binding a repository.
               </div>
             )}
 

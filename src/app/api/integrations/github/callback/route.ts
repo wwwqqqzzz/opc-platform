@@ -4,9 +4,11 @@ import { prisma } from '@/lib/prisma'
 import { exchangeGithubCode, fetchGithubViewer } from '@/lib/github/oauth'
 
 const GITHUB_OAUTH_STATE_COOKIE = 'github_oauth_state'
+const GITHUB_OAUTH_REDIRECT_COOKIE = 'github_oauth_redirect'
 
 export async function GET(request: NextRequest) {
   const settingsUrl = new URL('/dashboard/settings', request.url)
+  const redirectCookie = request.cookies.get(GITHUB_OAUTH_REDIRECT_COOKIE)?.value
 
   try {
     const user = await getAuthenticatedUser()
@@ -43,15 +45,27 @@ export async function GET(request: NextRequest) {
       },
     })
 
-    settingsUrl.searchParams.set('github', 'connected')
-    const response = NextResponse.redirect(settingsUrl)
+    const redirectUrl =
+      redirectCookie && redirectCookie.startsWith('/')
+        ? new URL(redirectCookie, request.url)
+        : settingsUrl
+
+    if (redirectUrl.pathname === '/dashboard/settings') {
+      redirectUrl.searchParams.set('github', 'connected')
+    } else {
+      redirectUrl.searchParams.set('github_connected', '1')
+    }
+
+    const response = NextResponse.redirect(redirectUrl)
     response.cookies.delete(GITHUB_OAUTH_STATE_COOKIE)
+    response.cookies.delete(GITHUB_OAUTH_REDIRECT_COOKIE)
     return response
   } catch (error) {
     console.error('GitHub OAuth callback failed:', error)
     settingsUrl.searchParams.set('github', 'callback_error')
     const response = NextResponse.redirect(settingsUrl)
     response.cookies.delete(GITHUB_OAUTH_STATE_COOKIE)
+    response.cookies.delete(GITHUB_OAUTH_REDIRECT_COOKIE)
     return response
   }
 }

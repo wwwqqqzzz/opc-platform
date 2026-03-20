@@ -8,10 +8,17 @@ interface ClaimIdeaModalProps {
   onClose: () => void
   ideaId: string
   ideaTitle: string
+  defaultOwnerName?: string | null
 }
 
-export default function ClaimIdeaModal({ isOpen, onClose, ideaId, ideaTitle }: ClaimIdeaModalProps) {
-  const [ownerName, setOwnerName] = useState('')
+export default function ClaimIdeaModal({
+  isOpen,
+  onClose,
+  ideaId,
+  ideaTitle,
+  defaultOwnerName,
+}: ClaimIdeaModalProps) {
+  const [ownerName, setOwnerName] = useState(defaultOwnerName || '')
   const [agentTeam, setAgentTeam] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState('')
@@ -58,7 +65,7 @@ export default function ClaimIdeaModal({ isOpen, onClose, ideaId, ideaTitle }: C
 
       // Close modal and redirect to project page
       onClose()
-      router.push(`/project/${project.id}`)
+      router.push(`/project/${project.id}?onboarding=1&claimed=1`)
       router.refresh()
     } catch (err: any) {
       setError(err.message || 'Failed to claim idea. Please try again.')
