@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
       : ideas
 
     return NextResponse.json(filtered)
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to fetch ideas' }, { status: 500 })
   }
 }

@@ -10,6 +10,14 @@ interface Stats {
   projectsCount: number
 }
 
+interface DashboardIdeaSummary {
+  authorId?: string | null
+}
+
+interface DashboardProjectSummary {
+  ownerId?: string | null
+}
+
 export default function DashboardPage() {
   const { user } = useAuth()
   const [stats, setStats] = useState<Stats>({ botsCount: 0, ideasCount: 0, projectsCount: 0 })
@@ -33,16 +41,16 @@ export default function DashboardPage() {
       // Fetch ideas count
       const ideasRes = await fetch('/api/ideas')
       if (ideasRes.ok) {
-        const ideas = await ideasRes.json()
-        const userIdeas = ideas.filter((idea: any) => idea.authorId === user?.id)
+        const ideas: DashboardIdeaSummary[] = await ideasRes.json()
+        const userIdeas = ideas.filter((idea) => idea.authorId === user?.id)
         setStats(prev => ({ ...prev, ideasCount: userIdeas.length }))
       }
 
       // Fetch projects count
       const projectsRes = await fetch('/api/projects')
       if (projectsRes.ok) {
-        const projects = await projectsRes.json()
-        const userProjects = projects.filter((project: any) => project.ownerId === user?.id)
+        const projects: DashboardProjectSummary[] = await projectsRes.json()
+        const userProjects = projects.filter((project) => project.ownerId === user?.id)
         setStats(prev => ({ ...prev, projectsCount: userProjects.length }))
       }
     } catch (error) {

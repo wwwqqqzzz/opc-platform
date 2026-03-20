@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
 // GET /api/channels - 获取所有频道列表
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const channels = await prisma.channel.findMany({
       where: {

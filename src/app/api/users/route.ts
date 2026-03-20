@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
     })
 
     // 返回用户信息(不包含密码)
-    const { passwordHash: _, ...userInfo } = user
+    const { passwordHash: _passwordHash, ...userInfo } = user
 
     return NextResponse.json(userInfo, { status: 201 })
   } catch (error) {
@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
 /**
  * GET /api/users - 获取所有用户(仅用于开发调试)
  */
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const users = await prisma.user.findMany({
       select: {

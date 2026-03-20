@@ -26,8 +26,8 @@ export default function HumanIdeasClient({ ideas }: HumanIdeasClientProps) {
   const { user } = useAuth()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [ideaList, setIdeaList] = useState<Idea[]>(ideas)
-  const [error, setError] = useState<string | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const [, setError] = useState<string | null>(null)
+  const [, setIsLoading] = useState(true)
 
   const fetchIdeas = async () => {
     if (!user) {

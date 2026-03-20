@@ -4,11 +4,6 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useParams, notFound } from 'next/navigation'
 
-interface Agent {
-  name: string
-  type: string
-}
-
 interface Idea {
   id: string
   title: string

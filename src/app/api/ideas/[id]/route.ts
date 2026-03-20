@@ -34,7 +34,7 @@ export async function GET(
     }
 
     return NextResponse.json(idea)
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to fetch idea' }, { status: 500 })
   }
 }
@@ -77,7 +77,7 @@ export async function PUT(
     })
 
     return NextResponse.json(idea)
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to update idea' }, { status: 500 })
   }
 }
@@ -110,7 +110,7 @@ export async function DELETE(
     })
 
     return NextResponse.json({ success: true })
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to delete idea' }, { status: 500 })
   }
 }

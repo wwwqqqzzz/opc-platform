@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json(filtered)
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to fetch launches' }, { status: 500 })
   }
 }

@@ -51,7 +51,7 @@ interface IdeaDetailClientProps {
   currentUser: User | null
 }
 
-export default function IdeaDetailClient({ idea, currentUser }: IdeaDetailClientProps) {
+export default function IdeaDetailClient({ idea, currentUser: _currentUser }: IdeaDetailClientProps) {
   const tags = JSON.parse(idea.tags || '[]')
   const agentTypes = JSON.parse(idea.agentTypes || '[]')
   const [isClaimModalOpen, setIsClaimModalOpen] = useState(false)

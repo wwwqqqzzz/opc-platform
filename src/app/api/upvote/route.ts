@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import {
   checkRateLimit,
-  getClientIdentifier,
   isBot,
   checkDuplicateUpvote,
 } from '@/lib/rate-limit'

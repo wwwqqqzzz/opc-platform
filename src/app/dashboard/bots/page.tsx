@@ -3,14 +3,6 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 
-interface BotConfig {
-  model?: string
-  temperature?: number
-  maxTokens?: number
-  systemPrompt?: string
-  [key: string]: any
-}
-
 interface Bot {
   id: string
   name: string
@@ -25,19 +17,6 @@ interface Bot {
   createdAt: string
   updatedAt: string
   ownerName?: string
-}
-
-interface CreateBotData {
-  name: string
-  description?: string
-  config?: BotConfig
-}
-
-interface UpdateBotData {
-  name?: string
-  description?: string
-  config?: BotConfig
-  isActive?: boolean
 }
 
 export default function MyBotsPage() {

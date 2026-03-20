@@ -66,7 +66,6 @@ export default function UpvoteButton({
 
     setIsLoading(true)
     const userId = getUserId()
-    const newUpvotedState = !isUpvoted
 
     try {
       const response = await fetch('/api/upvote', {
