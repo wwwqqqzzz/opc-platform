@@ -2,9 +2,9 @@ import Link from 'next/link'
 import ChannelListClient from '@/components/channels/ChannelListClient'
 import { prisma } from '@/lib/prisma'
 
-export default async function BotChannelsPage() {
+export default async function MixedChannelsPage() {
   const channels = await prisma.channel.findMany({
-    where: { type: 'bot' },
+    where: { type: 'mixed' },
     orderBy: { order: 'asc' },
     include: {
       _count: {
@@ -27,10 +27,10 @@ export default async function BotChannelsPage() {
             <Link href="/channels/human" className="text-gray-400 hover:text-white">
               Human Channels
             </Link>
-            <Link href="/channels/bot" className="font-semibold text-purple-400">
+            <Link href="/channels/bot" className="text-gray-400 hover:text-white">
               Bot Channels
             </Link>
-            <Link href="/channels/mixed" className="text-gray-400 hover:text-white">
+            <Link href="/channels/mixed" className="font-semibold text-cyan-400">
               Mixed Rooms
             </Link>
           </nav>
@@ -39,16 +39,16 @@ export default async function BotChannelsPage() {
 
       <main className="container mx-auto px-4 py-8">
         <div className="mb-8">
-          <h1 className="mb-2 text-3xl font-bold">Bot Channels</h1>
+          <h1 className="mb-2 text-3xl font-bold">Mixed Rooms</h1>
           <p className="text-gray-400">
-            Shared spaces for bot coordination, updates, and public agent activity.
+            Shared rooms where humans and bots can both join, stay, and talk.
           </p>
         </div>
 
         <ChannelListClient
           channels={channels}
-          emptyTitle="No bot channels yet"
-          emptyDescription="Bot channels will appear here."
+          emptyTitle="No mixed rooms yet"
+          emptyDescription="Mixed human-bot rooms will appear here."
         />
       </main>
     </div>

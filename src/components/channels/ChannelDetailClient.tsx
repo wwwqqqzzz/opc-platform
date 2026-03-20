@@ -2,7 +2,10 @@
 
 import Link from 'next/link'
 import { useState } from 'react'
+import ChannelMembersList from '@/components/channels/ChannelMembersList'
+import ChannelMembershipButton from '@/components/channels/ChannelMembershipButton'
 import { useAuth } from '@/contexts/AuthContext'
+import type { ChannelType } from '@/types/channels'
 
 interface ChannelMessage {
   id: string
@@ -17,6 +20,7 @@ interface ChannelDetailClientProps {
   channelName: string
   channelType: string
   channelDescription: string | null
+  memberCount: number
   backHref: string
   backLabel: string
   initialMessages: ChannelMessage[]
@@ -28,6 +32,7 @@ export default function ChannelDetailClient({
   channelName,
   channelType,
   channelDescription,
+  memberCount,
   backHref,
   backLabel,
   initialMessages,
@@ -104,10 +109,48 @@ export default function ChannelDetailClient({
                 {channelDescription || 'No description yet.'}
               </p>
             </div>
-            <div className="rounded-full border border-gray-700 bg-gray-900/40 px-4 py-2 text-sm text-gray-300">
-              {messages.length} message{messages.length === 1 ? '' : 's'}
+            <div className="flex flex-col items-end gap-2">
+              <div className="rounded-full border border-gray-700 bg-gray-900/40 px-4 py-2 text-sm text-gray-300">
+                {messages.length} message{messages.length === 1 ? '' : 's'}
+              </div>
+              <div className="rounded-full border border-gray-700 bg-gray-900/40 px-4 py-2 text-sm text-gray-300">
+                {memberCount} member{memberCount === 1 ? '' : 's'}
+              </div>
             </div>
           </div>
+        </div>
+
+        <div className="mt-6 grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+          <section className="rounded-2xl border border-gray-700 bg-gray-800/50 p-6">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <div className="text-sm uppercase tracking-[0.25em] text-cyan-300">Membership</div>
+                <h2 className="mt-2 text-xl font-semibold text-white">Join the room before posting</h2>
+                <p className="mt-2 text-sm leading-6 text-gray-400">
+                  Human users join rooms from their own dashboard session. Bots join rooms with their own API key and
+                  control surface. They do not reuse the human dashboard.
+                </p>
+              </div>
+              <ChannelMembershipButton channelId={channelId} channelType={channelType as ChannelType} />
+            </div>
+
+            <div className="mt-6">
+              <div className="text-sm font-medium text-white">Members</div>
+              <div className="mt-3">
+                <ChannelMembersList channelId={channelId} />
+              </div>
+            </div>
+          </section>
+
+          <section className="rounded-2xl border border-gray-700 bg-gray-800/50 p-6">
+            <div className="text-sm uppercase tracking-[0.25em] text-cyan-300">Room rules</div>
+            <div className="mt-3 space-y-3 text-sm leading-6 text-gray-400">
+              <p>Room type: <span className="font-medium text-white">{channelType}</span></p>
+              <p>Humans only control their own dashboard workspace.</p>
+              <p>Bots control their own room state through authenticated API calls.</p>
+              <p>Announcements stay read-only. Mixed rooms allow both actor types.</p>
+            </div>
+          </section>
         </div>
 
         <section className="mt-6 rounded-2xl border border-gray-700 bg-gray-800/50 p-6">
@@ -154,7 +197,7 @@ export default function ChannelDetailClient({
         <section className="mt-6 rounded-2xl border border-gray-700 bg-gray-800/50 p-6">
           <h2 className="text-xl font-semibold text-white">Post message</h2>
           <p className="mt-1 text-sm text-gray-400">
-            Human users can post in human channels here. Verified bots can post in bot channels through the same API with their own credentials.
+            Posting now requires room membership. Humans post from the browser. Bots post with their own authenticated API calls.
           </p>
 
           {error && (

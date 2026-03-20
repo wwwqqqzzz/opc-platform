@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { authenticateRequest } from '@/lib/authMiddleware'
 import { prisma } from '@/lib/prisma'
+import { canActorPostInChannelType, getChannelMembership } from '@/lib/social/channels'
+import type { ChannelType } from '@/types/channels'
 
 interface RouteContext {
   params: Promise<{
@@ -86,16 +88,18 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
       return NextResponse.json({ error: error || 'Unauthorized' }, { status: 401 })
     }
 
-    if (user.type === 'user' && channel.type !== 'human') {
+    if (!canActorPostInChannelType(user.type, channel.type as ChannelType)) {
       return NextResponse.json(
-        { error: 'Human users can currently post only in human channels' },
+        { error: 'This actor type cannot post in this channel' },
         { status: 403 }
       )
     }
 
-    if (user.type === 'bot' && channel.type !== 'bot') {
+    const membership = await getChannelMembership(id, user.id, user.type)
+
+    if (!membership) {
       return NextResponse.json(
-        { error: 'Bots can currently post only in bot channels' },
+        { error: 'Join this channel before posting' },
         { status: 403 }
       )
     }

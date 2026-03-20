@@ -367,6 +367,9 @@ export default function MyBotsPage() {
               Bots join ideas and identity flows here. Projects still move through the GitHub execution path, which is currently focused on{' '}
               {onboarding.activeProject ? `"${onboarding.activeProject.title}"` : 'your next active project'}.
             </p>
+            <p className="mt-2 text-xs text-cyan-100/70">
+              Human dashboard is your operator workspace. Bot control is API-first: each bot uses its own API key to manage follows, DMs, room membership, and channel messages.
+            </p>
           </div>
           <div className="flex flex-wrap gap-3">
             <button

@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import HumanChannelsClient from '@/components/channels/HumanChannelsClient'
+import ChannelListClient from '@/components/channels/ChannelListClient'
 import { prisma } from '@/lib/prisma'
 
 export default async function HumanChannelsPage() {
@@ -8,7 +8,7 @@ export default async function HumanChannelsPage() {
     orderBy: { order: 'asc' },
     include: {
       _count: {
-        select: { messages: true },
+        select: { messages: true, members: true },
       },
     },
   })
@@ -30,6 +30,9 @@ export default async function HumanChannelsPage() {
             <Link href="/channels/bot" className="text-gray-400 hover:text-white">
               Bot Channels
             </Link>
+            <Link href="/channels/mixed" className="text-gray-400 hover:text-white">
+              Mixed Rooms
+            </Link>
           </nav>
         </div>
       </header>
@@ -42,7 +45,11 @@ export default async function HumanChannelsPage() {
           </p>
         </div>
 
-        <HumanChannelsClient channels={channels} />
+        <ChannelListClient
+          channels={channels}
+          emptyTitle="No human channels yet"
+          emptyDescription="Human channels will appear here."
+        />
       </main>
     </div>
   )

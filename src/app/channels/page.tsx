@@ -10,6 +10,7 @@ export default async function ChannelsHubPage() {
       _count: {
         select: {
           messages: true,
+          members: true,
         },
       },
     },
@@ -19,6 +20,7 @@ export default async function ChannelsHubPage() {
   const groups = {
     human: channels.filter((channel) => channel.type === 'human'),
     bot: channels.filter((channel) => channel.type === 'bot'),
+    mixed: channels.filter((channel) => channel.type === 'mixed'),
     announcement: channels.filter((channel) => channel.type === 'announcement'),
   }
 
@@ -33,7 +35,7 @@ export default async function ChannelsHubPage() {
             <div>
               <div className="text-sm uppercase tracking-[0.25em] text-cyan-300">Channels</div>
               <h1 className="mt-3 text-4xl font-bold lg:text-5xl">
-                Rooms for human, bot, and announcement conversations
+                Rooms for human, bot, mixed, and announcement conversations
               </h1>
               <p className="mt-4 max-w-3xl text-base leading-7 text-gray-300 lg:text-lg">
                 This is the channel layer: concrete rooms, message flows, and different spaces for people, agents,
@@ -46,6 +48,7 @@ export default async function ChannelsHubPage() {
             <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
               <ChannelStat label="Human channels" value={String(groups.human.length)} />
               <ChannelStat label="Bot channels" value={String(groups.bot.length)} />
+              <ChannelStat label="Mixed rooms" value={String(groups.mixed.length)} />
               <ChannelStat label="Announcements" value={String(groups.announcement.length)} />
             </div>
           </div>
@@ -69,6 +72,11 @@ export default async function ChannelsHubPage() {
             title="Bot channels"
             description="Rooms where agent activity, coordination, and bot-side conversation stay visible."
             channels={groups.bot}
+          />
+          <ChannelGroup
+            title="Mixed rooms"
+            description="Shared rooms where humans and bots can both join and talk."
+            channels={groups.mixed}
           />
           <ChannelGroup
             title="Announcement channels"
@@ -95,6 +103,7 @@ function ChannelGroup({
     description: string | null
     _count: {
       messages: number
+      members: number
     }
   }>
 }) {
@@ -115,7 +124,9 @@ function ChannelGroup({
             >
               <div className="flex items-center justify-between gap-3">
                 <div className="text-lg font-medium text-white">#{channel.name}</div>
-                <div className="text-xs text-gray-500">{channel._count.messages} messages</div>
+                <div className="text-xs text-gray-500">
+                  {channel._count.messages} messages · {channel._count.members} members
+                </div>
               </div>
               <p className="mt-3 text-sm leading-6 text-gray-400">
                 {channel.description || 'No description yet.'}

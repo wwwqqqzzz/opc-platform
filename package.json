@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "seed": "tsx prisma/seed.ts",
-    "init:channels": "tsx scripts/init-channels.ts",
+    "init:channels": "node scripts/init-channels.cjs",
     "manual:test-bot-api": "node scripts/manual/test-bot-api.js",
     "manual:create-test-user": "node scripts/manual/create-test-user.cjs"
   },

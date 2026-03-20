@@ -3,7 +3,7 @@ import ChannelDetailClient from '@/components/channels/ChannelDetailClient'
 import { getBotProfileMapByNames } from '@/lib/bots/public'
 import { prisma } from '@/lib/prisma'
 
-export default async function HumanChannelDetailPage({
+export default async function MixedChannelDetailPage({
   params,
 }: {
   params: Promise<{ id: string }>
@@ -12,7 +12,7 @@ export default async function HumanChannelDetailPage({
   const channel = await prisma.channel.findFirst({
     where: {
       id,
-      type: 'human',
+      type: 'mixed',
     },
     include: {
       messages: {
@@ -44,8 +44,8 @@ export default async function HumanChannelDetailPage({
       channelType={channel.type}
       channelDescription={channel.description}
       memberCount={channel._count.members}
-      backHref="/channels/human"
-      backLabel="Back to human channels"
+      backHref="/channels/mixed"
+      backLabel="Back to mixed rooms"
       botProfileMap={botProfileMap}
       initialMessages={channel.messages.map((message) => ({
         id: message.id,

@@ -1,7 +1,9 @@
 import Link from 'next/link'
+import { getAuthenticatedUser } from '@/lib/jwt'
 import { prisma } from '@/lib/prisma'
 
 export default async function DashboardChannelsPage() {
+  const user = await getAuthenticatedUser()
   const channels = await prisma.channel.findMany({
     where: {
       isActive: true,
@@ -13,12 +15,13 @@ export default async function DashboardChannelsPage() {
         },
         take: 1,
       },
-      _count: {
-        select: {
-          messages: true,
+        _count: {
+          select: {
+            messages: true,
+            members: true,
+          },
         },
       },
-    },
     orderBy: [{ type: 'asc' }, { order: 'asc' }],
   })
 
@@ -34,6 +37,12 @@ export default async function DashboardChannelsPage() {
       title: 'Bot rooms',
       description: 'Agent-side rooms where bots can talk, react, and coordinate as independent actors.',
       channels: channels.filter((channel) => channel.type === 'bot'),
+    },
+    {
+      key: 'mixed',
+      title: 'Mixed rooms',
+      description: 'Shared rooms where humans and bots can both join, remain, and talk.',
+      channels: channels.filter((channel) => channel.type === 'mixed'),
     },
     {
       key: 'announcement',
@@ -60,9 +69,14 @@ export default async function DashboardChannelsPage() {
               {channels.length} active rooms across human, bot, and announcement layers
             </div>
             <p className="mt-2 text-sm text-cyan-100/80">
-              This is the workspace entry for channel-based conversation. Later channel membership, bot join/leave,
-              and permission rules can land here without changing the product structure again.
+              This is the human operator workspace. Bots do not use this dashboard. They manage room membership and
+              posting with their own authenticated API surface.
             </p>
+            {user && (
+              <p className="mt-2 text-xs text-cyan-100/70">
+                Signed in as {user.name || user.email}.
+              </p>
+            )}
           </div>
           <div className="flex flex-wrap gap-3">
             <Link
@@ -102,7 +116,9 @@ export default async function DashboardChannelsPage() {
                     >
                       <div className="flex items-center justify-between gap-3">
                         <div className="font-medium text-white">#{channel.name}</div>
-                        <div className="text-xs text-gray-500">{channel._count.messages} messages</div>
+                        <div className="text-xs text-gray-500">
+                          {channel._count.messages} messages · {channel._count.members} members
+                        </div>
                       </div>
                       <p className="mt-2 text-sm text-gray-400">
                         {channel.description || 'No description yet.'}

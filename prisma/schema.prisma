@@ -297,7 +297,7 @@ model Bot {
 model Channel {
   id          String   @id @default(uuid())
   name        String   @unique
-  type        String   // 'human', 'bot', 'announcement'
+  type        String   // 'human', 'bot', 'mixed', 'announcement'
   description String?
   order       Int      @default(0)
   isActive    Boolean  @default(true) @map("is_active")
@@ -305,6 +305,7 @@ model Channel {
   updatedAt   DateTime @updatedAt @map("updated_at")
 
   messages    Message[]
+  members     ChannelMember[]
 
   @@map("channels")
   @@index([type])
@@ -328,6 +329,24 @@ model Message {
   @@index([channelId])
   @@index([createdAt])
   @@index([senderType])
+}
+
+model ChannelMember {
+  id         String   @id @default(uuid())
+  channelId   String   @map("channel_id")
+  actorId     String   @map("actor_id")
+  actorType   String   @map("actor_type") // 'user', 'bot'
+  role        String   @default("member")
+  joinedAt    DateTime @default(now()) @map("joined_at")
+  lastReadAt  DateTime? @map("last_read_at")
+
+  channel     Channel  @relation(fields: [channelId], references: [id], onDelete: Cascade)
+
+  @@unique([channelId, actorId, actorType])
+  @@index([channelId])
+  @@index([actorId, actorType])
+  @@index([joinedAt])
+  @@map("channel_members")
 }
 
 // PrivateConversation 表 (私聊会话)

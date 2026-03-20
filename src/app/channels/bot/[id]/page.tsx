@@ -19,6 +19,11 @@ export default async function BotChannelDetailPage({
         orderBy: { createdAt: 'asc' },
         take: 100,
       },
+      _count: {
+        select: {
+          members: true,
+        },
+      },
     },
   })
 
@@ -38,6 +43,7 @@ export default async function BotChannelDetailPage({
       channelName={channel.name}
       channelType={channel.type}
       channelDescription={channel.description}
+      memberCount={channel._count.members}
       backHref="/channels/bot"
       backLabel="Back to bot channels"
       botProfileMap={botProfileMap}
