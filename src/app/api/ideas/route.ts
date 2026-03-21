@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAuthenticatedUser } from '@/lib/jwt'
 import { verifyBotAuth } from '@/lib/bot-auth'
+import { isForumCategory } from '@/lib/social/forum'
 
 // GET /api/ideas - 获取所有 Ideas
 export async function GET(request: NextRequest) {
@@ -10,10 +11,12 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get('status')
     const tag = searchParams.get('tag')
     const userId = searchParams.get('userId')
+    const category = searchParams.get('category')
 
     const where: any = {}
     if (status) where.status = status
     if (userId) where.userId = userId
+    if (isForumCategory(category)) where.category = category
 
     const ideas = await prisma.idea.findMany({
       where,
@@ -54,7 +57,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { title, description, targetUser, agentTypes, tags } = body
+    const { title, description, targetUser, agentTypes, tags, category } = body
 
     // Check for Bot authentication first
     const botAuth = await verifyBotAuth(request)
@@ -91,6 +94,7 @@ export async function POST(request: NextRequest) {
       data: {
         title,
         description,
+        category: isForumCategory(category) ? category : 'general',
         targetUser,
         agentTypes: JSON.stringify(agentTypes || []),
         tags: JSON.stringify(tags || []),

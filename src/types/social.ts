@@ -59,6 +59,7 @@ export type SocialNotificationType =
   | 'dm_message'
   | 'channel_role_updated'
   | 'connection_request'
+  | 'forum_reply'
 
 export interface SocialNotification {
   id: string

@@ -2,9 +2,10 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { FORUM_CATEGORIES } from '@/lib/social/forum'
 
 const AGENT_TYPES = ['coder', 'marketing', 'research', 'sales', 'design']
-const TAGS = ['SaaS', '工具', '内容', '自动化', 'API']
+const TAGS = ['SaaS', 'tooling', 'content', 'automation', 'API']
 
 interface NewIdeaModalProps {
   isOpen: boolean
@@ -16,32 +17,26 @@ export default function NewIdeaModal({ isOpen, onClose }: NewIdeaModalProps) {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
+    category: 'general',
     targetUser: '',
     agentTypes: [] as string[],
     tags: [] as string[],
-    authorType: 'human' as 'human' | 'agent',
-    authorName: '',
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState('')
 
   if (!isOpen) return null
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault()
     setError('')
 
-    // Validation
     if (!formData.title.trim()) {
-      setError('标题是必填项')
+      setError('Title is required.')
       return
     }
     if (!formData.description.trim()) {
-      setError('描述是必填项')
-      return
-    }
-    if (!formData.authorName.trim()) {
-      setError('作者名字是必填项')
+      setError('Description is required.')
       return
     }
 
@@ -61,107 +56,126 @@ export default function NewIdeaModal({ isOpen, onClose }: NewIdeaModalProps) {
         throw new Error(data.error || 'Failed to create idea')
       }
 
-      // Success - close modal and refresh
+      setFormData({
+        title: '',
+        description: '',
+        category: 'general',
+        targetUser: '',
+        agentTypes: [],
+        tags: [],
+      })
+      setError('')
       onClose()
       router.refresh()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : '发布失败，请重试')
+    } catch (submitError) {
+      setError(submitError instanceof Error ? submitError.message : 'Failed to publish idea')
     } finally {
       setIsSubmitting(false)
     }
   }
 
   const toggleAgentType = (type: string) => {
-    setFormData(prev => ({
-      ...prev,
-      agentTypes: prev.agentTypes.includes(type)
-        ? prev.agentTypes.filter(t => t !== type)
-        : [...prev.agentTypes, type],
+    setFormData((current) => ({
+      ...current,
+      agentTypes: current.agentTypes.includes(type)
+        ? current.agentTypes.filter((item) => item !== type)
+        : [...current.agentTypes, type],
     }))
   }
 
   const toggleTag = (tag: string) => {
-    setFormData(prev => ({
-      ...prev,
-      tags: prev.tags.includes(tag)
-        ? prev.tags.filter(t => t !== tag)
-        : [...prev.tags, tag],
+    setFormData((current) => ({
+      ...current,
+      tags: current.tags.includes(tag)
+        ? current.tags.filter((item) => item !== tag)
+        : [...current.tags, tag],
     }))
   }
 
   return (
-    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-      <div className="bg-gray-800 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
+      <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg bg-gray-800">
         <div className="p-6">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold">发布新 Idea</h2>
+          <div className="mb-6 flex items-center justify-between">
+            <h2 className="text-2xl font-bold text-white">Publish Forum Thread</h2>
             <button
+              type="button"
               onClick={onClose}
-              className="text-gray-400 hover:text-white text-2xl leading-none"
+              className="text-2xl leading-none text-gray-400 hover:text-white"
             >
               ×
             </button>
           </div>
 
           {error && (
-            <div className="mb-4 p-3 bg-red-500/20 border border-red-500/50 rounded text-red-300">
+            <div className="mb-4 rounded border border-red-500/50 bg-red-500/20 p-3 text-red-300">
               {error}
             </div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Title */}
             <div>
-              <label className="block text-sm font-medium mb-2">
-                标题 <span className="text-red-400">*</span>
-              </label>
+              <label className="mb-2 block text-sm font-medium text-white">Title</label>
               <input
                 type="text"
                 value={formData.title}
-                onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                className="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg focus:outline-none focus:border-emerald-500"
-                placeholder="简短有力的标题"
+                onChange={(event) => setFormData((current) => ({ ...current, title: event.target.value }))}
+                className="w-full rounded-lg border border-gray-700 bg-gray-900 px-4 py-2 text-white focus:border-emerald-500 focus:outline-none"
+                placeholder="Short, clear thread title"
                 disabled={isSubmitting}
               />
             </div>
 
-            {/* Description */}
             <div>
-              <label className="block text-sm font-medium mb-2">
-                一句话描述 <span className="text-red-400">*</span>
-              </label>
+              <label className="mb-2 block text-sm font-medium text-white">Forum Category</label>
+              <select
+                value={formData.category}
+                onChange={(event) => setFormData((current) => ({ ...current, category: event.target.value }))}
+                className="w-full rounded-lg border border-gray-700 bg-gray-900 px-4 py-2 text-white focus:border-emerald-500 focus:outline-none"
+                disabled={isSubmitting}
+              >
+                {FORUM_CATEGORIES.map((category) => (
+                  <option key={category} value={category}>
+                    {category}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="mb-2 block text-sm font-medium text-white">Description</label>
               <textarea
                 value={formData.description}
-                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                className="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg focus:outline-none focus:border-emerald-500 min-h-[100px] resize-y"
-                placeholder="详细描述你的想法..."
+                onChange={(event) =>
+                  setFormData((current) => ({ ...current, description: event.target.value }))
+                }
+                className="min-h-[100px] w-full resize-y rounded-lg border border-gray-700 bg-gray-900 px-4 py-2 text-white focus:border-emerald-500 focus:outline-none"
+                placeholder="Describe the idea, position, or discussion you want the forum to respond to..."
                 disabled={isSubmitting}
               />
             </div>
 
-            {/* Target User */}
             <div>
-              <label className="block text-sm font-medium mb-2">目标用户</label>
+              <label className="mb-2 block text-sm font-medium text-white">Target User</label>
               <input
                 type="text"
                 value={formData.targetUser}
-                onChange={(e) => setFormData(prev => ({ ...prev, targetUser: e.target.value }))}
-                className="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg focus:outline-none focus:border-emerald-500"
-                placeholder="谁是你的目标用户？"
+                onChange={(event) => setFormData((current) => ({ ...current, targetUser: event.target.value }))}
+                className="w-full rounded-lg border border-gray-700 bg-gray-900 px-4 py-2 text-white focus:border-emerald-500 focus:outline-none"
+                placeholder="Who is this thread most relevant for?"
                 disabled={isSubmitting}
               />
             </div>
 
-            {/* Agent Types */}
             <div>
-              <label className="block text-sm font-medium mb-2">需要的 Agent 类型</label>
+              <label className="mb-2 block text-sm font-medium text-white">Agent Types</label>
               <div className="flex flex-wrap gap-2">
                 {AGENT_TYPES.map((type) => (
                   <button
                     key={type}
                     type="button"
                     onClick={() => toggleAgentType(type)}
-                    className={`px-3 py-1.5 rounded-lg text-sm transition ${
+                    className={`rounded-lg px-3 py-1.5 text-sm transition ${
                       formData.agentTypes.includes(type)
                         ? 'bg-cyan-500 text-white'
                         : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
@@ -174,16 +188,15 @@ export default function NewIdeaModal({ isOpen, onClose }: NewIdeaModalProps) {
               </div>
             </div>
 
-            {/* Tags */}
             <div>
-              <label className="block text-sm font-medium mb-2">标签</label>
+              <label className="mb-2 block text-sm font-medium text-white">Tags</label>
               <div className="flex flex-wrap gap-2">
                 {TAGS.map((tag) => (
                   <button
                     key={tag}
                     type="button"
                     onClick={() => toggleTag(tag)}
-                    className={`px-3 py-1.5 rounded-lg text-sm transition ${
+                    className={`rounded-lg px-3 py-1.5 text-sm transition ${
                       formData.tags.includes(tag)
                         ? 'bg-emerald-500 text-white'
                         : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
@@ -196,66 +209,28 @@ export default function NewIdeaModal({ isOpen, onClose }: NewIdeaModalProps) {
               </div>
             </div>
 
-            {/* Author Type */}
             <div>
-              <label className="block text-sm font-medium mb-2">作者类型</label>
-              <div className="flex gap-4">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="authorType"
-                    value="human"
-                    checked={formData.authorType === 'human'}
-                    onChange={(e) => setFormData(prev => ({ ...prev, authorType: e.target.value as 'human' | 'agent' }))}
-                    disabled={isSubmitting}
-                  />
-                  <span>👤 Human</span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="authorType"
-                    value="agent"
-                    checked={formData.authorType === 'agent'}
-                    onChange={(e) => setFormData(prev => ({ ...prev, authorType: e.target.value as 'human' | 'agent' }))}
-                    disabled={isSubmitting}
-                  />
-                  <span>🤖 Agent</span>
-                </label>
+              <label className="mb-2 block text-sm font-medium text-white">Publishing Identity</label>
+              <div className="rounded-lg border border-gray-700 bg-gray-900 px-4 py-3 text-sm text-gray-300">
+                This thread will be published from your current human account.
               </div>
             </div>
 
-            {/* Author Name */}
-            <div>
-              <label className="block text-sm font-medium mb-2">
-                作者名字 <span className="text-red-400">*</span>
-              </label>
-              <input
-                type="text"
-                value={formData.authorName}
-                onChange={(e) => setFormData(prev => ({ ...prev, authorName: e.target.value }))}
-                className="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg focus:outline-none focus:border-emerald-500"
-                placeholder="你的名字或昵称"
-                disabled={isSubmitting}
-              />
-            </div>
-
-            {/* Submit Button */}
             <div className="flex gap-3 pt-4">
               <button
                 type="button"
                 onClick={onClose}
-                className="flex-1 px-6 py-3 bg-gray-700 hover:bg-gray-600 rounded-lg font-semibold transition"
+                className="flex-1 rounded-lg bg-gray-700 px-6 py-3 font-semibold transition hover:bg-gray-600"
                 disabled={isSubmitting}
               >
-                取消
+                Cancel
               </button>
               <button
                 type="submit"
-                className="flex-1 px-6 py-3 bg-emerald-500 hover:bg-emerald-600 rounded-lg font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 rounded-lg bg-emerald-500 px-6 py-3 font-semibold transition hover:bg-emerald-600 disabled:cursor-not-allowed disabled:opacity-50"
                 disabled={isSubmitting}
               >
-                {isSubmitting ? '发布中...' : '发布 Idea'}
+                {isSubmitting ? 'Publishing...' : 'Publish Thread'}
               </button>
             </div>
           </form>

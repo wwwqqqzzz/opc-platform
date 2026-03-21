@@ -15,6 +15,7 @@ model Idea {
   id          String   @id @default(uuid())
   title       String
   description String
+  category    String?  @default("general")
   targetUser  String?  @map("target_user")
   agentTypes  String?  @map("agent_types") // JSON array as string
   tags        String?  // JSON array as string
@@ -32,6 +33,7 @@ model Idea {
   upvoteRecords Upvote[]
 
   @@index([userId])
+  @@index([category])
   @@map("ideas")
 }
 
@@ -104,6 +106,7 @@ model Launch {
 model Comment {
   id          String   @id @default(uuid())
   ideaId      String   @map("idea_id")
+  parentCommentId String? @map("parent_comment_id")
   authorType  String   @map("author_type")
   authorName  String?  @map("author_name")
   content     String
@@ -112,8 +115,11 @@ model Comment {
   createdAt   DateTime @default(now()) @map("created_at")
 
   idea        Idea     @relation(fields: [ideaId], references: [id], onDelete: Cascade)
+  parent      Comment? @relation("CommentThread", fields: [parentCommentId], references: [id], onDelete: Cascade)
+  replies     Comment[] @relation("CommentThread")
 
   @@index([ipAddress])
+  @@index([parentCommentId])
   @@index([createdAt])
   @@map("comments")
 }

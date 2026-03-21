@@ -5,15 +5,13 @@ import { useRouter } from 'next/navigation'
 
 interface CommentFormProps {
   ideaId: string
+  parentCommentId?: string | null
+  compact?: boolean
 }
 
-export default function CommentForm({ ideaId }: CommentFormProps) {
+export default function CommentForm({ ideaId, parentCommentId = null, compact = false }: CommentFormProps) {
   const router = useRouter()
-  const [formData, setFormData] = useState({
-    authorType: 'human' as 'human' | 'agent',
-    authorName: '',
-    content: '',
-  })
+  const [content, setContent] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState('')
 
@@ -21,13 +19,8 @@ export default function CommentForm({ ideaId }: CommentFormProps) {
     event.preventDefault()
     setError('')
 
-    if (!formData.content.trim()) {
+    if (!content.trim()) {
       setError('Comment content cannot be empty.')
-      return
-    }
-
-    if (!formData.authorName.trim()) {
-      setError('Please enter your name.')
       return
     }
 
@@ -39,7 +32,10 @@ export default function CommentForm({ ideaId }: CommentFormProps) {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          content,
+          parentCommentId,
+        }),
       })
 
       if (!response.ok) {
@@ -47,11 +43,7 @@ export default function CommentForm({ ideaId }: CommentFormProps) {
         throw new Error(data.error || 'Failed to post comment')
       }
 
-      setFormData({
-        authorType: 'human',
-        authorName: formData.authorName,
-        content: '',
-      })
+      setContent('')
       router.refresh()
     } catch (submitError: unknown) {
       setError(submitError instanceof Error ? submitError.message : 'Failed to post comment. Please retry.')
@@ -61,7 +53,7 @@ export default function CommentForm({ ideaId }: CommentFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="mt-6">
+    <form onSubmit={handleSubmit} className={compact ? 'mt-2' : 'mt-6'}>
       {error && (
         <div className="mb-4 rounded border border-red-500/50 bg-red-500/20 p-3 text-red-300">
           {error}
@@ -70,56 +62,22 @@ export default function CommentForm({ ideaId }: CommentFormProps) {
 
       <div className="space-y-4">
         <div>
-          <label className="mb-2 block text-sm font-medium">I am</label>
-          <div className="flex gap-4">
-            <label className="flex cursor-pointer items-center gap-2">
-              <input
-                type="radio"
-                name="authorType"
-                value="human"
-                checked={formData.authorType === 'human'}
-                onChange={(event) =>
-                  setFormData((prev) => ({ ...prev, authorType: event.target.value as 'human' | 'agent' }))
-                }
-                disabled={isSubmitting}
-              />
-              <span>Human</span>
-            </label>
-            <label className="flex cursor-pointer items-center gap-2">
-              <input
-                type="radio"
-                name="authorType"
-                value="agent"
-                checked={formData.authorType === 'agent'}
-                onChange={(event) =>
-                  setFormData((prev) => ({ ...prev, authorType: event.target.value as 'human' | 'agent' }))
-                }
-                disabled={isSubmitting}
-              />
-              <span>Agent</span>
-            </label>
+          <label className="mb-2 block text-sm font-medium">Publishing Identity</label>
+          <div className="rounded-lg border border-gray-700 bg-gray-900 px-4 py-3 text-sm text-gray-300">
+            Browser comments are published from your current human account. Bot replies must use the
+            bot API.
           </div>
         </div>
 
         <div>
-          <label className="mb-2 block text-sm font-medium">Name</label>
-          <input
-            type="text"
-            value={formData.authorName}
-            onChange={(event) => setFormData((prev) => ({ ...prev, authorName: event.target.value }))}
-            className="w-full rounded-lg border border-gray-700 bg-gray-900 px-4 py-2 focus:border-emerald-500 focus:outline-none"
-            placeholder="Your display name or agent name"
-            disabled={isSubmitting}
-          />
-        </div>
-
-        <div>
-          <label className="mb-2 block text-sm font-medium">Comment</label>
+          <label className="mb-2 block text-sm font-medium">{compact ? 'Reply' : 'Comment'}</label>
           <textarea
-            value={formData.content}
-            onChange={(event) => setFormData((prev) => ({ ...prev, content: event.target.value }))}
-            className="min-h-[100px] w-full resize-y rounded-lg border border-gray-700 bg-gray-900 px-4 py-2 focus:border-emerald-500 focus:outline-none"
-            placeholder="Share your reaction, critique, or follow-up..."
+            value={content}
+            onChange={(event) => setContent(event.target.value)}
+            className={`w-full resize-y rounded-lg border border-gray-700 bg-gray-900 px-4 py-2 focus:border-emerald-500 focus:outline-none ${
+              compact ? 'min-h-[80px]' : 'min-h-[100px]'
+            }`}
+            placeholder={compact ? 'Write a threaded reply...' : 'Share your reaction, critique, or follow-up...'}
             disabled={isSubmitting}
           />
         </div>
@@ -129,7 +87,7 @@ export default function CommentForm({ ideaId }: CommentFormProps) {
           className="w-full rounded-lg bg-emerald-500 px-6 py-3 font-semibold transition hover:bg-emerald-600 disabled:cursor-not-allowed disabled:opacity-50"
           disabled={isSubmitting}
         >
-          {isSubmitting ? 'Posting...' : 'Post comment'}
+          {isSubmitting ? 'Posting...' : compact ? 'Post reply' : 'Post comment'}
         </button>
       </div>
     </form>

@@ -6,6 +6,8 @@ import {
   checkDuplicateComment,
 } from '@/lib/rate-limit'
 import { verifyBotAuth } from '@/lib/bot-auth'
+import { verifyAuth } from '@/lib/server-auth'
+import { createNotification } from '@/lib/social/notifications'
 
 // POST /api/ideas/[id]/comments - Create a new comment
 export async function POST(
@@ -15,6 +17,7 @@ export async function POST(
   try {
     // Check for Bot authentication first
     const botAuth = await verifyBotAuth(request)
+    const userAuth = botAuth ? null : await verifyAuth(request)
 
     // Get client information
     const ipAddress =
@@ -41,7 +44,7 @@ export async function POST(
 
     const { id } = await params
     const body = await request.json()
-    const { authorType, authorName, content } = body
+    const { content, parentCommentId } = body
 
     // Validate required fields
     if (!content || content.trim() === '') {
@@ -57,12 +60,12 @@ export async function POST(
       finalAuthorType = 'agent'
       finalAuthorName = botAuth.botName
     } else {
-      // Non-bot user
-      if (!authorName || authorName.trim() === '') {
-        return NextResponse.json({ error: 'Author name is required' }, { status: 400 })
+      if (!userAuth) {
+        return NextResponse.json({ error: 'Login required to comment' }, { status: 401 })
       }
-      finalAuthorType = authorType || 'human'
-      finalAuthorName = authorName.trim()
+
+      finalAuthorType = 'human'
+      finalAuthorName = userAuth.name || userAuth.email || 'Human member'
     }
 
     // Check for duplicate comments from same IP (prevent spam)
@@ -86,10 +89,27 @@ export async function POST(
       return NextResponse.json({ error: 'Idea not found' }, { status: 404 })
     }
 
+    if (typeof parentCommentId === 'string' && parentCommentId.trim()) {
+      const parentComment = await prisma.comment.findFirst({
+        where: {
+          id: parentCommentId.trim(),
+          ideaId: id,
+        },
+      })
+
+      if (!parentComment) {
+        return NextResponse.json({ error: 'Parent comment not found' }, { status: 404 })
+      }
+    }
+
     // Create the comment with IP tracking
     const comment = await prisma.comment.create({
       data: {
         ideaId: id,
+        parentCommentId:
+          typeof parentCommentId === 'string' && parentCommentId.trim()
+            ? parentCommentId.trim()
+            : null,
         authorType: finalAuthorType,
         authorName: finalAuthorName,
         content: content.trim(),
@@ -106,6 +126,18 @@ export async function POST(
         },
       },
     })
+
+    if (idea.userId) {
+      await createNotification({
+        actorId: idea.userId,
+        actorType: 'user',
+        type: 'forum_reply',
+        title: `${finalAuthorName} replied in your forum thread`,
+        body: content.trim().slice(0, 160),
+        href: `/idea/${id}`,
+        metadata: comment.id,
+      }).catch(() => null)
+    }
 
     return NextResponse.json(comment, { status: 201 })
   } catch (error) {

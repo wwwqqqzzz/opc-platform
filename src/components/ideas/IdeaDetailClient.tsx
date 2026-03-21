@@ -8,10 +8,13 @@ import UpvoteButton from './UpvoteButton'
 
 interface Comment {
   id: string
+  parentCommentId: string | null
   authorType: string
   authorName: string | null
   content: string
   createdAt: string
+  replies: Comment[]
+  replyCount: number
 }
 
 interface Project {
@@ -24,6 +27,7 @@ interface Idea {
   id: string
   title: string
   description: string
+  category: string | null
   targetUser: string | null
   agentTypes: string | null
   tags: string | null
@@ -102,6 +106,10 @@ export default function IdeaDetailClient({
         <p className="mb-6 text-lg text-gray-300">{idea.description}</p>
 
         <div className="grid gap-4 text-sm md:grid-cols-3">
+          <div className="rounded bg-gray-900/50 p-4">
+            <div className="mb-1 text-gray-400">Forum Category</div>
+            <div className="font-medium capitalize">{idea.category || 'general'}</div>
+          </div>
           <div className="rounded bg-gray-900/50 p-4">
             <div className="mb-1 text-gray-400">Target Users</div>
             <div className="font-medium">{idea.targetUser || 'Not specified'}</div>
@@ -201,29 +209,7 @@ export default function IdeaDetailClient({
         {idea.comments.length > 0 ? (
           <div className="mb-6 space-y-4">
             {idea.comments.map((comment) => (
-              <div key={comment.id} className="rounded bg-gray-900/50 p-4">
-                <div className="mb-2 flex items-center gap-2">
-                  <span
-                    className={`rounded px-2 py-1 text-xs ${
-                      comment.authorType === 'agent'
-                        ? 'bg-purple-500/20 text-purple-400'
-                        : 'bg-emerald-500/20 text-emerald-400'
-                    }`}
-                  >
-                    {comment.authorType === 'agent' ? 'Agent' : 'Human'}
-                  </span>
-                  <IdentityLink
-                    authorType={comment.authorType}
-                    authorName={comment.authorName}
-                    botProfileMap={botProfileMap}
-                    className="text-sm"
-                  />
-                  <span className="text-xs text-gray-500">
-                    {new Date(comment.createdAt).toLocaleDateString()}
-                  </span>
-                </div>
-                <p className="text-gray-300">{comment.content}</p>
-              </div>
+              <ThreadedCommentCard key={comment.id} comment={comment} ideaId={idea.id} botProfileMap={botProfileMap} />
             ))}
           </div>
         ) : (
@@ -233,6 +219,66 @@ export default function IdeaDetailClient({
         <CommentForm ideaId={idea.id} />
       </div>
     </>
+  )
+}
+
+function ThreadedCommentCard({
+  comment,
+  ideaId,
+  botProfileMap,
+  depth = 0,
+}: {
+  comment: Comment
+  ideaId: string
+  botProfileMap: Record<string, string>
+  depth?: number
+}) {
+  return (
+    <div className={`${depth > 0 ? 'ml-6 border-l border-gray-700 pl-4' : ''}`}>
+      <div className="rounded bg-gray-900/50 p-4">
+        <div className="mb-2 flex items-center gap-2">
+          <span
+            className={`rounded px-2 py-1 text-xs ${
+              comment.authorType === 'agent'
+                ? 'bg-purple-500/20 text-purple-400'
+                : 'bg-emerald-500/20 text-emerald-400'
+            }`}
+          >
+            {comment.authorType === 'agent' ? 'Agent' : 'Human'}
+          </span>
+          <IdentityLink
+            authorType={comment.authorType}
+            authorName={comment.authorName}
+            botProfileMap={botProfileMap}
+            className="text-sm"
+          />
+          <span className="text-xs text-gray-500">
+            {new Date(comment.createdAt).toLocaleDateString()}
+          </span>
+          {comment.replyCount > 0 && (
+            <span className="text-xs text-gray-500">{comment.replyCount} replies</span>
+          )}
+        </div>
+        <p className="text-gray-300">{comment.content}</p>
+        <div className="mt-4">
+          <CommentForm ideaId={ideaId} parentCommentId={comment.id} compact />
+        </div>
+      </div>
+
+      {comment.replies.length > 0 && (
+        <div className="mt-3 space-y-3">
+          {comment.replies.map((reply) => (
+            <ThreadedCommentCard
+              key={reply.id}
+              comment={reply}
+              ideaId={ideaId}
+              botProfileMap={botProfileMap}
+              depth={depth + 1}
+            />
+          ))}
+        </div>
+      )}
+    </div>
   )
 }
 

@@ -1,9 +1,11 @@
 import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
+import { FORUM_CATEGORIES, isForumCategory } from '@/lib/social/forum'
 
 type ViewMode = 'feed' | 'threads'
 type SortMode = 'new' | 'top' | 'active' | 'claim-ready'
 type AuthorFilter = 'all' | 'human' | 'agent'
+type CategoryFilter = 'all' | 'general' | 'startup' | 'product' | 'growth' | 'automation' | 'research'
 
 type FeedItem =
   | {
@@ -34,7 +36,7 @@ type FeedItem =
       createdAt: Date
     }
 
-function buildSocialHref(view: ViewMode, sort?: SortMode, author?: AuthorFilter) {
+function buildSocialHref(view: ViewMode, sort?: SortMode, author?: AuthorFilter, category?: CategoryFilter) {
   const params = new URLSearchParams()
   if (view !== 'feed') {
     params.set('view', view)
@@ -44,6 +46,9 @@ function buildSocialHref(view: ViewMode, sort?: SortMode, author?: AuthorFilter)
   }
   if (author && author !== 'all') {
     params.set('author', author)
+  }
+  if (category && category !== 'all') {
+    params.set('category', category)
   }
 
   const query = params.toString()
@@ -57,12 +62,14 @@ export default async function SocialPage({
     view?: ViewMode
     sort?: SortMode
     author?: AuthorFilter
+    category?: CategoryFilter
   }>
 }) {
   const resolved = searchParams ? await searchParams : undefined
   const view = resolved?.view === 'threads' ? 'threads' : 'feed'
   const sort = resolved?.sort || 'active'
   const author = resolved?.author || 'all'
+  const category = resolved?.category || 'all'
 
   const [ideas, messages, launches, threadIdeas] = await Promise.all([
     prisma.idea.findMany({
@@ -103,6 +110,7 @@ export default async function SocialPage({
     prisma.idea.findMany({
       where: {
         ...(author === 'all' ? {} : { authorType: author }),
+        ...(isForumCategory(category) ? { category } : {}),
       },
       include: {
         project: {
@@ -214,7 +222,7 @@ export default async function SocialPage({
               <TabLink label="Timeline" href={buildSocialHref('feed')} active={view === 'feed'} />
               <TabLink
                 label="Threads"
-                href={buildSocialHref('threads', sort, author)}
+                href={buildSocialHref('threads', sort, author, category)}
                 active={view === 'threads'}
               />
             </div>
@@ -224,41 +232,56 @@ export default async function SocialPage({
                 <div className="flex flex-wrap gap-2">
                   <SortLink
                     label="Active"
-                    href={buildSocialHref('threads', 'active', author)}
+                    href={buildSocialHref('threads', 'active', author, category)}
                     active={sort === 'active'}
                   />
                   <SortLink
                     label="New"
-                    href={buildSocialHref('threads', 'new', author)}
+                    href={buildSocialHref('threads', 'new', author, category)}
                     active={sort === 'new'}
                   />
                   <SortLink
                     label="Top"
-                    href={buildSocialHref('threads', 'top', author)}
+                    href={buildSocialHref('threads', 'top', author, category)}
                     active={sort === 'top'}
                   />
                   <SortLink
                     label="Claim-ready"
-                    href={buildSocialHref('threads', 'claim-ready', author)}
+                    href={buildSocialHref('threads', 'claim-ready', author, category)}
                     active={sort === 'claim-ready'}
                   />
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <SortLink
                     label="All"
-                    href={buildSocialHref('threads', sort, 'all')}
+                    href={buildSocialHref('threads', sort, 'all', category)}
                     active={author === 'all'}
                   />
                   <SortLink
                     label="Humans"
-                    href={buildSocialHref('threads', sort, 'human')}
+                    href={buildSocialHref('threads', sort, 'human', category)}
                     active={author === 'human'}
                   />
                   <SortLink
                     label="Agents"
-                    href={buildSocialHref('threads', sort, 'agent')}
+                    href={buildSocialHref('threads', sort, 'agent', category)}
                     active={author === 'agent'}
                   />
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <SortLink
+                    label="All topics"
+                    href={buildSocialHref('threads', sort, author, 'all')}
+                    active={category === 'all'}
+                  />
+                  {FORUM_CATEGORIES.map((item) => (
+                    <SortLink
+                      key={item}
+                      label={item}
+                      href={buildSocialHref('threads', sort, author, item)}
+                      active={category === item}
+                    />
+                  ))}
                 </div>
               </div>
             )}
@@ -311,6 +334,7 @@ export default async function SocialPage({
                       </span>
                       <span>{idea.authorName || 'Unknown author'}</span>
                       <span>{new Date(idea.createdAt).toLocaleDateString()}</span>
+                      <span className="capitalize">{idea.category || 'general'}</span>
                     </div>
 
                     <Link
