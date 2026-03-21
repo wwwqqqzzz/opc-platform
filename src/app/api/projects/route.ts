@@ -71,7 +71,8 @@ export async function POST(request: NextRequest) {
   try {
     const user = await getAuthenticatedUser()
     const body = await request.json()
-    const { ideaId, ownerName, ownerRole, agentTeam, initialGoal, whyNow, executionPath } = body as {
+    const { postId, ideaId, ownerName, ownerRole, agentTeam, initialGoal, whyNow, executionPath } = body as {
+      postId?: string
       ideaId?: string
       ownerName?: string
       ownerRole?: string
@@ -80,25 +81,29 @@ export async function POST(request: NextRequest) {
       whyNow?: string
       executionPath?: string
     }
+    const sourcePostId = postId || ideaId
 
-    if (!ideaId || !ownerName || !ownerRole || !initialGoal || !whyNow) {
+    if (!sourcePostId || !ownerName || !ownerRole || !initialGoal || !whyNow) {
       return NextResponse.json(
-        { error: 'ideaId, ownerName, ownerRole, initialGoal, and whyNow are required' },
+        {
+          error:
+            'postId, ownerName, ownerRole, initialGoal, and whyNow are required. ideaId is still accepted temporarily for backward compatibility.',
+        },
         { status: 400 }
       )
     }
 
     const idea = await prisma.idea.findUnique({
-      where: { id: ideaId },
+      where: { id: sourcePostId },
     })
 
     if (!idea) {
-      return NextResponse.json({ error: 'Idea not found' }, { status: 404 })
+      return NextResponse.json({ error: 'Source post not found' }, { status: 404 })
     }
 
     if (idea.status !== 'idea') {
       return NextResponse.json(
-        { error: 'Idea has already been claimed or launched' },
+        { error: 'Post is no longer open for project prep' },
         { status: 400 }
       )
     }
@@ -114,13 +119,13 @@ export async function POST(request: NextRequest) {
 
     const project = await prisma.$transaction(async (tx) => {
       await tx.idea.update({
-        where: { id: ideaId },
+        where: { id: sourcePostId },
         data: { status: 'in_progress' },
       })
 
       const createdProject = await tx.project.create({
         data: {
-          ideaId,
+          ideaId: sourcePostId,
           title: idea.title,
           description: idea.description,
           ownerName,
@@ -137,22 +142,22 @@ export async function POST(request: NextRequest) {
       await createLifecycleEvent(tx as typeof prisma, {
         projectId: createdProject.id,
         eventType: 'project_created',
-        title: 'Project created from idea',
-        description: `The idea "${idea.title}" was claimed and turned into a project.`,
+        title: 'Project prep started from post',
+        description: `The post "${idea.title}" moved into structured project prep.`,
         deliveryStage: 'project',
         agentGithubStatus: 'pending',
           actorType: user ? 'user' : 'system',
           actorId: user?.id || null,
           actorName: user?.name || user?.email || ownerName,
           metadata: {
-            sourceIdeaId: ideaId,
-            sourceIdeaTitle: idea.title,
+            sourcePostId,
+            sourcePostTitle: idea.title,
             ownerName,
             ownerRole,
             initialGoal,
             whyNow,
             executionPath: executionPath || 'GitHub bridge now, Agent GitHub later',
-            claimedAt: new Date().toISOString(),
+            enteredProjectPrepAt: new Date().toISOString(),
             initialAgentTeam: agentTeamArray,
           },
         })

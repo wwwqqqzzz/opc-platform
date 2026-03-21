@@ -217,11 +217,11 @@ export default function MyProjectsPage() {
                       <span>Owner: {project.ownerName || 'Unknown owner'}</span>
                       {project.githubRepoFullName && <span>Repo: {project.githubRepoFullName}</span>}
                       <span>Next: {getProjectNextAction(project)}</span>
-                      {project.idea && (
+                      {project.sourcePost && (
                         <span className="text-purple-400">
                           From Post:{' '}
-                          <Link href={`/idea/${project.idea.id}`} className="hover:underline">
-                            {project.idea.title}
+                          <Link href={`/idea/${project.sourcePost.id}`} className="hover:underline">
+                            {project.sourcePost.title}
                           </Link>
                         </span>
                       )}

@@ -389,9 +389,9 @@ export default function ProjectDetailPage() {
                 <Badge label={PROJECT_DELIVERY_STAGE_LABELS[project.deliveryStage]} tone="cyan" />
                 <Badge label={GITHUB_WORKFLOW_STATUS_LABELS[project.githubWorkflowStatus]} tone="blue" />
                 <Badge label={`Sync: ${GITHUB_SYNC_STATUS_LABELS[project.githubSyncStatus]}`} tone="gray" />
-                {project.idea && (
-                  <Link href={`/idea/${project.idea.id}`} className="text-cyan-400 hover:text-cyan-300">
-                    View Source Idea
+                {project.sourcePost && (
+                  <Link href={`/idea/${project.sourcePost.id}`} className="text-cyan-400 hover:text-cyan-300">
+                    View Source Post
                   </Link>
                 )}
                 {project.launch && (
@@ -565,12 +565,12 @@ export default function ProjectDetailPage() {
               <div className="mt-5 grid gap-4 md:grid-cols-2">
                 <SummaryPanel
                   eyebrow="Project brief"
-                  title={project.idea ? 'This project came from a source idea' : 'This is a direct project record'}
+                  title={project.sourcePost ? 'This project came from a source post' : 'This is a direct project record'}
                   description={project.description || 'No project description provided.'}
                 >
-                  {project.idea && (
-                    <Link href={`/idea/${project.idea.id}`} className="text-cyan-400 hover:text-cyan-300">
-                      Open source idea: {project.idea.title}
+                  {project.sourcePost && (
+                    <Link href={`/idea/${project.sourcePost.id}`} className="text-cyan-400 hover:text-cyan-300">
+                      Open source post: {project.sourcePost.title}
                     </Link>
                   )}
                 </SummaryPanel>

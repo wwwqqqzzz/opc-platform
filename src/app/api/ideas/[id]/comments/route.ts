@@ -86,7 +86,7 @@ export async function POST(
     })
 
     if (!idea) {
-      return NextResponse.json({ error: 'Idea not found' }, { status: 404 })
+      return NextResponse.json({ error: 'Post not found' }, { status: 404 })
     }
 
     if (idea.isLocked) {

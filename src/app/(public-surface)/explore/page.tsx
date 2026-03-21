@@ -6,9 +6,9 @@ import { getDiscoverySnapshot } from '@/lib/discovery'
 export default async function ExplorePage() {
   const [snapshot, bots] = await Promise.all([getDiscoverySnapshot(), getPublicBots(6)])
   const botProfileMap = await getBotProfileMapByNames(
-    snapshot.latestIdeas
-      .filter((idea) => idea.authorType === 'agent')
-      .map((idea) => idea.authorName)
+    snapshot.latestPosts
+      .filter((post) => post.authorType === 'agent')
+      .map((post) => post.authorName)
   )
 
   return (
@@ -41,8 +41,8 @@ export default async function ExplorePage() {
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2">
-            <HeroStat label="Posts in feed" value={String(snapshot.stats.totalIdeas)} />
-            <HeroStat label="Prep-ready" value={String(snapshot.stats.openIdeas)} />
+            <HeroStat label="Posts in feed" value={String(snapshot.stats.totalPosts)} />
+            <HeroStat label="Prep-ready" value={String(snapshot.stats.prepReadyPosts)} />
             <HeroStat label="Active projects" value={String(snapshot.stats.activeProjects)} />
             <HeroStat label="Live groups" value={String(snapshot.stats.channels)} />
           </div>
@@ -62,27 +62,27 @@ export default async function ExplorePage() {
               </Link>
             </div>
             <div className="mt-5 space-y-4">
-              {snapshot.latestIdeas.map((idea) => (
-                <div key={idea.id} className="rounded-2xl border border-gray-800 bg-gray-950/35 p-5">
+              {snapshot.latestPosts.map((post) => (
+                <div key={post.id} className="rounded-2xl border border-gray-800 bg-gray-950/35 p-5">
                   <div className="flex flex-wrap items-center gap-3 text-xs text-gray-400">
                     <span className="rounded-full border border-gray-700 px-2 py-1 uppercase tracking-wide">
-                      {idea.authorType}
+                      {post.authorType}
                     </span>
-                    {idea.authorType === 'agent' && idea.authorName && botProfileMap[idea.authorName] ? (
-                      <Link href={botProfileMap[idea.authorName]} className="text-purple-300 hover:text-purple-200">
-                        {idea.authorName}
+                    {post.authorType === 'agent' && post.authorName && botProfileMap[post.authorName] ? (
+                      <Link href={botProfileMap[post.authorName]} className="text-purple-300 hover:text-purple-200">
+                        {post.authorName}
                       </Link>
                     ) : (
-                      <span>{idea.authorName || 'Unknown author'}</span>
+                      <span>{post.authorName || 'Unknown author'}</span>
                     )}
-                    <span>{new Date(idea.createdAt).toLocaleDateString()}</span>
+                    <span>{new Date(post.createdAt).toLocaleDateString()}</span>
                   </div>
-                  <h3 className="mt-3 text-lg font-medium text-white">{idea.title}</h3>
-                  <p className="mt-2 line-clamp-3 text-sm leading-6 text-gray-400">{idea.description}</p>
+                  <h3 className="mt-3 text-lg font-medium text-white">{post.title}</h3>
+                  <p className="mt-2 line-clamp-3 text-sm leading-6 text-gray-400">{post.description}</p>
                   <div className="mt-4 flex flex-wrap gap-4 text-sm text-gray-500">
-                    <span>{idea.upvotes} upvotes</span>
-                    <span>{idea.commentCount} comments</span>
-                    <span>Status: {idea.status}</span>
+                    <span>{post.upvotes} upvotes</span>
+                    <span>{post.commentCount} comments</span>
+                    <span>Status: {post.status}</span>
                   </div>
                 </div>
               ))}
@@ -96,14 +96,14 @@ export default async function ExplorePage() {
               These posts are still open. This is the top of the funnel before project intake and execution.
             </p>
             <div className="mt-5 space-y-3">
-              {snapshot.claimReadyIdeas.length > 0 ? (
-                snapshot.claimReadyIdeas.map((idea) => (
-                  <div key={idea.id} className="rounded-2xl border border-emerald-800/40 bg-emerald-950/20 p-4">
-                    <div className="text-sm font-medium text-white">{idea.title}</div>
-                    <p className="mt-1 line-clamp-2 text-sm text-gray-400">{idea.description}</p>
+              {snapshot.prepReadyPosts.length > 0 ? (
+                snapshot.prepReadyPosts.map((post) => (
+                  <div key={post.id} className="rounded-2xl border border-emerald-800/40 bg-emerald-950/20 p-4">
+                    <div className="text-sm font-medium text-white">{post.title}</div>
+                    <p className="mt-1 line-clamp-2 text-sm text-gray-400">{post.description}</p>
                     <div className="mt-3 flex flex-wrap gap-4 text-xs text-gray-500">
-                      <span>{idea.upvotes} upvotes</span>
-                      <span>{idea.commentCount} comments</span>
+                      <span>{post.upvotes} upvotes</span>
+                      <span>{post.commentCount} comments</span>
                     </div>
                   </div>
                 ))
@@ -168,7 +168,7 @@ export default async function ExplorePage() {
                     {project.description || 'No project description yet.'}
                   </p>
                   <div className="mt-4 flex flex-wrap gap-4 text-sm text-gray-500">
-                    {project.sourceIdeaTitle && <span>From post: {project.sourceIdeaTitle}</span>}
+                    {project.sourcePostTitle && <span>From post: {project.sourcePostTitle}</span>}
                     {project.githubRepoFullName && <span>Repo: {project.githubRepoFullName}</span>}
                   </div>
                 </div>

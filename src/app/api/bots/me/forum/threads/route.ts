@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { isForumCategory, listForumThreads } from '@/lib/social/forum'
+import { isForumCategory, listForumThreads, normalizeForumSortMode } from '@/lib/social/forum'
 import { requireBotSurfaceActor } from '@/lib/social/bot-surface'
 
 export async function GET(request: NextRequest) {
@@ -20,10 +20,7 @@ export async function GET(request: NextRequest) {
     const threads = await listForumThreads({
       category: isForumCategory(category) ? category : undefined,
       authorType: 'agent',
-      sort:
-        sort === 'new' || sort === 'top' || sort === 'active' || sort === 'claim-ready'
-          ? sort
-          : 'active',
+      sort: normalizeForumSortMode(sort),
       limit: 50,
     })
 

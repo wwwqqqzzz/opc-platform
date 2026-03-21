@@ -172,7 +172,7 @@ export function mapProjectDto(
     handoffCompletedAt: project.handoffCompletedAt?.toISOString() || null,
     createdAt: project.createdAt.toISOString(),
     updatedAt: project.updatedAt.toISOString(),
-    idea: project.idea
+    sourcePost: project.idea
       ? {
           id: project.idea.id,
           title: project.idea.title,

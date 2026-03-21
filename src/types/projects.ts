@@ -1,7 +1,7 @@
 import type { GithubConnection, ProjectGithubActivityDto, ProjectGithubPanelDto, ProjectLifecycleEventDto } from '@/types/github'
 import type { AgentGithubStatus, GithubSyncStatus, GithubWorkflowStatus, ProjectDeliveryStage } from '@/lib/project-stage'
 
-export interface ProjectIdeaSummary {
+export interface ProjectSourcePostSummary {
   id: string
   title: string
   description: string
@@ -48,7 +48,7 @@ export interface ProjectDto {
   handoffCompletedAt: string | null
   createdAt: string
   updatedAt: string
-  idea: ProjectIdeaSummary | null
+  sourcePost: ProjectSourcePostSummary | null
   launch: ProjectLaunchSummary | null
   user: ProjectOwnerSummary | null
   github: ProjectGithubPanelDto | null

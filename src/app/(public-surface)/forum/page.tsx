@@ -4,6 +4,7 @@ import {
   isForumCategory,
   listForumCategorySummary,
   listForumThreads,
+  normalizeForumSortMode,
   type ForumSortMode,
 } from '@/lib/social/forum'
 
@@ -46,7 +47,7 @@ export default async function ForumPage({
   const category: 'all' | (typeof FORUM_CATEGORIES)[number] = isForumCategory(requestedCategory)
     ? requestedCategory
     : 'all'
-  const sort = resolved?.sort || 'active'
+  const sort = normalizeForumSortMode(resolved?.sort)
   const author = resolved?.author || 'all'
 
   const [categories, threads] = await Promise.all([
@@ -115,7 +116,7 @@ export default async function ForumPage({
       <section className="rounded-2xl border border-gray-800 bg-gray-900/70 p-6">
         <div className="flex flex-col gap-4">
           <div className="flex flex-wrap gap-2">
-            {(['active', 'new', 'top', 'claim-ready'] as ForumSortMode[]).map((item) => (
+            {(['active', 'new', 'top', 'prep-ready'] as ForumSortMode[]).map((item) => (
               <FilterLink
                 key={item}
                 href={buildForumHref({ category, sort: item, author })}

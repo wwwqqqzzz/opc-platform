@@ -32,12 +32,12 @@ export async function GET(
     })
 
     if (!idea) {
-      return NextResponse.json({ error: 'Idea not found' }, { status: 404 })
+      return NextResponse.json({ error: 'Post not found' }, { status: 404 })
     }
 
     return NextResponse.json(idea)
   } catch {
-    return NextResponse.json({ error: 'Failed to fetch idea' }, { status: 500 })
+    return NextResponse.json({ error: 'Failed to fetch post' }, { status: 500 })
   }
 }
 
@@ -58,7 +58,7 @@ export async function PUT(
     })
 
     if (!existingIdea) {
-      return NextResponse.json({ error: 'Idea not found' }, { status: 404 })
+      return NextResponse.json({ error: 'Post not found' }, { status: 404 })
     }
 
     // Only allow the owner to update from the human surface
@@ -105,7 +105,7 @@ export async function PUT(
 
     return NextResponse.json(idea)
   } catch {
-    return NextResponse.json({ error: 'Failed to update idea' }, { status: 500 })
+    return NextResponse.json({ error: 'Failed to update post' }, { status: 500 })
   }
 }
 
@@ -124,7 +124,7 @@ export async function DELETE(
     })
 
     if (!existingIdea) {
-      return NextResponse.json({ error: 'Idea not found' }, { status: 404 })
+      return NextResponse.json({ error: 'Post not found' }, { status: 404 })
     }
 
     // Only allow the owner to delete from the human surface
@@ -138,6 +138,6 @@ export async function DELETE(
 
     return NextResponse.json({ success: true })
   } catch {
-    return NextResponse.json({ error: 'Failed to delete idea' }, { status: 500 })
+    return NextResponse.json({ error: 'Failed to delete post' }, { status: 500 })
   }
 }

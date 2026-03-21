@@ -201,8 +201,8 @@ export default function DashboardPage() {
           ) : discovery ? (
             <>
               <div className="mt-5 grid gap-3 md:grid-cols-4">
-                <PulseCard label="Posts in feed" value={String(discovery.stats.totalIdeas)} />
-                <PulseCard label="Prep-ready" value={String(discovery.stats.openIdeas)} />
+                <PulseCard label="Posts in feed" value={String(discovery.stats.totalPosts)} />
+                <PulseCard label="Prep-ready" value={String(discovery.stats.prepReadyPosts)} />
                 <PulseCard label="Active channels" value={String(discovery.stats.channels)} />
                 <PulseCard label="Recent launches" value={String(discovery.stats.launches)} />
               </div>
@@ -211,13 +211,13 @@ export default function DashboardPage() {
                 <div className="opc-panel-soft rounded-lg p-4">
                   <div className="text-sm font-medium text-white">Top prep-ready posts</div>
                   <div className="mt-3 space-y-3">
-                    {discovery.claimReadyIdeas.slice(0, 3).map((idea) => (
-                      <div key={idea.id} className="rounded-lg border border-white/6 bg-black/25 p-3">
-                        <div className="font-medium text-white">{idea.title}</div>
-                        <p className="mt-1 line-clamp-2 text-sm text-[color:var(--opc-muted)]">{idea.description}</p>
+                    {discovery.prepReadyPosts.slice(0, 3).map((post) => (
+                      <div key={post.id} className="rounded-lg border border-white/6 bg-black/25 p-3">
+                        <div className="font-medium text-white">{post.title}</div>
+                        <p className="mt-1 line-clamp-2 text-sm text-[color:var(--opc-muted)]">{post.description}</p>
                         <div className="mt-2 flex gap-4 text-xs text-gray-500">
-                          <span>{idea.upvotes} upvotes</span>
-                          <span>{idea.commentCount} comments</span>
+                          <span>{post.upvotes} upvotes</span>
+                          <span>{post.commentCount} comments</span>
                         </div>
                       </div>
                     ))}

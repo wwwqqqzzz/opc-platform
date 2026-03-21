@@ -10,7 +10,7 @@ export const FORUM_CATEGORIES = [
 ] as const
 
 export type ForumCategory = (typeof FORUM_CATEGORIES)[number]
-export type ForumSortMode = 'new' | 'top' | 'active' | 'claim-ready'
+export type ForumSortMode = 'new' | 'top' | 'active' | 'prep-ready'
 
 export interface ForumThreadPreview {
   id: string
@@ -52,6 +52,18 @@ export function isForumCategory(value: string | null): value is ForumCategory {
   return Boolean(value && FORUM_CATEGORIES.includes(value as ForumCategory))
 }
 
+export function normalizeForumSortMode(value: string | null | undefined): ForumSortMode {
+  if (value === 'new' || value === 'top' || value === 'active' || value === 'prep-ready') {
+    return value
+  }
+
+  if (value === 'claim-ready') {
+    return 'prep-ready'
+  }
+
+  return 'active'
+}
+
 function sortForumThreads(threads: ForumThreadPreview[], sort: ForumSortMode) {
   const sorted = [...threads]
 
@@ -75,7 +87,7 @@ function sortForumThreads(threads: ForumThreadPreview[], sort: ForumSortMode) {
     return sorted
   }
 
-  if (sort === 'claim-ready') {
+  if (sort === 'prep-ready') {
     sorted.sort((left, right) => {
       const leftScore =
         (left.isPinned ? 100 : 0) + (left.status === 'idea' ? 10 : 0) + left.counts.comments + left.counts.upvotes

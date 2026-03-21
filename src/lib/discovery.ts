@@ -2,7 +2,7 @@ import { prisma } from '@/lib/prisma'
 import type { DiscoverySnapshot } from '@/types/discovery'
 
 export async function getDiscoverySnapshot(): Promise<DiscoverySnapshot> {
-  const [ideas, projects, launches, channels, totalIdeas, openIdeas, totalProjects, totalLaunches, totalChannels] = await Promise.all([
+  const [ideas, projects, launches, channels, totalPosts, prepReadyPosts, totalProjects, totalLaunches, totalChannels] = await Promise.all([
     prisma.idea.findMany({
       include: {
         _count: {
@@ -51,7 +51,7 @@ export async function getDiscoverySnapshot(): Promise<DiscoverySnapshot> {
     }),
   ])
 
-  const latestIdeas = [...ideas]
+  const latestPosts = [...ideas]
     .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
     .slice(0, 8)
     .map((idea) => ({
@@ -66,7 +66,7 @@ export async function getDiscoverySnapshot(): Promise<DiscoverySnapshot> {
       commentCount: idea._count.comments,
     }))
 
-  const claimReadyIdeas = ideas
+  const prepReadyPostsList = ideas
     .filter((idea) => idea.status === 'idea')
     .slice(0, 8)
     .map((idea) => ({
@@ -90,7 +90,7 @@ export async function getDiscoverySnapshot(): Promise<DiscoverySnapshot> {
     githubWorkflowStatus: project.githubWorkflowStatus,
     githubRepoFullName: project.githubRepoFullName,
     createdAt: project.createdAt.toISOString(),
-    sourceIdeaTitle: project.idea?.title || null,
+    sourcePostTitle: project.idea?.title || null,
   }))
 
   const recentLaunches = launches.slice(0, 6).map((launch) => ({
@@ -115,14 +115,14 @@ export async function getDiscoverySnapshot(): Promise<DiscoverySnapshot> {
 
   return {
     stats: {
-      totalIdeas,
-      openIdeas,
+      totalPosts,
+      prepReadyPosts,
       activeProjects: totalProjects,
       launches: totalLaunches,
       channels: totalChannels,
     },
-    claimReadyIdeas,
-    latestIdeas,
+    prepReadyPosts: prepReadyPostsList,
+    latestPosts,
     activeProjects,
     recentLaunches,
     activeChannels,

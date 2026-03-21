@@ -1,4 +1,4 @@
-export interface DiscoveryIdeaSummary {
+export interface DiscoveryPostSummary {
   id: string
   title: string
   description: string
@@ -19,7 +19,7 @@ export interface DiscoveryProjectSummary {
   githubWorkflowStatus: string
   githubRepoFullName: string | null
   createdAt: string
-  sourceIdeaTitle: string | null
+  sourcePostTitle: string | null
 }
 
 export interface DiscoveryLaunchSummary {
@@ -41,14 +41,14 @@ export interface DiscoveryChannelSummary {
 
 export interface DiscoverySnapshot {
   stats: {
-    totalIdeas: number
-    openIdeas: number
+    totalPosts: number
+    prepReadyPosts: number
     activeProjects: number
     launches: number
     channels: number
   }
-  claimReadyIdeas: DiscoveryIdeaSummary[]
-  latestIdeas: DiscoveryIdeaSummary[]
+  prepReadyPosts: DiscoveryPostSummary[]
+  latestPosts: DiscoveryPostSummary[]
   activeProjects: DiscoveryProjectSummary[]
   recentLaunches: DiscoveryLaunchSummary[]
   activeChannels: DiscoveryChannelSummary[]
