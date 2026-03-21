@@ -73,57 +73,75 @@ export default function IdeaDetailClient({
 
   return (
     <>
-      <div className="mb-8 rounded-lg bg-gray-800/50 p-8">
-        <div className="mb-4 flex items-start justify-between">
-          <div className="flex items-center gap-3">
-            <span
-              className={`rounded px-3 py-1 text-sm ${
-                idea.authorType === 'agent'
-                  ? 'bg-purple-500/20 text-purple-400'
-                  : 'bg-emerald-500/20 text-emerald-400'
-              }`}
-            >
-              {idea.authorType === 'agent' ? 'Agent' : 'Human'}
-            </span>
-            <span
-              className={`rounded px-3 py-1 text-sm ${
-                idea.status === 'launched'
-                  ? 'bg-green-500/20 text-green-400'
-                  : idea.status === 'in_progress'
-                  ? 'bg-yellow-500/20 text-yellow-400'
-                  : 'bg-gray-500/20 text-gray-300'
-              }`}
-            >
-              {idea.status === 'in_progress'
-                ? 'In Progress'
-                : idea.status === 'launched'
-                ? 'Launched'
-                : 'Idea'}
-            </span>
-            {idea.isPinned && (
-              <span className="rounded bg-amber-500/20 px-3 py-1 text-sm text-amber-300">Pinned</span>
-            )}
-            {idea.isLocked && (
-              <span className="rounded bg-rose-500/20 px-3 py-1 text-sm text-rose-300">Locked</span>
-            )}
+      <div className="mb-8 rounded-3xl border border-white/10 bg-zinc-950/70 p-6 md:p-8">
+        <div className="flex items-start gap-4">
+          <div
+            className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-sm font-semibold ${
+              idea.authorType === 'agent' ? 'bg-violet-600' : 'bg-emerald-600'
+            }`}
+          >
+            {(idea.authorName || 'O').charAt(0).toUpperCase()}
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <IdentityLink
+                authorType={idea.authorType}
+                authorName={idea.authorName}
+                botProfileMap={botProfileMap}
+                className="font-semibold text-white"
+              />
+              <span className="text-sm text-gray-500">
+                {idea.authorType === 'agent' ? 'Bot' : 'Human'}
+              </span>
+              <span className="text-sm text-gray-600">路</span>
+              <span className="text-sm text-gray-500">{new Date(idea.createdAt).toLocaleDateString()}</span>
+              {idea.isPinned && (
+                <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-xs text-amber-300">
+                  Pinned
+                </span>
+              )}
+              {idea.isLocked && (
+                <span className="rounded-full bg-rose-500/15 px-2 py-0.5 text-xs text-rose-300">
+                  Locked
+                </span>
+              )}
+            </div>
+            <div className="mt-1 text-sm text-gray-500">Post detail</div>
           </div>
           <UpvoteButton ideaId={idea.id} initialCount={idea._count.upvoteRecords} />
         </div>
 
-        <h1 className="mb-4 text-3xl font-bold">{idea.title}</h1>
-        <p className="mb-6 text-lg text-gray-300">{idea.description}</p>
+        <div className="mt-6">
+          <h1 className="text-3xl font-bold">{idea.title}</h1>
+          <p className="mt-4 whitespace-pre-wrap text-lg leading-8 text-gray-200">{idea.description}</p>
+        </div>
 
-        <div className="grid gap-4 text-sm md:grid-cols-3">
-          <div className="rounded bg-gray-900/50 p-4">
-            <div className="mb-1 text-gray-400">Forum Category</div>
-            <div className="font-medium capitalize">{idea.category || 'general'}</div>
+        <div className="mt-6 flex flex-wrap gap-3 text-sm text-gray-400">
+          <span className="rounded-full border border-white/10 px-3 py-1.5 capitalize">
+            {idea.category || 'general'}
+          </span>
+          <span className="rounded-full border border-white/10 px-3 py-1.5">
+            {idea._count.comments} replies
+          </span>
+          <span className="rounded-full border border-white/10 px-3 py-1.5">
+            {idea._count.upvoteRecords} boosts
+          </span>
+          <span className="rounded-full border border-white/10 px-3 py-1.5">
+            {idea.status === 'in_progress'
+              ? 'Project intake'
+              : idea.status === 'launched'
+              ? 'Launched'
+              : 'Open post'}
+          </span>
+        </div>
+
+        <div className="mt-6 grid gap-4 text-sm md:grid-cols-2">
+          <div className="rounded-2xl border border-white/10 bg-black/50 p-4">
+            <div className="mb-1 text-gray-400">Audience</div>
+            <div className="font-medium text-white">{idea.targetUser || 'General network'}</div>
           </div>
-          <div className="rounded bg-gray-900/50 p-4">
-            <div className="mb-1 text-gray-400">Target Users</div>
-            <div className="font-medium">{idea.targetUser || 'Not specified'}</div>
-          </div>
-          <div className="rounded bg-gray-900/50 p-4">
-            <div className="mb-1 text-gray-400">Agent Types Needed</div>
+          <div className="rounded-2xl border border-white/10 bg-black/50 p-4">
+            <div className="mb-1 text-gray-400">Agent lane</div>
             <div className="flex flex-wrap gap-2">
               {agentTypes.length > 0 ? (
                 agentTypes.map((type: string) => (
@@ -136,8 +154,8 @@ export default function IdeaDetailClient({
               )}
             </div>
           </div>
-          <div className="rounded bg-gray-900/50 p-4">
-            <div className="mb-1 text-gray-400">Tags</div>
+          <div className="rounded-2xl border border-white/10 bg-black/50 p-4 md:col-span-2">
+            <div className="mb-1 text-gray-400">Post tags</div>
             <div className="flex flex-wrap gap-2">
               {tags.length > 0 ? (
                 tags.map((tag: string) => (
@@ -152,36 +170,27 @@ export default function IdeaDetailClient({
           </div>
         </div>
 
-        <div className="mt-6 text-sm text-gray-500">
-          Posted by{' '}
-          <IdentityLink
-            authorType={idea.authorType}
-            authorName={idea.authorName}
-            botProfileMap={botProfileMap}
-          />{' '}
-          on {new Date(idea.createdAt).toLocaleDateString()}
-        </div>
-
         {canClaim && (
-          <div className="mt-6">
+          <div className="mt-6 rounded-2xl border border-amber-500/20 bg-amber-500/10 p-4">
+            <div className="text-sm font-medium text-amber-200">Project intake is a secondary action</div>
+            <p className="mt-1 text-sm text-amber-100/80">
+              This post is still part of the public feed. Claim it only when you want to move it into structured project intake.
+            </p>
             <button
               onClick={() => setIsClaimModalOpen(true)}
-              className="flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-yellow-500 to-orange-500 px-6 py-3 font-semibold transition hover:from-yellow-600 hover:to-orange-600"
+              className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-yellow-500 to-orange-500 px-6 py-3 font-semibold transition hover:from-yellow-600 hover:to-orange-600"
             >
-              Claim this idea
+              Claim post into project
             </button>
-            <p className="mt-2 text-center text-xs text-gray-500">
-              Claim this idea to start moving it toward project intake and execution.
-            </p>
           </div>
         )}
 
         {isInProgress && idea.project && (
-          <div className="mt-6 rounded-lg border border-yellow-500/30 bg-yellow-500/10 p-4">
+          <div className="mt-6 rounded-2xl border border-yellow-500/30 bg-yellow-500/10 p-4">
             <div className="flex items-center justify-between">
               <div>
                 <div className="mb-1 text-sm text-gray-400">Status</div>
-                <div className="font-medium text-yellow-400">This idea is now in project intake</div>
+                <div className="font-medium text-yellow-400">This post is now in project intake</div>
                 {idea.project.ownerName && (
                   <div className="mt-1 text-xs text-gray-500">OPC Owner: {idea.project.ownerName}</div>
                 )}
@@ -197,8 +206,8 @@ export default function IdeaDetailClient({
         )}
 
         {isLaunched && (
-          <div className="mt-6 rounded-lg border border-green-500/30 bg-green-500/10 p-4">
-            <div className="mb-2 font-medium text-green-400">This idea has been launched.</div>
+          <div className="mt-6 rounded-2xl border border-green-500/30 bg-green-500/10 p-4">
+            <div className="mb-2 font-medium text-green-400">This post has already produced a launch.</div>
             <p className="text-sm text-gray-400">Check the launch board to see the final product record.</p>
           </div>
         )}
@@ -212,8 +221,8 @@ export default function IdeaDetailClient({
         defaultOwnerName={currentUser?.name || null}
       />
 
-      <div className="rounded-lg bg-gray-800/50 p-8">
-        <h2 className="mb-4 text-xl font-bold">Comments ({idea._count.comments})</h2>
+      <div className="rounded-3xl border border-white/10 bg-zinc-950/70 p-6 md:p-8">
+        <h2 className="mb-4 text-xl font-bold">Replies ({idea._count.comments})</h2>
         {idea.comments.length > 0 ? (
           <div className="mb-6 space-y-4">
             {idea.comments.map((comment) => (
@@ -227,12 +236,12 @@ export default function IdeaDetailClient({
             ))}
           </div>
         ) : (
-          <p className="mb-6 text-gray-500">No comments yet. Be the first to comment.</p>
+          <p className="mb-6 text-gray-500">No replies yet. Start the thread.</p>
         )}
 
         {idea.isLocked ? (
           <div className="rounded-lg border border-rose-700 bg-rose-900/20 p-4 text-sm text-rose-200">
-            This forum thread is locked. New replies are disabled.
+            This post thread is locked. New replies are disabled.
           </div>
         ) : (
           <CommentForm ideaId={idea.id} />
@@ -256,8 +265,8 @@ function ThreadedCommentCard({
   threadLocked?: boolean
 }) {
   return (
-    <div className={`${depth > 0 ? 'ml-6 border-l border-gray-700 pl-4' : ''}`}>
-      <div className="rounded bg-gray-900/50 p-4">
+      <div className={`${depth > 0 ? 'ml-6 border-l border-gray-700 pl-4' : ''}`}>
+      <div className="rounded-2xl border border-white/10 bg-black/50 p-4">
         <div className="mb-2 flex items-center gap-2">
           <span
             className={`rounded px-2 py-1 text-xs ${

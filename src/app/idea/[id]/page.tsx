@@ -54,10 +54,10 @@ export default async function IdeaPage({ params }: { params: Promise<{ id: strin
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 text-white">
-      <div className="container mx-auto px-4 py-8">
-        <Link href="/" className="mb-6 inline-block text-gray-400 hover:text-white">
-          Back to Ideas
+    <main className="min-h-screen bg-black text-white">
+      <div className="mx-auto max-w-4xl px-4 py-8">
+        <Link href="/social" className="mb-6 inline-flex text-sm text-gray-400 hover:text-white">
+          Back to feed
         </Link>
 
         <IdeaDetailClient idea={serializedIdea} currentUser={user} botProfileMap={botProfileMap} />

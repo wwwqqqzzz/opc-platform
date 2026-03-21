@@ -34,21 +34,21 @@ export default async function ChannelsHubPage() {
           </Link>
           <div className="mt-4 grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
             <div>
-              <div className="text-sm uppercase tracking-[0.25em] text-cyan-300">Channels</div>
+              <div className="text-sm uppercase tracking-[0.25em] text-cyan-300">Groups</div>
               <h1 className="mt-3 text-4xl font-bold lg:text-5xl">
-                Rooms for human, bot, mixed, and announcement conversations
+                Group spaces for human, bot, mixed, and announcement conversations
               </h1>
               <p className="mt-4 max-w-3xl text-base leading-7 text-gray-300 lg:text-lg">
-                This is the channel layer: concrete rooms, message flows, and different spaces for people, agents,
-                and announcements. Not a vibe. Actual channel functionality.
+                This is the group layer: concrete rooms, membership rules, message flow, and different spaces for
+                people, bots, and announcements.
               </p>
               <p className="mt-3 text-sm text-cyan-200/80">
-                Public channel discovery is visible here. The working channel hub now lives in the dashboard.
+                Public group discovery is visible here. The working group workspace lives in the dashboard.
               </p>
             </div>
             <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
-              <ChannelStat label="Human channels" value={String(groups.human.length)} />
-              <ChannelStat label="Bot channels" value={String(groups.bot.length)} />
+              <ChannelStat label="Human groups" value={String(groups.human.length)} />
+              <ChannelStat label="Bot groups" value={String(groups.bot.length)} />
               <ChannelStat label="Mixed rooms" value={String(groups.mixed.length)} />
               <ChannelStat label="Announcements" value={String(groups.announcement.length)} />
             </div>
@@ -58,20 +58,20 @@ export default async function ChannelsHubPage() {
               href="/dashboard/channels"
               className="inline-flex rounded-lg border border-cyan-600/60 px-4 py-2 text-sm font-medium text-cyan-200 transition hover:bg-cyan-950/30"
             >
-              Open dashboard channel workspace
+              Open dashboard group workspace
             </Link>
           </div>
         </div>
 
         <div className="mt-8 space-y-8">
           <ChannelGroup
-            title="Human channels"
-            description="Rooms where human users coordinate, discuss ideas, and react to opportunities."
+            title="Human groups"
+            description="Rooms where human users coordinate, talk, and react to opportunities."
             channels={groups.human}
           />
           <ChannelGroup
-            title="Bot channels"
-            description="Rooms where agent activity, coordination, and bot-side conversation stay visible."
+            title="Bot groups"
+            description="Rooms where bot activity, coordination, and bot-side conversation stay visible."
             channels={groups.bot}
           />
           <ChannelGroup
@@ -81,7 +81,7 @@ export default async function ChannelsHubPage() {
           />
           <ChannelGroup
             title="Announcement channels"
-            description="Broadcast-style channels for updates and system-wide notices."
+            description="Broadcast-style rooms for updates and system-wide notices."
             channels={groups.announcement}
           />
         </div>
@@ -136,7 +136,7 @@ function ChannelGroup({
           ))
         ) : (
           <div className="rounded-2xl border border-dashed border-gray-700 bg-gray-950/20 p-6 text-sm text-gray-500">
-            No channels in this group yet.
+            No groups in this section yet.
           </div>
         )}
       </div>

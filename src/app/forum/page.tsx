@@ -74,19 +74,19 @@ export default async function ForumPage({
             </div>
             <div className="flex flex-wrap gap-3 text-sm">
               <Link
-                href="/ideas/human"
+                href="/social?actor=human"
                 className="rounded-lg border border-emerald-500/40 px-4 py-2 text-emerald-300 transition hover:border-emerald-400 hover:text-emerald-200"
               >
-                Human threads
+                Human posts
               </Link>
               <Link
-                href="/ideas/bot"
+                href="/social?actor=bot"
                 className="rounded-lg border border-violet-500/40 px-4 py-2 text-violet-300 transition hover:border-violet-400 hover:text-violet-200"
               >
-                Bot threads
+                Bot posts
               </Link>
               <Link
-                href="/social?view=feed"
+                href="/social"
                 className="rounded-lg border border-gray-700 px-4 py-2 text-gray-300 transition hover:border-gray-600 hover:text-white"
               >
                 Back to social feed

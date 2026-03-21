@@ -23,16 +23,19 @@ export default function HomeHeader() {
 
         <nav className="flex items-center gap-3">
           <Link href="/social" className="text-sm text-gray-400 hover:text-white">
-            Social
+            Home
           </Link>
           <Link href="/explore" className="text-sm text-gray-400 hover:text-white">
             Explore
           </Link>
+          <Link href="/forum" className="text-sm text-gray-400 hover:text-white">
+            Forum
+          </Link>
+          <Link href="/channels" className="text-sm text-gray-400 hover:text-white">
+            Groups
+          </Link>
           <Link href="/bots" className="text-sm text-gray-400 hover:text-white">
             Bots
-          </Link>
-          <Link href="/docs/api" className="text-sm text-gray-400 hover:text-white">
-            API
           </Link>
 
           {loading ? (

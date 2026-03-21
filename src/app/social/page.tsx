@@ -1,122 +1,137 @@
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
+import { getBotProfileMapByNames, getPublicBots } from '@/lib/bots/public'
+import { getAuthenticatedUser } from '@/lib/jwt'
 import { prisma } from '@/lib/prisma'
-import { FORUM_CATEGORIES, isForumCategory } from '@/lib/social/forum'
+import { listForumThreads } from '@/lib/social/forum'
 
-type ViewMode = 'feed' | 'threads'
-type SortMode = 'new' | 'top' | 'active' | 'claim-ready'
-type AuthorFilter = 'all' | 'human' | 'agent'
-type CategoryFilter = 'all' | 'general' | 'startup' | 'product' | 'growth' | 'automation' | 'research'
+type FeedTab = 'for-you' | 'following'
+type ActorFilter = 'all' | 'human' | 'bot'
 
-type FeedItem =
-  | {
-      id: string
-      type: 'idea'
-      title: string
-      body: string
-      actor: string
-      href: string
-      createdAt: Date
-    }
-  | {
-      id: string
-      type: 'message'
-      title: string
-      body: string
-      actor: string
-      href: string
-      createdAt: Date
-    }
-  | {
-      id: string
-      type: 'launch'
-      title: string
-      body: string
-      actor: string
-      href: string
-      createdAt: Date
-    }
-
-function buildSocialHref(view: ViewMode, sort?: SortMode, author?: AuthorFilter, category?: CategoryFilter) {
+function buildSocialHref(options: { feed?: FeedTab; actor?: ActorFilter }) {
   const params = new URLSearchParams()
-  if (view !== 'feed') {
-    params.set('view', view)
+
+  if (options.feed && options.feed !== 'for-you') {
+    params.set('feed', options.feed)
   }
-  if (sort && sort !== 'active') {
-    params.set('sort', sort)
-  }
-  if (author && author !== 'all') {
-    params.set('author', author)
-  }
-  if (category && category !== 'all') {
-    params.set('category', category)
+
+  if (options.actor && options.actor !== 'all') {
+    params.set('actor', options.actor)
   }
 
   const query = params.toString()
   return query ? `/social?${query}` : '/social'
 }
 
+function buildForumRedirect(searchParams: {
+  sort?: string
+  author?: string
+  category?: string
+}) {
+  const params = new URLSearchParams()
+
+  if (searchParams.sort) {
+    params.set('sort', searchParams.sort)
+  }
+
+  if (searchParams.author) {
+    params.set('author', searchParams.author)
+  }
+
+  if (searchParams.category) {
+    params.set('category', searchParams.category)
+  }
+
+  const query = params.toString()
+  return query ? `/forum?${query}` : '/forum'
+}
+
 export default async function SocialPage({
   searchParams,
 }: {
   searchParams?: Promise<{
-    view?: ViewMode
-    sort?: SortMode
-    author?: AuthorFilter
-    category?: CategoryFilter
+    view?: string
+    sort?: string
+    author?: string
+    category?: string
+    feed?: FeedTab
+    actor?: ActorFilter
   }>
 }) {
   const resolved = searchParams ? await searchParams : undefined
-  const view = resolved?.view === 'threads' ? 'threads' : 'feed'
-  const sort = resolved?.sort || 'active'
-  const author = resolved?.author || 'all'
-  const category = resolved?.category || 'all'
 
-  const [ideas, messages, launches, threadIdeas] = await Promise.all([
-    prisma.idea.findMany({
-      orderBy: { createdAt: 'desc' },
-      take: 20,
-      select: {
-        id: true,
-        title: true,
-        description: true,
-        authorName: true,
-        createdAt: true,
-      },
-    }),
-    prisma.message.findMany({
-      orderBy: { createdAt: 'desc' },
-      take: 20,
-      include: {
-        channel: {
+  if (resolved?.view === 'threads') {
+    redirect(
+      buildForumRedirect({
+        sort: resolved.sort,
+        author: resolved.author,
+        category: resolved.category,
+      })
+    )
+  }
+
+  const feed = resolved?.feed === 'following' ? 'following' : 'for-you'
+  const actor = resolved?.actor === 'human' || resolved?.actor === 'bot' ? resolved.actor : 'all'
+  const currentUser = await getAuthenticatedUser()
+
+  const followingRows = currentUser
+    ? await prisma.follow.findMany({
+        where: {
+          followerId: currentUser.id,
+          followerType: 'user',
+        },
+        select: {
+          followingId: true,
+          followingType: true,
+        },
+      })
+    : []
+
+  const followedUserIds = followingRows
+    .filter((row) => row.followingType === 'user')
+    .map((row) => row.followingId)
+
+  const followedBotIds = followingRows
+    .filter((row) => row.followingType === 'bot')
+    .map((row) => row.followingId)
+
+  const followedBots =
+    followedBotIds.length > 0
+      ? await prisma.bot.findMany({
+          where: {
+            id: {
+              in: followedBotIds,
+            },
+            isActive: true,
+          },
           select: {
             id: true,
-            type: true,
+            name: true,
+          },
+        })
+      : []
+
+  const followedBotNames = new Set(followedBots.map((bot) => bot.name))
+
+  const [rawPosts, trendingThreads, suggestedBots, openGroups, launches] = await Promise.all([
+    prisma.idea.findMany({
+      where: {
+        ...(actor === 'human'
+          ? { authorType: 'human' }
+          : actor === 'bot'
+          ? { authorType: 'agent' }
+          : {}),
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
             name: true,
           },
         },
-      },
-    }),
-    prisma.launch.findMany({
-      orderBy: { launchedAt: 'desc' },
-      take: 20,
-      select: {
-        id: true,
-        productName: true,
-        tagline: true,
-        ownerName: true,
-        launchedAt: true,
-      },
-    }),
-    prisma.idea.findMany({
-      where: {
-        ...(author === 'all' ? {} : { authorType: author }),
-        ...(isForumCategory(category) ? { category } : {}),
-      },
-      include: {
         project: {
           select: {
             id: true,
-            title: true,
           },
         },
         _count: {
@@ -126,261 +141,336 @@ export default async function SocialPage({
           },
         },
       },
-      orderBy:
-        sort === 'new'
-          ? [{ createdAt: 'desc' }]
-          : sort === 'top'
-          ? [{ upvotes: 'desc' }, { createdAt: 'desc' }]
-          : sort === 'claim-ready'
-          ? [{ upvotes: 'desc' }, { createdAt: 'desc' }]
-          : [{ updatedAt: 'desc' }, { upvotes: 'desc' }],
+      orderBy: [{ isPinned: 'desc' }, { createdAt: 'desc' }],
       take: 80,
+    }),
+    listForumThreads({ sort: 'top', limit: 4 }),
+    getPublicBots(4),
+    prisma.channel.findMany({
+      where: {
+        isActive: true,
+        visibility: 'open',
+      },
+      select: {
+        id: true,
+        name: true,
+        type: true,
+        description: true,
+        _count: {
+          select: {
+            messages: true,
+            members: true,
+          },
+        },
+      },
+      orderBy: [{ order: 'asc' }, { updatedAt: 'desc' }],
+      take: 4,
+    }),
+    prisma.launch.findMany({
+      orderBy: { launchedAt: 'desc' },
+      select: {
+        id: true,
+        productName: true,
+        ownerName: true,
+      },
+      take: 4,
     }),
   ])
 
-  const feed: FeedItem[] = [
-    ...ideas.map((idea) => ({
-      id: `idea-${idea.id}`,
-      type: 'idea' as const,
-      title: idea.title,
-      body: idea.description,
-      actor: idea.authorName || 'Unknown author',
-      href: `/idea/${idea.id}`,
-      createdAt: idea.createdAt,
-    })),
-    ...messages.map((message) => ({
-      id: `message-${message.id}`,
-      type: 'message' as const,
-      title: `#${message.channel.name}`,
-      body: message.content,
-      actor: message.senderName || 'Unknown sender',
-      href: `/channels/${message.channel.type}/${message.channel.id}`,
-      createdAt: message.createdAt,
-    })),
-    ...launches.map((launch) => ({
-      id: `launch-${launch.id}`,
-      type: 'launch' as const,
-      title: launch.productName,
-      body: launch.tagline || 'A new product was launched.',
-      actor: launch.ownerName || 'Unknown owner',
-      href: `/launch?highlight=${launch.id}`,
-      createdAt: launch.launchedAt,
-    })),
-  ].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+  const postBotMap = await getBotProfileMapByNames(
+    rawPosts.filter((post) => post.authorType === 'agent').map((post) => post.authorName)
+  )
 
-  const filteredThreadIdeas =
-    sort === 'claim-ready' ? threadIdeas.filter((idea) => idea.status === 'idea') : threadIdeas
+  const posts = rawPosts
+    .filter((post) => {
+      if (feed !== 'following') {
+        return true
+      }
+
+      if (!currentUser) {
+        return false
+      }
+
+      if (post.authorType === 'human') {
+        return Boolean(post.userId && followedUserIds.includes(post.userId))
+      }
+
+      return Boolean(post.authorName && followedBotNames.has(post.authorName))
+    })
+    .sort((left, right) => {
+      if (feed === 'for-you') {
+        const leftScore =
+          (left.isPinned ? 100 : 0) +
+          left._count.comments * 3 +
+          left._count.upvoteRecords * 2 +
+          (left.project ? 8 : 0)
+        const rightScore =
+          (right.isPinned ? 100 : 0) +
+          right._count.comments * 3 +
+          right._count.upvoteRecords * 2 +
+          (right.project ? 8 : 0)
+        return rightScore - leftScore
+      }
+
+      return right.createdAt.getTime() - left.createdAt.getTime()
+    })
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 text-white">
-      <div className="container mx-auto max-w-7xl px-4 py-8">
-        <div className="rounded-3xl border border-cyan-700/30 bg-gradient-to-r from-cyan-900/20 via-gray-900/50 to-emerald-900/15 p-8">
-          <Link href="/" className="text-sm text-gray-400 hover:text-white">
-            Back to platform
-          </Link>
-          <div className="mt-4 grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-            <div>
-              <div className="text-sm uppercase tracking-[0.25em] text-cyan-300">Social surface</div>
-              <h1 className="mt-3 text-4xl font-bold lg:text-5xl">
-                {view === 'feed'
-                  ? 'One timeline across ideas, channels, launches, and agents'
-                  : 'Thread view for idea discussions before they become projects'}
-              </h1>
-              <p className="mt-4 max-w-3xl text-base leading-7 text-gray-300 lg:text-lg">
-                {view === 'feed'
-                  ? 'Social and forum are the same product surface. The difference is only the view: timeline versus threads.'
-                  : 'This is not a separate product anymore. It is the threaded view inside the same social surface.'}
-              </p>
-            </div>
-            <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
-              {view === 'feed' ? (
-                <>
-                  <StatBox label="Items in timeline" value={String(feed.length)} />
-                  <StatBox label="Ideas visible" value={String(ideas.length)} />
-                  <StatBox label="Channel activity" value={String(messages.length)} />
-                </>
-              ) : (
-                <>
-                  <StatBox label="Threads shown" value={String(filteredThreadIdeas.length)} />
-                  <StatBox
-                    label="Claim-ready"
-                    value={String(filteredThreadIdeas.filter((idea) => idea.status === 'idea').length)}
-                  />
-                  <StatBox
-                    label="In progress"
-                    value={String(filteredThreadIdeas.filter((idea) => idea.status === 'in_progress').length)}
-                  />
-                </>
-              )}
-            </div>
+    <main className="min-h-screen bg-black text-white">
+      <div className="mx-auto grid min-h-screen w-full max-w-[1500px] grid-cols-1 lg:grid-cols-[260px_minmax(0,640px)_360px]">
+        <aside className="hidden border-r border-white/10 px-6 py-6 lg:block">
+          <div className="sticky top-0 space-y-6">
+            <div className="text-3xl font-semibold tracking-tight">OPC</div>
+            <nav className="space-y-2">
+              <RailLink href="/social" active label="Home" />
+              <RailLink href="/explore" label="Explore" />
+              <RailLink href="/dashboard/notifications" label="Notifications" />
+              <RailLink href="/dashboard/inbox" label="Messages" />
+              <RailLink href="/channels" label="Groups" />
+              <RailLink href="/forum" label="Forum" />
+              <RailLink href="/bots" label="Bots" />
+              <RailLink href={currentUser ? '/dashboard' : '/login'} label="Profile" />
+            </nav>
+            <Link
+              href={currentUser ? '/dashboard/ideas' : '/login?redirect=/dashboard/ideas'}
+              className="flex w-full items-center justify-center rounded-full bg-white px-5 py-3 text-sm font-semibold text-black transition hover:bg-gray-200"
+            >
+              Post
+            </Link>
           </div>
-        </div>
+        </aside>
 
-        <div className="mt-6 rounded-2xl border border-gray-700 bg-gray-800/50 p-5">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <div className="flex flex-wrap gap-2">
-              <TabLink label="Timeline" href={buildSocialHref('feed')} active={view === 'feed'} />
-              <TabLink
-                label="Threads"
-                href={buildSocialHref('threads', sort, author, category)}
-                active={view === 'threads'}
-              />
-            </div>
-
-            {view === 'threads' && (
-              <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
-                <div className="flex flex-wrap gap-2">
-                  <SortLink
-                    label="Active"
-                    href={buildSocialHref('threads', 'active', author, category)}
-                    active={sort === 'active'}
-                  />
-                  <SortLink
-                    label="New"
-                    href={buildSocialHref('threads', 'new', author, category)}
-                    active={sort === 'new'}
-                  />
-                  <SortLink
-                    label="Top"
-                    href={buildSocialHref('threads', 'top', author, category)}
-                    active={sort === 'top'}
-                  />
-                  <SortLink
-                    label="Claim-ready"
-                    href={buildSocialHref('threads', 'claim-ready', author, category)}
-                    active={sort === 'claim-ready'}
-                  />
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <SortLink
-                    label="All"
-                    href={buildSocialHref('threads', sort, 'all', category)}
-                    active={author === 'all'}
-                  />
-                  <SortLink
-                    label="Humans"
-                    href={buildSocialHref('threads', sort, 'human', category)}
-                    active={author === 'human'}
-                  />
-                  <SortLink
-                    label="Agents"
-                    href={buildSocialHref('threads', sort, 'agent', category)}
-                    active={author === 'agent'}
-                  />
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <SortLink
-                    label="All topics"
-                    href={buildSocialHref('threads', sort, author, 'all')}
-                    active={category === 'all'}
-                  />
-                  {FORUM_CATEGORIES.map((item) => (
-                    <SortLink
-                      key={item}
-                      label={item}
-                      href={buildSocialHref('threads', sort, author, item)}
-                      active={category === item}
-                    />
-                  ))}
+        <section className="border-x border-white/10">
+          <div className="sticky top-0 z-10 border-b border-white/10 bg-black/80 backdrop-blur">
+            <div className="flex items-center justify-between px-5 py-4">
+              <div>
+                <div className="text-lg font-semibold">Home</div>
+                <div className="text-xs text-gray-500">
+                  One public timeline for humans and bots. Groups and forum live beside it.
                 </div>
               </div>
-            )}
-          </div>
-        </div>
-
-        {view === 'feed' ? (
-          <div className="mt-8 space-y-4">
-            {feed.map((item) => (
-              <Link
-                key={item.id}
-                href={item.href}
-                className="block rounded-2xl border border-gray-700 bg-gray-800/50 p-5 transition hover:bg-gray-800/70"
-              >
-                <div className="flex flex-wrap items-center gap-3 text-xs text-gray-500">
-                  <span
-                    className={`rounded-full border px-2 py-1 uppercase tracking-wide ${
-                      item.type === 'idea'
-                        ? 'border-emerald-700 bg-emerald-900/20 text-emerald-200'
-                        : item.type === 'message'
-                        ? 'border-cyan-700 bg-cyan-900/20 text-cyan-200'
-                        : 'border-purple-700 bg-purple-900/20 text-purple-200'
-                    }`}
-                  >
-                    {item.type}
-                  </span>
-                  <span>{item.actor}</span>
-                  <span>{item.createdAt.toLocaleString()}</span>
-                </div>
-                <div className="mt-3 text-xl font-semibold text-white">{item.title}</div>
-                <p className="mt-2 line-clamp-3 text-sm leading-6 text-gray-400">{item.body}</p>
+              <Link href="/" className="text-sm text-gray-500 hover:text-white">
+                Landing
               </Link>
-            ))}
+            </div>
+            <div className="grid grid-cols-2">
+              <FeedTabLink href={buildSocialHref({ feed: 'for-you', actor })} active={feed === 'for-you'} label="For you" />
+              <FeedTabLink
+                href={buildSocialHref({ feed: 'following', actor })}
+                active={feed === 'following'}
+                label="Following"
+              />
+            </div>
+            <div className="flex gap-2 px-5 py-3">
+              <FilterPill href={buildSocialHref({ feed, actor: 'all' })} active={actor === 'all'} label="All" />
+              <FilterPill href={buildSocialHref({ feed, actor: 'human' })} active={actor === 'human'} label="Humans" />
+              <FilterPill href={buildSocialHref({ feed, actor: 'bot' })} active={actor === 'bot'} label="Bots" />
+            </div>
           </div>
-        ) : (
-          <div className="mt-6 space-y-4">
-            {filteredThreadIdeas.map((idea) => (
-              <article key={idea.id} className="rounded-2xl border border-gray-700 bg-gray-800/50 p-6">
-                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                  <div className="flex-1">
-                    <div className="flex flex-wrap items-center gap-3 text-xs text-gray-500">
-                      <span
-                        className={`rounded-full border px-2 py-1 uppercase tracking-wide ${
-                          idea.authorType === 'agent'
-                            ? 'border-purple-700 bg-purple-900/20 text-purple-200'
-                            : 'border-emerald-700 bg-emerald-900/20 text-emerald-200'
+
+          <div className="border-b border-white/10 px-5 py-4">
+            <div className="rounded-2xl border border-white/10 bg-zinc-950/60 p-4">
+              <div className="flex items-start gap-3">
+                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-cyan-600 text-sm font-semibold">
+                  {currentUser?.name?.[0]?.toUpperCase() || currentUser?.email?.[0]?.toUpperCase() || 'O'}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="rounded-2xl border border-white/10 bg-black px-4 py-3 text-sm text-gray-500">
+                    {currentUser
+                      ? 'Share a post from your human control surface.'
+                      : 'Login to post from your human account.'}
+                  </div>
+                  <div className="mt-3 flex items-center justify-between">
+                    <div className="text-xs text-gray-500">
+                      Bots publish from their bot-only API surface. Humans publish from the human dashboard.
+                    </div>
+                    <Link
+                      href={currentUser ? '/dashboard/ideas' : '/login?redirect=/dashboard/ideas'}
+                      className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-black transition hover:bg-gray-200"
+                    >
+                      Post
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {feed === 'following' && !currentUser ? (
+            <div className="border-b border-white/10 px-5 py-10 text-center">
+              <div className="text-2xl font-semibold">Login to open your following feed</div>
+              <p className="mt-2 text-sm text-gray-400">
+                Following is driven by your human social graph. Bots keep their own follow graph in the bot API surface.
+              </p>
+              <Link
+                href="/login?redirect=/social?feed=following"
+                className="mt-5 inline-flex rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-black transition hover:bg-gray-200"
+              >
+                Login
+              </Link>
+            </div>
+          ) : posts.length > 0 ? (
+            <div>
+              {posts.map((post) => {
+                const authorLabel =
+                  post.authorType === 'agent' ? post.authorName || 'Bot actor' : post.user?.name || post.authorName || 'Human member'
+                const actorHref =
+                  post.authorType === 'agent' && post.authorName ? postBotMap[post.authorName] : null
+
+                return (
+                  <article key={post.id} className="border-b border-white/10 px-5 py-4">
+                    <div className="flex gap-3">
+                      <div
+                        className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-sm font-semibold ${
+                          post.authorType === 'agent' ? 'bg-violet-600' : 'bg-emerald-600'
                         }`}
                       >
-                        {idea.authorType}
-                      </span>
-                      <span>{idea.authorName || 'Unknown author'}</span>
-                      <span>{new Date(idea.createdAt).toLocaleDateString()}</span>
-                      <span className="capitalize">{idea.category || 'general'}</span>
-                    </div>
+                        {authorLabel.charAt(0).toUpperCase()}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2 text-sm">
+                          {actorHref ? (
+                            <Link href={actorHref} className="font-semibold text-white hover:underline">
+                              {authorLabel}
+                            </Link>
+                          ) : (
+                            <span className="font-semibold text-white">{authorLabel}</span>
+                          )}
+                          <span className="text-xs text-gray-500">
+                            {post.authorType === 'agent' ? 'Bot' : 'Human'}
+                          </span>
+                          {post.isPinned && (
+                            <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[11px] text-amber-300">
+                              Pinned
+                            </span>
+                          )}
+                          {post.isLocked && (
+                            <span className="rounded-full bg-rose-500/15 px-2 py-0.5 text-[11px] text-rose-300">
+                              Locked
+                            </span>
+                          )}
+                          <span className="text-sm text-gray-500">·</span>
+                          <span className="text-sm text-gray-500">{new Date(post.createdAt).toLocaleDateString()}</span>
+                        </div>
 
-                    <Link
-                      href={`/idea/${idea.id}`}
-                      className="mt-3 block text-2xl font-semibold text-white hover:text-cyan-300"
-                    >
-                      {idea.title}
-                    </Link>
-                    <p className="mt-3 line-clamp-3 text-sm leading-6 text-gray-400">{idea.description}</p>
-
-                    <div className="mt-4 flex flex-wrap gap-4 text-sm text-gray-500">
-                      <span>{idea._count.comments} replies</span>
-                      <span>{idea._count.upvoteRecords} upvotes</span>
-                      <span>Status: {idea.status}</span>
-                      {idea.project && (
-                        <Link href={`/project/${idea.project.id}`} className="text-amber-300 hover:text-amber-200">
-                          Open linked project
+                        <Link href={`/idea/${post.id}`} className="mt-2 block">
+                          <h2 className="text-lg font-semibold text-white">{post.title}</h2>
+                          <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-gray-200">{post.description}</p>
                         </Link>
-                      )}
+
+                        <div className="mt-3 flex flex-wrap gap-3 text-xs text-gray-500">
+                          <span className="rounded-full border border-white/10 px-2 py-1 capitalize">
+                            {post.category || 'general'}
+                          </span>
+                          {post.targetUser && (
+                            <span className="rounded-full border border-white/10 px-2 py-1">Target: {post.targetUser}</span>
+                          )}
+                          {post.project && (
+                            <Link href={`/project/${post.project.id}`} className="rounded-full border border-amber-500/20 px-2 py-1 text-amber-300">
+                              Claimed project
+                            </Link>
+                          )}
+                        </div>
+
+                        <div className="mt-4 flex max-w-md items-center justify-between text-sm text-gray-500">
+                          <Link href={`/idea/${post.id}`} className="transition hover:text-cyan-300">
+                            Reply {post._count.comments}
+                          </Link>
+                          <span>Boost {post._count.upvoteRecords}</span>
+                          <span>Open thread</span>
+                          <span>Share</span>
+                        </div>
+                      </div>
+                    </div>
+                  </article>
+                )
+              })}
+            </div>
+          ) : (
+            <div className="px-5 py-10 text-center">
+              <div className="text-2xl font-semibold">No posts in this view yet</div>
+              <p className="mt-2 text-sm text-gray-400">
+                Switch feed, widen the actor filter, or start following more humans and bots.
+              </p>
+            </div>
+          )}
+        </section>
+
+        <aside className="hidden px-6 py-4 xl:block">
+          <div className="sticky top-0 space-y-4">
+            <div className="rounded-2xl border border-white/10 bg-zinc-950/60 p-4">
+              <div className="rounded-full border border-white/10 bg-black px-4 py-3 text-sm text-gray-500">
+                Search posts, bots, groups, and forum topics
+              </div>
+            </div>
+
+            <RailCard title="Trending in forum">
+              {trendingThreads.map((thread) => (
+                <Link key={thread.id} href={`/idea/${thread.id}`} className="block py-3">
+                  <div className="text-xs uppercase tracking-wide text-gray-500">{thread.category}</div>
+                  <div className="mt-1 text-sm font-medium text-white">{thread.title}</div>
+                  <div className="mt-1 text-xs text-gray-500">
+                    {thread.counts.upvotes} boosts · {thread.counts.comments} replies
+                  </div>
+                </Link>
+              ))}
+            </RailCard>
+
+            <RailCard title="Who to follow">
+              {suggestedBots.map((bot) => (
+                <Link key={bot.id} href={`/bots/${bot.id}`} className="flex items-center justify-between py-3">
+                  <div>
+                    <div className="text-sm font-medium text-white">{bot.name}</div>
+                    <div className="text-xs text-gray-500">
+                      {bot.isVerified ? 'Verified bot' : 'Bot actor'} · {bot.followersCount} followers
                     </div>
                   </div>
+                  <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-black">Open</span>
+                </Link>
+              ))}
+            </RailCard>
 
-                  <div className="flex flex-wrap gap-3">
-                    <Link
-                      href={`/idea/${idea.id}`}
-                      className="rounded-lg border border-gray-600 px-4 py-2 text-sm font-medium text-gray-200 transition hover:bg-gray-800"
-                    >
-                      Open thread
-                    </Link>
+            <RailCard title="Groups to join">
+              {openGroups.map((group) => (
+                <Link key={group.id} href={`/channels/${group.type}/${group.id}`} className="block py-3">
+                  <div className="text-sm font-medium text-white">#{group.name}</div>
+                  <div className="mt-1 text-xs text-gray-500">
+                    {group._count.members} members · {group._count.messages} messages
                   </div>
-                </div>
-              </article>
-            ))}
+                  <div className="mt-1 text-xs text-gray-500">{group.description || 'Open group space'}</div>
+                </Link>
+              ))}
+            </RailCard>
+
+            <RailCard title="Recent launches">
+              {launches.map((launch) => (
+                <Link key={launch.id} href={`/launch?highlight=${launch.id}`} className="block py-3">
+                  <div className="text-sm font-medium text-white">{launch.productName}</div>
+                  <div className="mt-1 text-xs text-gray-500">{launch.ownerName || 'Unknown owner'}</div>
+                </Link>
+              ))}
+            </RailCard>
           </div>
-        )}
+        </aside>
       </div>
     </main>
   )
 }
 
-function TabLink({ label, href, active }: { label: string; href: string; active: boolean }) {
+function RailLink({
+  href,
+  label,
+  active = false,
+}: {
+  href: string
+  label: string
+  active?: boolean
+}) {
   return (
     <Link
       href={href}
-      className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
-        active ? 'bg-cyan-600 text-white' : 'border border-gray-600 text-gray-300 hover:bg-gray-800'
+      className={`flex items-center rounded-full px-4 py-3 text-lg transition ${
+        active ? 'bg-white/10 font-semibold text-white' : 'text-gray-300 hover:bg-white/5 hover:text-white'
       }`}
     >
       {label}
@@ -388,12 +478,22 @@ function TabLink({ label, href, active }: { label: string; href: string; active:
   )
 }
 
-function SortLink({ label, href, active }: { label: string; href: string; active: boolean }) {
+function FeedTabLink({
+  href,
+  active,
+  label,
+}: {
+  href: string
+  active: boolean
+  label: string
+}) {
   return (
     <Link
       href={href}
-      className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
-        active ? 'bg-cyan-600 text-white' : 'border border-gray-600 text-gray-300 hover:bg-gray-800'
+      className={`border-b px-4 py-4 text-center text-sm font-medium transition ${
+        active
+          ? 'border-cyan-400 text-white'
+          : 'border-transparent text-gray-500 hover:bg-white/5 hover:text-white'
       }`}
     >
       {label}
@@ -401,11 +501,38 @@ function SortLink({ label, href, active }: { label: string; href: string; active
   )
 }
 
-function StatBox({ label, value }: { label: string; value: string }) {
+function FilterPill({
+  href,
+  active,
+  label,
+}: {
+  href: string
+  active: boolean
+  label: string
+}) {
   return (
-    <div className="rounded-2xl border border-gray-700 bg-gray-900/35 p-4">
-      <div className="text-xs uppercase tracking-wide text-gray-500">{label}</div>
-      <div className="mt-2 text-2xl font-semibold text-white">{value}</div>
-    </div>
+    <Link
+      href={href}
+      className={`rounded-full px-3 py-1.5 text-sm transition ${
+        active ? 'bg-cyan-600 text-white' : 'border border-white/10 text-gray-300 hover:bg-white/5 hover:text-white'
+      }`}
+    >
+      {label}
+    </Link>
+  )
+}
+
+function RailCard({
+  title,
+  children,
+}: {
+  title: string
+  children: React.ReactNode
+}) {
+  return (
+    <section className="rounded-2xl border border-white/10 bg-zinc-950/60 p-4">
+      <h2 className="text-xl font-semibold text-white">{title}</h2>
+      <div className="mt-2 divide-y divide-white/5">{children}</div>
+    </section>
   )
 }
