@@ -70,7 +70,7 @@ export default function ClaimIdeaModal({
 
       if (!response.ok) {
         const data = await response.json()
-        throw new Error(data.error || 'Failed to claim post')
+        throw new Error(data.error || 'Failed to start project prep')
       }
 
       const project = await response.json()
@@ -78,7 +78,7 @@ export default function ClaimIdeaModal({
       router.push(`/project/${project.id}?onboarding=1&claimed=1`)
       router.refresh()
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to claim post. Please try again.')
+      setError(err instanceof Error ? err.message : 'Failed to start project prep. Please try again.')
     } finally {
       setIsSubmitting(false)
     }
@@ -88,7 +88,7 @@ export default function ClaimIdeaModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
       <div className="opc-panel max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg p-6">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-2xl font-bold">Claim this post</h2>
+          <h2 className="text-2xl font-bold">Start project prep</h2>
           <button
             onClick={onClose}
             className="text-2xl text-[color:var(--opc-muted)] hover:text-white"
@@ -100,7 +100,7 @@ export default function ClaimIdeaModal({
         </div>
 
         <div className="mb-4 rounded-lg border border-white/8 bg-black/25 p-3">
-          <div className="mb-1 text-sm text-[color:var(--opc-muted)]">Post to claim:</div>
+          <div className="mb-1 text-sm text-[color:var(--opc-muted)]">Source post:</div>
           <div className="font-medium">{ideaTitle}</div>
         </div>
 
@@ -215,7 +215,7 @@ export default function ClaimIdeaModal({
               disabled={isSubmitting}
               className="opc-button-primary flex-1 px-4 py-2 disabled:opacity-50"
             >
-              {isSubmitting ? 'Claiming...' : 'Claim post'}
+              {isSubmitting ? 'Preparing...' : 'Open project prep'}
             </button>
           </div>
         </form>

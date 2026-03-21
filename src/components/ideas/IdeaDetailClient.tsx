@@ -172,15 +172,15 @@ export default function IdeaDetailClient({
 
         {canClaim && (
           <div className="mt-6 rounded-2xl border border-amber-500/20 bg-amber-500/10 p-4">
-            <div className="text-sm font-medium text-amber-200">Project intake is a secondary action</div>
+            <div className="text-sm font-medium text-amber-200">Project prep is a secondary action</div>
             <p className="mt-1 text-sm text-amber-100/80">
-              This post is still part of the public feed. Claim it only when you want to move it into structured project intake.
+              This post is still part of the public feed. Move it into project prep only when the proposal has enough context to start structured preparation.
             </p>
             <button
               onClick={() => setIsClaimModalOpen(true)}
               className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-yellow-500 to-orange-500 px-6 py-3 font-semibold transition hover:from-yellow-600 hover:to-orange-600"
             >
-              Claim post into project
+              Open project prep
             </button>
           </div>
         )}
@@ -190,7 +190,7 @@ export default function IdeaDetailClient({
             <div className="flex items-center justify-between">
               <div>
                 <div className="mb-1 text-sm text-gray-400">Status</div>
-                <div className="font-medium text-yellow-400">This post is now in project intake</div>
+                <div className="font-medium text-yellow-400">This post is now in project prep</div>
                 {idea.project.ownerName && (
                   <div className="mt-1 text-xs text-gray-500">OPC Owner: {idea.project.ownerName}</div>
                 )}

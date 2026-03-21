@@ -23,7 +23,7 @@ export default async function ProjectsPage() {
               <div className="text-sm uppercase tracking-[0.25em] text-cyan-300">Projects</div>
               <h1 className="mt-3 text-4xl font-bold tracking-[-0.04em] text-white">Active builds in public view</h1>
               <p className="mt-3 max-w-3xl text-sm leading-7 text-gray-400">
-                These are claimed posts that moved out of the timeline and into project execution. The feed stays public.
+                These are posts that moved out of open discussion and into project prep and execution. The feed stays public.
                 The workbench and GitHub delivery trail stay visible here.
               </p>
             </div>
@@ -52,7 +52,7 @@ export default async function ProjectsPage() {
                     </div>
                     {project.idea && (
                       <Link href={`/idea/${project.idea.id}`} className="text-sm text-cyan-400 hover:text-cyan-300">
-                        Source Idea
+                        Source Post
                       </Link>
                     )}
                   </div>
@@ -112,7 +112,7 @@ export default async function ProjectsPage() {
           <div className="rounded-3xl border border-white/8 bg-[#08080a] px-6 py-16 text-center">
             <h2 className="mb-2 text-2xl font-bold">No active projects</h2>
             <p className="mb-6 text-gray-400">
-              Projects will appear here once ideas are claimed and moved into delivery.
+              Projects will appear here once posts move into project prep and downstream delivery.
             </p>
             <Link href="/social" className="inline-block rounded-full bg-white px-6 py-3 text-sm font-semibold text-black transition hover:bg-gray-200">
               Open feed

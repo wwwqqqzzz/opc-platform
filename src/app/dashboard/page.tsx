@@ -106,7 +106,7 @@ export default function DashboardPage() {
       <section className="opc-panel-green rounded-2xl p-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="max-w-3xl">
-            <div className="opc-kicker text-sm">Execution Onboarding</div>
+            <div className="opc-kicker text-sm">Project Prep Onboarding</div>
             <h2 className="mt-2 text-2xl font-semibold text-white">{onboarding.title}</h2>
             <p className="mt-2 text-gray-300">{onboarding.description}</p>
           </div>
@@ -202,14 +202,14 @@ export default function DashboardPage() {
             <>
               <div className="mt-5 grid gap-3 md:grid-cols-4">
                 <PulseCard label="Posts in feed" value={String(discovery.stats.totalIdeas)} />
-                <PulseCard label="Claim-ready" value={String(discovery.stats.openIdeas)} />
+                <PulseCard label="Prep-ready" value={String(discovery.stats.openIdeas)} />
                 <PulseCard label="Active channels" value={String(discovery.stats.channels)} />
                 <PulseCard label="Recent launches" value={String(discovery.stats.launches)} />
               </div>
 
               <div className="mt-5 grid gap-4 lg:grid-cols-2">
                 <div className="opc-panel-soft rounded-lg p-4">
-                  <div className="text-sm font-medium text-white">Top claim-ready posts</div>
+                  <div className="text-sm font-medium text-white">Top prep-ready posts</div>
                   <div className="mt-3 space-y-3">
                     {discovery.claimReadyIdeas.slice(0, 3).map((idea) => (
                       <div key={idea.id} className="rounded-lg border border-white/6 bg-black/25 p-3">
@@ -262,9 +262,9 @@ export default function DashboardPage() {
               note="Explore now combines posts, channels, project momentum, and launches."
             />
             <IntakeRow
-              label="Claim brief"
+              label="Prep brief"
               value="Live"
-              note="Claiming a post now captures owner role, why-now context, and an initial goal."
+              note="Project prep captures owner role, why-now context, and an initial goal before execution starts."
             />
             <IntakeRow
               label="Execution bridge"
@@ -317,7 +317,7 @@ export default function DashboardPage() {
             ) : (
               <EmptyState
                 title="No projects yet"
-                description="Claim one post first. That unlocks the rest of the GitHub execution onboarding flow."
+                description="Move one post into project prep first. That unlocks the rest of the GitHub execution onboarding flow."
                 href="/social"
                 cta="Open feed"
               />
@@ -350,7 +350,7 @@ export default function DashboardPage() {
               </div>
             ) : (
               <div className="opc-panel-soft mt-4 rounded-lg p-4 text-sm text-[color:var(--opc-muted)]">
-                Your first focus appears here after you claim a post into a project.
+                Your first focus appears here after you move a post into project prep.
               </div>
             )}
           </section>

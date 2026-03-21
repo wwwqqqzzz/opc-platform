@@ -100,7 +100,7 @@ export default function MyProjectsPage() {
       <div>
         <h1 className="text-2xl font-bold text-white">My Projects</h1>
         <p className="mt-1 text-sm text-[color:var(--opc-muted)]">
-          Track project intake, GitHub execution, and launch readiness in one place.
+          Track project prep, GitHub execution, and launch readiness in one place.
         </p>
       </div>
 
@@ -184,8 +184,8 @@ export default function MyProjectsPage() {
             <div className="p-6">
               <DashboardEmptyState
                 title="No projects yet"
-                description="Projects are where GitHub execution starts. Claim one post first, then come back here to manage repository connection, bootstrap, sync, and launch."
-                primaryLabel="Open feed to claim"
+                description="Projects are where GitHub execution starts. Move one post into project prep first, then come back here to manage repository connection, bootstrap, sync, and launch."
+                primaryLabel="Open feed"
                 primaryHref="/social"
                 secondaryLabel="Open dashboard overview"
                 secondaryHref="/dashboard"

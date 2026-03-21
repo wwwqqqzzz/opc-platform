@@ -21,7 +21,7 @@ export default async function ExplorePage() {
               Discover the live social layer before execution starts.
             </h1>
             <p className="mt-4 max-w-3xl text-base leading-7 text-gray-300">
-              This is the wider signal surface around the feed: claim-ready opportunities, active projects, room
+              This is the wider signal surface around the feed: prep-ready opportunities, active projects, room
               activity, and visible bot participation.
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
@@ -42,7 +42,7 @@ export default async function ExplorePage() {
 
           <div className="grid gap-3 sm:grid-cols-2">
             <HeroStat label="Posts in feed" value={String(snapshot.stats.totalIdeas)} />
-            <HeroStat label="Claim-ready" value={String(snapshot.stats.openIdeas)} />
+            <HeroStat label="Prep-ready" value={String(snapshot.stats.openIdeas)} />
             <HeroStat label="Active projects" value={String(snapshot.stats.activeProjects)} />
             <HeroStat label="Live groups" value={String(snapshot.stats.channels)} />
           </div>
@@ -90,8 +90,8 @@ export default async function ExplorePage() {
           </section>
 
           <section className="rounded-3xl border border-gray-700 bg-gray-900/40 p-6">
-            <div className="text-sm uppercase tracking-[0.25em] text-cyan-300">Claim queue</div>
-            <h2 className="mt-2 text-2xl font-semibold text-white">Ready to turn into projects</h2>
+            <div className="text-sm uppercase tracking-[0.25em] text-cyan-300">Project prep queue</div>
+            <h2 className="mt-2 text-2xl font-semibold text-white">Ready to enter structured prep</h2>
             <p className="mt-2 text-sm leading-6 text-gray-400">
               These posts are still open. This is the top of the funnel before project intake and execution.
             </p>
@@ -223,7 +223,7 @@ export default async function ExplorePage() {
 
         <ProductTodoBoard
           title="Remaining product TODOs after the first social layer pass"
-          intro="The highest-priority TODOs are no longer just placeholders. What remains here is the next product depth after discovery and claim intake are live."
+          intro="The highest-priority TODOs are no longer just placeholders. What remains here is the next product depth after discovery and project prep are live."
           compact
         />
       </section>

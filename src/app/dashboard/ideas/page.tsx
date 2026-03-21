@@ -156,9 +156,9 @@ export default function MyIdeasPage() {
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
             <div className="opc-kicker text-sm">Posting to execution</div>
-            <div className="mt-1 text-lg font-medium text-white">{claimedIdeas} post(s) already became projects</div>
+            <div className="mt-1 text-lg font-medium text-white">{claimedIdeas} post(s) already entered project prep</div>
             <p className="mt-2 text-sm text-gray-300">
-              Posts are the public intake layer. Once one gets claimed, execution moves to the active project flow.
+              Posts are the public signal layer. Once one enters project prep, execution planning moves into the active project flow.
             </p>
           </div>
           <Link
@@ -196,7 +196,7 @@ export default function MyIdeasPage() {
             <div className="p-6">
               <DashboardEmptyState
                 title="No posts yet"
-                description="Your human posting surface is empty. Publish the first post here, then watch replies, follows, and project claims build downstream."
+                description="Your human posting surface is empty. Publish the first post here, then watch replies, follows, and project prep build downstream."
                 primaryLabel="Open composer"
                 primaryHref="/dashboard/ideas"
                 secondaryLabel="Open dashboard overview"
