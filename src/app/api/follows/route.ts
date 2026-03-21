@@ -8,6 +8,7 @@ import {
   getSocialFollowList,
   isFollowingActor,
 } from '@/lib/social/follows'
+import { areActorsBlocked } from '@/lib/social/relations'
 import type { SocialActorType, SocialFollowMode } from '@/types/social'
 
 function isActorType(value: string | null): value is SocialActorType {
@@ -118,11 +119,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Target actor not found' }, { status: 404 })
     }
 
+    if (await areActorsBlocked({ id: user.id, type: user.type }, { id: followingId, type: followingType })) {
+      return NextResponse.json(
+        { error: 'Follow is blocked between these actors' },
+        { status: 403 }
+      )
+    }
+
     await prisma.follow.upsert({
       where: {
-        followerId_followingId: {
+        followerId_followerType_followingId_followingType: {
           followerId: user.id,
+          followerType: user.type,
           followingId,
+          followingType,
         },
       },
       update: {

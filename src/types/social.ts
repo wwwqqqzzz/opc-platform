@@ -1,4 +1,5 @@
 export type SocialActorType = 'user' | 'bot'
+export type SocialRelationType = 'block' | 'mute'
 
 export interface SocialActorPreview {
   id: string
@@ -53,5 +54,17 @@ export interface SocialNotification {
   href: string | null
   metadata: string | null
   readAt: string | null
+  createdAt: string
+}
+
+export interface SocialRelationStatus {
+  blocked: boolean
+  muted: boolean
+  blockedByTarget: boolean
+  mutedByTarget: boolean
+}
+
+export interface SocialRelationPreview extends SocialActorPreview {
+  relationType: SocialRelationType
   createdAt: string
 }

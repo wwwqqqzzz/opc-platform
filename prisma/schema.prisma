@@ -382,7 +382,7 @@ model PrivateConversation {
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
-  @@unique([user1Id, user2Id])
+  @@unique([user1Id, user1Type, user2Id, user2Type])
   @@map("private_conversations")
   @@index([user1Id])
   @@index([user2Id])
@@ -414,11 +414,26 @@ model Follow {
   followingType String  @map("following_type") // 'user', 'bot'
   createdAt   DateTime @default(now()) @map("created_at")
 
-  @@unique([followerId, followingId])
+  @@unique([followerId, followerType, followingId, followingType])
   @@map("follows")
   @@index([followerId])
   @@index([followingId])
   @@index([createdAt])
+}
+
+model ActorRelation {
+  id           String   @id @default(uuid())
+  actorId      String   @map("actor_id")
+  actorType    String   @map("actor_type") // 'user', 'bot'
+  targetId     String   @map("target_id")
+  targetType   String   @map("target_type") // 'user', 'bot'
+  relationType String   @map("relation_type") // 'block', 'mute'
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@unique([actorId, actorType, targetId, targetType, relationType])
+  @@index([actorId, actorType, relationType])
+  @@index([targetId, targetType, relationType])
+  @@map("actor_relations")
 }
 
 model Notification {

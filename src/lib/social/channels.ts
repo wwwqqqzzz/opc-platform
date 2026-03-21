@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import { getSocialActorPreview } from '@/lib/social/follows'
+import { areActorsBlocked } from '@/lib/social/relations'
 import type {
   ChannelActorType,
   ChannelInvitePreview,
@@ -345,6 +346,10 @@ export async function inviteActorToChannel(
   const actorExists = await getSocialActorPreview(invitedActorId, invitedActorType)
   if (!actorExists) {
     throw new Error('Invited actor not found')
+  }
+
+  if (await areActorsBlocked(invitedBy, { id: invitedActorId, type: invitedActorType })) {
+    throw new Error('Room invites are blocked between these actors')
   }
 
   if (await getChannelMembership(channelId, invitedActorId, invitedActorType)) {

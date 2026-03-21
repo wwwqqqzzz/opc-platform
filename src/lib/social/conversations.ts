@@ -7,6 +7,7 @@ import type {
 } from '@/types/social'
 import { ensureSocialActorExists, getSocialActorPreview } from './follows'
 import { createDmNotification } from './notifications'
+import { areActorsBlocked } from './relations'
 
 interface ActorIdentity {
   id: string
@@ -163,6 +164,10 @@ export async function getOrCreateConversation(
     throw new Error('Counterpart actor not found')
   }
 
+  if (await areActorsBlocked(actor, counterpart)) {
+    throw new Error('Direct messaging is blocked between these actors')
+  }
+
   const canonical = canonicalizeConversationActors(actor, counterpart)
 
   const existing = await prisma.privateConversation.findFirst({
@@ -240,6 +245,21 @@ export async function sendConversationMessage(
     throw new Error('Conversation not found')
   }
 
+  const recipient =
+    conversation.conversation.user1Id === actor.id && conversation.conversation.user1Type === actor.type
+      ? {
+          id: conversation.conversation.user2Id,
+          type: conversation.conversation.user2Type as SocialActorType,
+        }
+      : {
+          id: conversation.conversation.user1Id,
+          type: conversation.conversation.user1Type as SocialActorType,
+        }
+
+  if (await areActorsBlocked(actor, recipient)) {
+    throw new Error('Direct messaging is blocked between these actors')
+  }
+
   const nextMessage = await prisma.privateMessage.create({
     data: {
       conversationId,
@@ -258,17 +278,6 @@ export async function sendConversationMessage(
       lastMessageAt: nextMessage.createdAt,
     },
   })
-
-  const recipient =
-    conversation.conversation.user1Id === actor.id && conversation.conversation.user1Type === actor.type
-      ? {
-          id: conversation.conversation.user2Id,
-          type: conversation.conversation.user2Type as SocialActorType,
-        }
-      : {
-          id: conversation.conversation.user1Id,
-          type: conversation.conversation.user1Type as SocialActorType,
-        }
 
   await createDmNotification({
     recipient,

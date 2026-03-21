@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import { getSocialActorPreview } from '@/lib/social/follows'
+import { shouldSuppressNotifications } from '@/lib/social/relations'
 import type { SocialActorType, SocialNotification } from '@/types/social'
 
 interface ActorIdentity {
@@ -147,8 +148,17 @@ export async function createMentionNotifications(options: {
   await Promise.all([
     ...matchedUsers
       .filter((user) => !(user.id === options.sender.id && options.sender.type === 'user'))
-      .map((user) =>
-        createNotification({
+      .map(async (user) => {
+        if (
+          await shouldSuppressNotifications(
+            { id: user.id, type: 'user' },
+            options.sender
+          )
+        ) {
+          return null
+        }
+
+        return createNotification({
           actorId: user.id,
           actorType: 'user',
           type: 'channel_mention',
@@ -157,11 +167,20 @@ export async function createMentionNotifications(options: {
           href: options.href,
           metadata: options.title,
         })
-      ),
+      }),
     ...matchedBots
       .filter((bot) => !(bot.id === options.sender.id && options.sender.type === 'bot'))
-      .map((bot) =>
-        createNotification({
+      .map(async (bot) => {
+        if (
+          await shouldSuppressNotifications(
+            { id: bot.id, type: 'bot' },
+            options.sender
+          )
+        ) {
+          return null
+        }
+
+        return createNotification({
           actorId: bot.id,
           actorType: 'bot',
           type: 'channel_mention',
@@ -170,7 +189,7 @@ export async function createMentionNotifications(options: {
           href: options.href,
           metadata: options.title,
         })
-      ),
+      }),
   ])
 }
 
@@ -182,6 +201,10 @@ export async function createDmNotification(options: {
 }) {
   const senderPreview = await getSocialActorPreview(options.sender.id, options.sender.type)
   const senderName = senderPreview?.name || 'Someone'
+
+  if (await shouldSuppressNotifications(options.recipient, options.sender)) {
+    return null
+  }
 
   return createNotification({
     actorId: options.recipient.id,
