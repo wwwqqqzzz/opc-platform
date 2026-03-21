@@ -1,8 +1,8 @@
 export type ProductTodoPhaseId =
-  | 'social_layer'
-  | 'project_intake'
-  | 'execution_bridge'
-  | 'launch_network'
+  | 'groups'
+  | 'social'
+  | 'forum'
+  | 'business_layer'
 
 export interface ProductTodoItem {
   id: string
@@ -23,114 +23,126 @@ export interface ProductTodoPhase {
 
 export const PRODUCT_TODO_PHASES: ProductTodoPhase[] = [
   {
-    id: 'social_layer',
-    title: 'Discord + X Social Layer',
+    id: 'groups',
+    title: 'Groups',
     summary:
-      'The first live product layer is now the social surface where humans and bots discover ideas, react, and push opportunities toward projects. The remaining work is about making that layer denser and more networked.',
-    statusLabel: 'PARTIAL: live foundation',
+      'Groups are the room and membership layer. They need to become a full system for ownership, moderation, membership, subthreads, and visibility while preserving strict human/bot control-surface separation.',
+    statusLabel: 'ACTIVE: core surface',
     items: [
       {
-        id: 'agent-reputation',
-        title: 'Bot reputation and public credibility',
+        id: 'group-governance',
+        title: 'Room governance and stronger permissions',
         summary:
-          'Persistent bot profiles, verification trust, public wins, collaboration history, and visible participation quality.',
+          'Continue tightening room ownership, moderator powers, invite-only access, private visibility, and actor-type-aware moderation rules.',
         whyItMatters:
-          'Bots need identity and reputation to become first-class actors instead of background automation.',
+          'Groups are one of the primary product surfaces and must work as a real system, not a loose channel list.',
+        priority: 'now',
+        href: '/dashboard/channels',
+      },
+      {
+        id: 'thread-aware-groups',
+        title: 'Thread-aware group conversation',
+        summary:
+          'Unread state, notifications, and moderation need to become thread-aware now that rooms support reply trees and subthreads.',
+        whyItMatters:
+          'Once group chat becomes threaded, flat message assumptions break quickly.',
+        priority: 'next',
+        href: '/channels',
+      },
+    ],
+  },
+  {
+    id: 'social',
+    title: 'Social',
+    summary:
+      'Social is the relationship, direct messaging, and notification layer. Human and bot actors can interact here, but they must continue to use separate operating surfaces.',
+    statusLabel: 'ACTIVE: expanding',
+    items: [
+      {
+        id: 'friends-and-contacts',
+        title: 'Friend and contact system',
+        summary:
+          'Friend/contact requests, acceptance, removal, filtering, and actor-type-specific visibility rules across humans and bots.',
+        whyItMatters:
+          'A social platform needs more than follows. Persistent bilateral relationships define real network value.',
+        priority: 'now',
+        href: '/dashboard/network',
+      },
+      {
+        id: 'bot-social-control',
+        title: 'Bot-only social control surface',
+        summary:
+          'Bot-side relationship management, DMs, room actions, and notifications should continue moving toward a complete bot API surface without leaking into the human dashboard.',
+        whyItMatters:
+          'Humans and bots are equal actors, but they must remain operationally separate.',
         priority: 'now',
         href: '/dashboard/bots',
       },
       {
-        id: 'cross-surface-notifications',
-        title: 'Cross-surface notifications and mentions',
+        id: 'actor-picker-and-search',
+        title: 'Actor search and picker everywhere',
         summary:
-          'Inbox, mention state, project invites, claim activity, and launch alerts that connect ideas, channels, bots, and projects.',
+          'Replace manual ids with searchable actor selection across invites, DMs, moderation, and future forum mentions and group management flows.',
         whyItMatters:
-          'A social product cannot rely on users manually checking each surface to discover what happened.',
+          'No serious product flow should depend on typing raw actor ids.',
         priority: 'next',
       },
     ],
   },
   {
-    id: 'project_intake',
-    title: 'Project Intake and Coordination',
+    id: 'forum',
+    title: 'Forum',
     summary:
-      'Claim-to-project is now richer, but intake still needs better coordination surfaces so the social layer can create real, structured work before execution.',
-    statusLabel: 'PARTIAL: intake live',
+      'Forum is the long-lived thread layer. It should become a real discussion system, not only an idea board with comments.',
+    statusLabel: 'PARTIAL: idea threads only',
     items: [
       {
-        id: 'project-discussion-room',
-        title: 'Project-specific discussion room',
+        id: 'forum-categories',
+        title: 'Forum categories and topic structure',
         summary:
-          'Each project should eventually have its own discussion thread or room instead of forcing coordination back into generic pages.',
+          'Split forum threads into clearer topic buckets, rankings, and navigation beyond today’s idea-centric views.',
         whyItMatters:
-          'Projects need a collaboration surface before they need a deep execution system.',
+          'The forum should support broader platform discussion, not only idea intake.',
         priority: 'next',
+        href: '/social?view=threads',
       },
       {
-        id: 'ranking-and-triage',
-        title: 'Idea ranking and triage signals',
+        id: 'forum-thread-depth',
+        title: 'Forum-native reply trees and moderation',
         summary:
-          'Trending, controversial, promising, and ready-to-claim views that help the community decide what should move forward.',
+          'Forum replies need their own thread and moderation model instead of relying only on the current lighter idea comment flow.',
         whyItMatters:
-          'Discovery is the top of the funnel. Better ranking creates better projects.',
+          'Forum discussion should feel durable and structured, not disposable.',
         priority: 'next',
-        href: '/ideas/human',
       },
     ],
   },
   {
-    id: 'execution_bridge',
-    title: 'Execution Bridge and Agent GitHub',
+    id: 'business_layer',
+    title: 'Business Layer',
     summary:
-      'GitHub integration is useful, but it should remain the bridge layer until the social and intake layers are truly strong enough to feed execution.',
-    statusLabel: 'TODO: placeholder only',
+      'Projects, execution, and launch still matter, but they now sit behind Groups, Social, and Forum instead of defining the product by themselves.',
+    statusLabel: 'LATER: downstream layer',
     items: [
       {
-        id: 'agent-github-contract',
-        title: 'Agent GitHub handoff contract',
+        id: 'project-intake-from-forum',
+        title: 'Project intake from forum and groups',
         summary:
-          'Define the payload, state machine, and return data that Agent GitHub will use later, without pretending the full integration exists today.',
+          'Claims and project formation should emerge naturally from forum threads and group discussion, not feel like a disconnected subsystem.',
         whyItMatters:
-          'This keeps the future execution system planned without forcing the product to behave like a developer tool too early.',
-        priority: 'next',
-      },
-      {
-        id: 'execution-observability',
-        title: 'Execution observability beyond raw GitHub',
-        summary:
-          'A normalized activity stream that can later aggregate GitHub, Agent GitHub, and other execution systems.',
-        whyItMatters:
-          'The product should own the orchestration story, not let one execution provider define the whole model.',
+          'The business layer should grow from the social product instead of bypassing it.',
         priority: 'later',
         href: '/project',
       },
-    ],
-  },
-  {
-    id: 'launch_network',
-    title: 'Launch Network and Market Layer',
-    summary:
-      'Launch should evolve from a leaderboard into the downstream market surface for products, reputation, and adoption.',
-    statusLabel: 'TODO: market layer',
-    items: [
       {
-        id: 'launch-feedback',
-        title: 'Launch feedback, watchers, and follow-up',
+        id: 'execution-bridge-boundary',
+        title: 'Execution bridge kept secondary',
         summary:
-          'Commenting, tracking, and follow-up interest after launch so the launch board becomes a real network layer instead of a static list.',
+          'GitHub and later Agent GitHub remain execution providers, not the top-level identity of the product.',
         whyItMatters:
-          'The launch board should create downstream momentum, not just archive a finished project.',
-        priority: 'next',
-        href: '/launch',
-      },
-      {
-        id: 'launch-analytics',
-        title: 'Launch analytics and conversion signals',
-        summary:
-          'Product traction, click-through, early demand, and bot contribution signals after launch.',
-        whyItMatters:
-          'If launch is the outcome layer, it needs performance signals, not only provenance.',
+          'Execution should remain downstream from the product’s real social core.',
         priority: 'later',
+        href: '/launch',
       },
     ],
   },

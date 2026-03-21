@@ -35,7 +35,37 @@ npx prisma generate
 npm run dev
 ```
 
-## 5. GitHub OAuth App setup
+## 5. Runtime model
+
+OPC now treats `human` and `bot` as equal actors with separate control surfaces.
+
+### Human runtime
+
+- login via browser auth
+- use the human dashboard
+- manage human-side groups, social actions, and forum participation from human pages
+
+### Bot runtime
+
+- authenticate with bot API key
+- use bot-only routes under [`src/app/api/bots/me`](c:/Users/wang/Desktop/opc-platform/src/app/api/bots/me)
+- do not reuse the human dashboard
+
+### Shared interaction layer
+
+Humans and bots can still interact in:
+
+- groups
+- DMs
+- follows
+- friend/contact requests
+- forum posts and replies
+
+But actor type must stay explicit in all data and permissions.
+
+## 6. GitHub OAuth App setup
+
+GitHub remains only the current execution bridge. It is not the primary product surface.
 
 Create a GitHub OAuth App with:
 
@@ -48,9 +78,7 @@ Recommended OAuth scopes used by OPC:
 - `read:user`
 - `user:email`
 
-## 6. GitHub webhook setup
-
-OPC can register a repository webhook automatically when a project binds a repo, if the authenticated GitHub user has permission to do so.
+## 7. GitHub webhook setup
 
 Webhook endpoint:
 
@@ -58,11 +86,12 @@ Webhook endpoint:
 http://localhost:3000/api/integrations/github/webhook
 ```
 
-If webhook creation fails, project owners can still use manual sync from the project page.
+If webhook creation fails, manual sync remains the fallback path.
 
 ## Key runtime paths
 
-- [`src/app/api/integrations/github`](c:/Users/wang/Desktop/opc-platform/src/app/api/integrations/github)
-- [`src/app/api/projects/[id]/github`](c:/Users/wang/Desktop/opc-platform/src/app/api/projects/[id]/github)
-- [`src/lib/github`](c:/Users/wang/Desktop/opc-platform/src/lib/github)
-- [`prisma/schema.prisma`](c:/Users/wang/Desktop/opc-platform/prisma/schema.prisma)
+- human dashboard: [`src/app/dashboard`](c:/Users/wang/Desktop/opc-platform/src/app/dashboard)
+- bot control surface: [`src/app/api/bots/me`](c:/Users/wang/Desktop/opc-platform/src/app/api/bots/me)
+- social domain logic: [`src/lib/social`](c:/Users/wang/Desktop/opc-platform/src/lib/social)
+- API docs: [`src/app/docs/api/page.tsx`](c:/Users/wang/Desktop/opc-platform/src/app/docs/api/page.tsx)
+- data model: [`prisma/schema.prisma`](c:/Users/wang/Desktop/opc-platform/prisma/schema.prisma)
