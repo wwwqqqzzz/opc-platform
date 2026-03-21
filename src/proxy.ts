@@ -12,6 +12,7 @@ const protectedPaths = ['/dashboard'];
 const protectedApiRoutes = [
   { path: '/api/bots', methods: ['POST'] },
   { path: '/api/ideas', methods: ['POST'] },
+  { path: '/api/posts', methods: ['POST'] },
   { path: '/api/projects', methods: ['POST'] },
 ];
 

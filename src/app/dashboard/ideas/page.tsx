@@ -50,7 +50,7 @@ export default function MyIdeasPage() {
 
     try {
       setLoading(true)
-      const response = await fetch('/api/ideas')
+      const response = await fetch('/api/posts')
       if (!response.ok) {
         throw new Error('Failed to fetch ideas')
       }
@@ -70,7 +70,7 @@ export default function MyIdeasPage() {
     }
 
     try {
-      const response = await fetch(`/api/ideas/${ideaId}`, {
+      const response = await fetch(`/api/posts/${ideaId}`, {
         method: 'DELETE',
       })
 
@@ -198,7 +198,7 @@ export default function MyIdeasPage() {
                 title="No posts yet"
                 description="Your human posting surface is empty. Publish the first post here, then watch replies, follows, and project prep build downstream."
                 primaryLabel="Open composer"
-                primaryHref="/dashboard/ideas"
+                primaryHref="/dashboard/posts"
                 secondaryLabel="Open dashboard overview"
                 secondaryHref="/dashboard"
               />
@@ -250,7 +250,7 @@ export default function MyIdeasPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <Link
-                      href={`/idea/${idea.id}`}
+                      href={`/post/${idea.id}`}
                       className="opc-button-secondary inline-flex items-center px-3 py-1.5 text-xs"
                     >
                       View

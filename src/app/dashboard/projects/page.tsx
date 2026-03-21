@@ -220,7 +220,7 @@ export default function MyProjectsPage() {
                       {project.sourcePost && (
                         <span className="text-purple-400">
                           From Post:{' '}
-                          <Link href={`/idea/${project.sourcePost.id}`} className="hover:underline">
+                          <Link href={`/post/${project.sourcePost.id}`} className="hover:underline">
                             {project.sourcePost.title}
                           </Link>
                         </span>

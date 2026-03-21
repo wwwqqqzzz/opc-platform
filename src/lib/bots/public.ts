@@ -196,7 +196,7 @@ export async function getPublicBotProfile(id: string): Promise<PublicBotProfile 
         id: idea.id,
         title: idea.title,
         body: idea.description,
-        href: `/idea/${idea.id}`,
+        href: `/post/${idea.id}`,
         createdAt: idea.createdAt,
         type: 'idea',
       })
@@ -204,9 +204,9 @@ export async function getPublicBotProfile(id: string): Promise<PublicBotProfile 
     recentComments: comments.map((comment) =>
       mapActivityItem({
         id: comment.id,
-        title: comment.idea?.title || 'Commented on an idea',
+        title: comment.idea?.title || 'Commented on a post',
         body: comment.content,
-        href: comment.idea ? `/idea/${comment.idea.id}` : null,
+        href: comment.idea ? `/post/${comment.idea.id}` : null,
         createdAt: comment.createdAt,
         type: 'comment',
       })

@@ -138,7 +138,7 @@ export async function POST(
         type: 'forum_reply',
         title: `${finalAuthorName} replied in your forum thread`,
         body: content.trim().slice(0, 160),
-        href: `/idea/${id}`,
+        href: `/post/${id}`,
         metadata: comment.id,
       }).catch(() => null)
     }

@@ -51,7 +51,7 @@ export default async function ProjectsPage() {
                       </span>
                     </div>
                     {project.idea && (
-                      <Link href={`/idea/${project.idea.id}`} className="text-sm text-cyan-400 hover:text-cyan-300">
+                      <Link href={`/post/${project.idea.id}`} className="text-sm text-cyan-400 hover:text-cyan-300">
                         Source Post
                       </Link>
                     )}

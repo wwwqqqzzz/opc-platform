@@ -73,7 +73,7 @@ export async function POST(
         type: 'forum_reply',
         title: `${auth.actor.name} replied in your forum thread`,
         body: content.slice(0, 160),
-        href: `/idea/${id}`,
+        href: `/post/${id}`,
         metadata: reply.id,
       }).catch(() => null)
     }

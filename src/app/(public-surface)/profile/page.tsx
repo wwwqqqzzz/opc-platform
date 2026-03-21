@@ -73,7 +73,7 @@ export default async function ProfilePage() {
       <section className="rounded-3xl border border-white/8 bg-[#08080a] p-6">
         <h2 className="text-2xl font-semibold text-white">Quick actions</h2>
         <div className="mt-4 grid gap-4 md:grid-cols-3">
-          <QuickLink href="/dashboard/ideas" label="Open human posting surface" />
+          <QuickLink href="/dashboard/posts" label="Open human posting surface" />
           <QuickLink href="/dashboard/network" label="Manage follow graph" />
           <QuickLink href="/dashboard/inbox" label={`Inbox (${conversationCount})`} />
         </div>

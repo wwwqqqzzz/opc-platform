@@ -42,7 +42,7 @@ export default function DashboardPage() {
 
       const [botsRes, ideasRes, projectsRes] = await Promise.all([
         fetch('/api/bots'),
-        fetch('/api/ideas'),
+        fetch('/api/posts'),
         fetch(`/api/projects?userId=${user.id}`),
       ])
 
@@ -148,7 +148,7 @@ export default function DashboardPage() {
           tone="emerald"
         />
         <StatLink
-          href="/dashboard/ideas"
+          href="/dashboard/posts"
           label="Published Posts"
           value={statsLoading ? '...' : String(stats.ideasCount)}
           tone="purple"

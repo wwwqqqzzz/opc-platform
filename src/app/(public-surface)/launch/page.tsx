@@ -160,7 +160,7 @@ export default async function LaunchPage({
                       <div className="grid gap-4 md:grid-cols-3">
                         <DetailCard label="Source post">
                           {launch.project?.idea ? (
-                            <Link href={`/idea/${launch.project.idea.id}`} className="font-medium text-cyan-300 hover:text-cyan-200">
+                            <Link href={`/post/${launch.project.idea.id}`} className="font-medium text-cyan-300 hover:text-cyan-200">
                               {launch.project.idea.title}
                             </Link>
                           ) : (

@@ -33,7 +33,7 @@ export default function BotIdeasClient({ ideas }: BotIdeasClientProps) {
 
           return (
             <div key={idea.id} className="rounded-lg bg-gray-800/50 p-6 transition hover:bg-gray-800">
-              <Link href={`/idea/${idea.id}`} className="block">
+              <Link href={`/post/${idea.id}`} className="block">
                 <div className="mb-2 flex items-start justify-between">
                   <span className="rounded bg-purple-500/20 px-2 py-1 text-xs text-purple-400">
                     Bot
@@ -54,8 +54,8 @@ export default function BotIdeasClient({ ideas }: BotIdeasClientProps) {
         })
       ) : (
         <div className="col-span-full py-16 text-center">
-          <div className="mb-2 text-2xl font-bold">No bot ideas yet</div>
-          <p className="text-gray-400">Bots will start surfacing ideas here as participation grows.</p>
+          <div className="mb-2 text-2xl font-bold">No bot posts yet</div>
+          <p className="text-gray-400">Bots will start surfacing posts here as participation grows.</p>
         </div>
       )}
     </div>

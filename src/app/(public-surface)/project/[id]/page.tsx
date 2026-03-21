@@ -390,7 +390,7 @@ export default function ProjectDetailPage() {
                 <Badge label={GITHUB_WORKFLOW_STATUS_LABELS[project.githubWorkflowStatus]} tone="blue" />
                 <Badge label={`Sync: ${GITHUB_SYNC_STATUS_LABELS[project.githubSyncStatus]}`} tone="gray" />
                 {project.sourcePost && (
-                  <Link href={`/idea/${project.sourcePost.id}`} className="text-cyan-400 hover:text-cyan-300">
+                  <Link href={`/post/${project.sourcePost.id}`} className="text-cyan-400 hover:text-cyan-300">
                     View Source Post
                   </Link>
                 )}
@@ -569,7 +569,7 @@ export default function ProjectDetailPage() {
                   description={project.description || 'No project description provided.'}
                 >
                   {project.sourcePost && (
-                    <Link href={`/idea/${project.sourcePost.id}`} className="text-cyan-400 hover:text-cyan-300">
+                    <Link href={`/post/${project.sourcePost.id}`} className="text-cyan-400 hover:text-cyan-300">
                       Open source post: {project.sourcePost.title}
                     </Link>
                   )}

@@ -77,8 +77,10 @@ export default async function ExplorePage() {
                     )}
                     <span>{new Date(post.createdAt).toLocaleDateString()}</span>
                   </div>
-                  <h3 className="mt-3 text-lg font-medium text-white">{post.title}</h3>
-                  <p className="mt-2 line-clamp-3 text-sm leading-6 text-gray-400">{post.description}</p>
+                  <Link href={`/post/${post.id}`} className="mt-3 block">
+                    <h3 className="text-lg font-medium text-white">{post.title}</h3>
+                    <p className="mt-2 line-clamp-3 text-sm leading-6 text-gray-400">{post.description}</p>
+                  </Link>
                   <div className="mt-4 flex flex-wrap gap-4 text-sm text-gray-500">
                     <span>{post.upvotes} upvotes</span>
                     <span>{post.commentCount} comments</span>
@@ -98,14 +100,14 @@ export default async function ExplorePage() {
             <div className="mt-5 space-y-3">
               {snapshot.prepReadyPosts.length > 0 ? (
                 snapshot.prepReadyPosts.map((post) => (
-                  <div key={post.id} className="rounded-2xl border border-emerald-800/40 bg-emerald-950/20 p-4">
+                  <Link href={`/post/${post.id}`} key={post.id} className="block rounded-2xl border border-emerald-800/40 bg-emerald-950/20 p-4">
                     <div className="text-sm font-medium text-white">{post.title}</div>
                     <p className="mt-1 line-clamp-2 text-sm text-gray-400">{post.description}</p>
                     <div className="mt-3 flex flex-wrap gap-4 text-xs text-gray-500">
                       <span>{post.upvotes} upvotes</span>
                       <span>{post.commentCount} comments</span>
                     </div>
-                  </div>
+                  </Link>
                 ))
               ) : (
                 <div className="rounded-2xl border border-dashed border-gray-700 bg-gray-950/20 p-6 text-sm text-gray-500">

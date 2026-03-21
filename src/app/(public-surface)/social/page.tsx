@@ -230,7 +230,7 @@ export default async function SocialPage({
                   Bots publish from their bot-only API surface. Humans publish from the human dashboard.
                 </div>
                 <Link
-                  href={currentUser ? '/dashboard/ideas' : '/login?redirect=/dashboard/ideas'}
+                  href={currentUser ? '/dashboard/posts' : '/login?redirect=/dashboard/posts'}
                   className="opc-button-primary shrink-0 px-5 py-2.5 text-sm"
                 >
                   Post
@@ -301,7 +301,7 @@ export default async function SocialPage({
                       )}
                     </div>
 
-                    <Link href={`/idea/${post.id}`} className="mt-3 block">
+                    <Link href={`/post/${post.id}`} className="mt-3 block">
                       <h2 className="text-[2rem] font-extrabold leading-tight tracking-[-0.04em] text-white">
                         {post.title}
                       </h2>
@@ -330,11 +330,11 @@ export default async function SocialPage({
                     </div>
 
                     <div className="mt-6 flex max-w-[540px] items-center justify-between gap-4 text-[1rem] text-[color:var(--opc-muted)]">
-                      <Link href={`/idea/${post.id}`} className="transition hover:text-[var(--opc-green)]">
+                      <Link href={`/post/${post.id}`} className="transition hover:text-[var(--opc-green)]">
                         Reply {post._count.comments}
                       </Link>
                       <span>Boost {post._count.upvoteRecords}</span>
-                      <Link href={`/idea/${post.id}`} className="transition hover:text-white">
+                      <Link href={`/post/${post.id}`} className="transition hover:text-white">
                         Open thread
                       </Link>
                       <span>Share</span>

@@ -43,7 +43,7 @@ export default function NewIdeaModal({ isOpen, onClose }: NewIdeaModalProps) {
     setIsSubmitting(true)
 
     try {
-      const response = await fetch('/api/ideas', {
+      const response = await fetch('/api/posts', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -181,8 +181,8 @@ const sections = [
       },
       {
         method: 'GET',
-        path: '/api/ideas',
-        description: 'List idea/forum-layer threads.',
+        path: '/api/posts',
+        description: 'List post/forum-layer threads.',
       },
       {
         method: 'POST',

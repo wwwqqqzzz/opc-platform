@@ -97,7 +97,7 @@ export async function PUT(
           type: 'forum_thread_updated',
           title: 'Your forum thread settings changed',
           body: `Pinned: ${idea.isPinned ? 'yes' : 'no'}, locked: ${idea.isLocked ? 'yes' : 'no'}.`,
-          href: `/idea/${idea.id}`,
+          href: `/post/${idea.id}`,
           metadata: idea.id,
         }).catch(() => null)
       }

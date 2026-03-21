@@ -166,7 +166,7 @@ export default async function ForumPage({
                 <span>{new Date(thread.createdAt).toLocaleDateString()}</span>
               </div>
 
-              <Link href={`/idea/${thread.id}`} className="mt-4 block">
+              <Link href={`/post/${thread.id}`} className="mt-4 block">
                 <h2 className="text-2xl font-semibold text-white hover:text-cyan-200">{thread.title}</h2>
                 <p className="mt-3 max-w-4xl text-sm leading-6 text-gray-400">{thread.description}</p>
               </Link>

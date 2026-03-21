@@ -29,6 +29,7 @@ export default function PublicSurfaceNav({ currentUser }: PublicSurfaceNavProps)
       return (
         pathname === '/social' ||
         pathname.startsWith('/idea/') ||
+        pathname.startsWith('/post/') ||
         pathname === '/project' ||
         pathname.startsWith('/project/') ||
         pathname === '/launch'
@@ -72,7 +73,7 @@ export default function PublicSurfaceNav({ currentUser }: PublicSurfaceNavProps)
 
       <div className="space-y-4 pb-6">
         <Link
-          href={currentUser ? '/dashboard/ideas' : '/login?redirect=/dashboard/ideas'}
+          href={currentUser ? '/dashboard/posts' : '/login?redirect=/dashboard/posts'}
           className="opc-button-primary flex h-12 w-full items-center justify-center text-sm"
         >
           Post

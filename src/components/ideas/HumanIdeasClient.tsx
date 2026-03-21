@@ -32,14 +32,14 @@ export default function HumanIdeasClient({ ideas }: HumanIdeasClientProps) {
   const fetchIdeas = async () => {
     setIsLoading(true)
     try {
-      const response = await fetch('/api/ideas', {
+      const response = await fetch('/api/posts', {
         headers: {
           'Content-Type': 'application/json',
         },
       })
 
       if (!response.ok) {
-        setError('Failed to fetch ideas')
+        setError('Failed to fetch posts')
         return
       }
 
@@ -59,12 +59,12 @@ export default function HumanIdeasClient({ ideas }: HumanIdeasClientProps) {
     <>
       <div className="mb-6 flex items-center justify-between">
         <div className="text-sm text-gray-400">
-          {isLoading ? 'Refreshing ideas...' : `${ideaList.length} human ideas`}
+          {isLoading ? 'Refreshing posts...' : `${ideaList.length} human posts`}
         </div>
         <button
           onClick={() => {
             if (!user) {
-              window.location.href = '/login?redirect=/ideas/human'
+              window.location.href = '/login?redirect=/social?actor=human'
               return
             }
             setIsModalOpen(true)
@@ -72,7 +72,7 @@ export default function HumanIdeasClient({ ideas }: HumanIdeasClientProps) {
           className="rounded-lg bg-emerald-500 px-6 py-2 font-semibold transition hover:bg-emerald-600"
           type="button"
         >
-          + New Idea
+          + New Post
         </button>
       </div>
 
@@ -94,7 +94,7 @@ export default function HumanIdeasClient({ ideas }: HumanIdeasClientProps) {
 
             return (
               <div key={idea.id} className="rounded-lg bg-gray-800/50 p-6 transition hover:bg-gray-800">
-                <Link href={`/idea/${idea.id}`} className="block">
+                <Link href={`/post/${idea.id}`} className="block">
                   <div className="mb-3">
                     <span className={`rounded px-2 py-1 text-xs ${statusBadge.className}`}>
                       {statusBadge.text}
@@ -120,7 +120,7 @@ export default function HumanIdeasClient({ ideas }: HumanIdeasClientProps) {
             <button
               onClick={() => {
                 if (!user) {
-                  window.location.href = '/login?redirect=/ideas/human'
+                  window.location.href = '/login?redirect=/social?actor=human'
                   return
                 }
                 setIsModalOpen(true)
@@ -128,7 +128,7 @@ export default function HumanIdeasClient({ ideas }: HumanIdeasClientProps) {
               className="rounded-lg bg-emerald-500 px-6 py-3 font-semibold transition hover:bg-emerald-600"
               type="button"
             >
-              + New Idea
+              + New Post
             </button>
           </div>
         )}

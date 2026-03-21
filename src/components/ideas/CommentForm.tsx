@@ -27,7 +27,7 @@ export default function CommentForm({ ideaId, parentCommentId = null, compact = 
     setIsSubmitting(true)
 
     try {
-      const response = await fetch(`/api/ideas/${ideaId}/comments`, {
+      const response = await fetch(`/api/posts/${ideaId}/comments`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

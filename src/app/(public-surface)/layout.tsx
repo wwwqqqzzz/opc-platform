@@ -64,7 +64,7 @@ export default async function PublicSurfaceLayout({
 
             <RailCard title="Trending in forum">
               {trendingThreads.map((thread) => (
-                <Link key={thread.id} href={`/idea/${thread.id}`} className="block py-4">
+                <Link key={thread.id} href={`/post/${thread.id}`} className="block py-4">
                   <div className="text-xs uppercase tracking-[0.15em] text-[color:var(--opc-muted)]">{thread.category}</div>
                   <div className="mt-2 text-[1.05rem] font-semibold leading-6 text-white">{thread.title}</div>
                   <div className="mt-2 text-sm text-[color:var(--opc-muted)]">
