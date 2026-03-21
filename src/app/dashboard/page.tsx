@@ -98,29 +98,29 @@ export default function DashboardPage() {
     <div className="space-y-8">
       <div>
         <h1 className="text-3xl font-bold text-white">Welcome back, {user?.name || 'User'}!</h1>
-        <p className="mt-2 text-gray-400">
+        <p className="mt-2 text-[color:var(--opc-muted)]">
           This dashboard keeps the whole product loop visible: discovery, intake, execution bridge, and launch.
         </p>
       </div>
 
-      <section className="rounded-2xl border border-cyan-700/40 bg-gradient-to-r from-cyan-900/30 to-gray-800 p-6">
+      <section className="opc-panel-green rounded-2xl p-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="max-w-3xl">
-            <div className="text-sm uppercase tracking-wide text-cyan-300">Execution Onboarding</div>
+            <div className="opc-kicker text-sm">Execution Onboarding</div>
             <h2 className="mt-2 text-2xl font-semibold text-white">{onboarding.title}</h2>
             <p className="mt-2 text-gray-300">{onboarding.description}</p>
           </div>
           <div className="flex flex-wrap gap-3">
             <Link
               href={onboarding.ctaHref}
-              className="rounded-lg bg-cyan-600 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-cyan-700"
+              className="opc-button-primary px-5 py-2.5 text-sm"
             >
               {onboarding.ctaLabel}
             </Link>
             {onboarding.activeProject && (
               <Link
                 href={`/project/${onboarding.activeProject.id}`}
-                className="rounded-lg border border-gray-600 px-5 py-2.5 text-sm font-medium text-gray-200 transition hover:bg-gray-800"
+                className="opc-button-secondary px-5 py-2.5 text-sm"
               >
                 Open active project
               </Link>
@@ -183,15 +183,15 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
-        <section className="rounded-lg border border-gray-700 bg-gray-800 p-6">
+        <section className="opc-panel rounded-lg p-6">
           <div className="flex items-center justify-between gap-4">
             <div>
               <h2 className="text-xl font-semibold text-white">Social Pulse</h2>
-              <p className="mt-1 text-sm text-gray-400">
+              <p className="mt-1 text-sm text-[color:var(--opc-muted)]">
                 The social layer should stay visible here, not only on the public pages.
               </p>
             </div>
-            <Link href="/explore" className="text-sm text-cyan-400 hover:text-cyan-300">
+            <Link href="/explore" className="text-sm text-[var(--opc-green)] hover:text-[#7ef0bb]">
               Open explore
             </Link>
           </div>
@@ -208,13 +208,13 @@ export default function DashboardPage() {
               </div>
 
               <div className="mt-5 grid gap-4 lg:grid-cols-2">
-                <div className="rounded-lg border border-gray-700 bg-gray-900/40 p-4">
+                <div className="opc-panel-soft rounded-lg p-4">
                   <div className="text-sm font-medium text-white">Top claim-ready posts</div>
                   <div className="mt-3 space-y-3">
                     {discovery.claimReadyIdeas.slice(0, 3).map((idea) => (
-                      <div key={idea.id} className="rounded-lg border border-gray-800 bg-gray-950/35 p-3">
+                      <div key={idea.id} className="rounded-lg border border-white/6 bg-black/25 p-3">
                         <div className="font-medium text-white">{idea.title}</div>
-                        <p className="mt-1 line-clamp-2 text-sm text-gray-400">{idea.description}</p>
+                        <p className="mt-1 line-clamp-2 text-sm text-[color:var(--opc-muted)]">{idea.description}</p>
                         <div className="mt-2 flex gap-4 text-xs text-gray-500">
                           <span>{idea.upvotes} upvotes</span>
                           <span>{idea.commentCount} comments</span>
@@ -224,16 +224,16 @@ export default function DashboardPage() {
                   </div>
                 </div>
 
-                <div className="rounded-lg border border-gray-700 bg-gray-900/40 p-4">
+                <div className="opc-panel-soft rounded-lg p-4">
                   <div className="text-sm font-medium text-white">Active channels</div>
                   <div className="mt-3 space-y-3">
                     {discovery.activeChannels.slice(0, 3).map((channel) => (
-                      <div key={channel.id} className="rounded-lg border border-gray-800 bg-gray-950/35 p-3">
+                      <div key={channel.id} className="rounded-lg border border-white/6 bg-black/25 p-3">
                         <div className="flex items-center justify-between gap-3">
                           <div className="font-medium text-white">#{channel.name}</div>
                           <div className="text-xs text-gray-500">{channel.messageCount} messages</div>
                         </div>
-                        <p className="mt-1 text-sm text-gray-400">
+                        <p className="mt-1 text-sm text-[color:var(--opc-muted)]">
                           {channel.description || 'No description yet.'}
                         </p>
                       </div>
@@ -247,10 +247,10 @@ export default function DashboardPage() {
           )}
         </section>
 
-        <section className="rounded-lg border border-gray-700 bg-gray-800 p-6">
+        <section className="opc-panel rounded-lg p-6">
           <div>
             <h2 className="text-xl font-semibold text-white">Intake Truth</h2>
-            <p className="mt-1 text-sm text-gray-400">
+            <p className="mt-1 text-sm text-[color:var(--opc-muted)]">
               Projects should start with social context, not jump straight into execution tooling.
             </p>
           </div>
@@ -276,15 +276,15 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[1.3fr_1fr]">
-        <section className="rounded-lg border border-gray-700 bg-gray-800 p-6">
+        <section className="opc-panel rounded-lg p-6">
           <div className="flex items-center justify-between gap-4">
             <div>
               <h2 className="text-xl font-semibold text-white">Active Execution Queue</h2>
-              <p className="mt-1 text-sm text-gray-400">
+              <p className="mt-1 text-sm text-[color:var(--opc-muted)]">
                 These projects are the best candidates to move forward right now.
               </p>
             </div>
-            <Link href="/dashboard/projects" className="text-sm text-cyan-400 hover:text-cyan-300">
+            <Link href="/dashboard/projects" className="text-sm text-[var(--opc-green)] hover:text-[#7ef0bb]">
               View all
             </Link>
           </div>
@@ -292,11 +292,11 @@ export default function DashboardPage() {
           <div className="mt-5 space-y-4">
             {projects.length > 0 ? (
               projects.slice(0, 4).map((project) => (
-                <div key={project.id} className="rounded-lg border border-gray-700 bg-gray-900/40 p-4">
+                <div key={project.id} className="opc-panel-soft rounded-lg p-4">
                   <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                     <div>
                       <div className="text-lg font-medium text-white">{project.title}</div>
-                      <p className="mt-1 line-clamp-2 text-sm text-gray-400">
+                      <p className="mt-1 line-clamp-2 text-sm text-[color:var(--opc-muted)]">
                         {project.description || 'No description provided.'}
                       </p>
                       <div className="mt-3 flex flex-wrap gap-3 text-xs text-gray-500">
@@ -307,7 +307,7 @@ export default function DashboardPage() {
                     </div>
                     <Link
                       href={`/project/${project.id}`}
-                      className="rounded-lg border border-gray-600 px-4 py-2 text-sm font-medium text-gray-200 transition hover:bg-gray-800"
+                      className="opc-button-secondary px-4 py-2 text-sm"
                     >
                       Open project
                     </Link>
@@ -326,36 +326,36 @@ export default function DashboardPage() {
         </section>
 
         <div className="space-y-6">
-          <section className="rounded-lg border border-gray-700 bg-gray-800 p-6">
+          <section className="opc-panel rounded-lg p-6">
             <h2 className="text-xl font-semibold text-white">Current Focus</h2>
             {onboarding.activeProject ? (
-              <div className="mt-4 rounded-lg border border-gray-700 bg-gray-900/40 p-4">
-                <div className="text-sm text-gray-400">Project</div>
+              <div className="opc-panel-soft mt-4 rounded-lg p-4">
+                <div className="text-sm text-[color:var(--opc-muted)]">Project</div>
                 <div className="mt-1 text-lg font-medium text-white">{onboarding.activeProject.title}</div>
-                <p className="mt-2 text-sm text-gray-400">{onboarding.description}</p>
+                <p className="mt-2 text-sm text-[color:var(--opc-muted)]">{onboarding.description}</p>
                 <div className="mt-4 flex flex-wrap gap-3">
                   <Link
                     href={`/project/${onboarding.activeProject.id}`}
-                    className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-700"
+                    className="opc-button-primary px-4 py-2 text-sm"
                   >
                     Continue
                   </Link>
                   <Link
                     href={onboarding.ctaHref}
-                    className="rounded-lg border border-gray-600 px-4 py-2 text-sm font-medium text-gray-200 transition hover:bg-gray-800"
+                    className="opc-button-secondary px-4 py-2 text-sm"
                   >
                     Go to next step
                   </Link>
                 </div>
               </div>
             ) : (
-              <div className="mt-4 rounded-lg border border-gray-700 bg-gray-900/40 p-4 text-sm text-gray-400">
+              <div className="opc-panel-soft mt-4 rounded-lg p-4 text-sm text-[color:var(--opc-muted)]">
                 Your first focus appears here after you claim a post into a project.
               </div>
             )}
           </section>
 
-          <section className="rounded-lg border border-gray-700 bg-gray-800 p-6">
+          <section className="opc-panel rounded-lg p-6">
             <h2 className="text-xl font-semibold text-white">Health Signals</h2>
             <div className="mt-4 space-y-3">
               <HealthRow
@@ -389,7 +389,7 @@ export default function DashboardPage() {
 
 function PulseCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg border border-gray-700 bg-gray-900/40 p-4">
+    <div className="opc-panel-soft rounded-lg p-4">
       <div className="text-xs uppercase tracking-wide text-gray-500">{label}</div>
       <div className="mt-2 text-2xl font-semibold text-white">{value}</div>
     </div>
@@ -406,14 +406,14 @@ function IntakeRow({
   note: string
 }) {
   return (
-    <div className="rounded-lg border border-gray-700 bg-gray-900/40 p-4">
+    <div className="opc-panel-soft rounded-lg p-4">
       <div className="flex items-center justify-between gap-3">
         <div className="font-medium text-white">{label}</div>
-        <div className="rounded-full border border-cyan-700 bg-cyan-900/20 px-3 py-1 text-xs text-cyan-200">
+        <div className="opc-chip-green">
           {value}
         </div>
       </div>
-      <p className="mt-2 text-sm text-gray-400">{note}</p>
+      <p className="mt-2 text-sm text-[color:var(--opc-muted)]">{note}</p>
     </div>
   )
 }
@@ -431,23 +431,19 @@ function OnboardingCard({
     <div
       className={`rounded-lg border p-4 ${
         complete
-          ? 'border-emerald-700 bg-emerald-900/20'
-          : 'border-gray-700 bg-gray-900/50'
+          ? 'opc-panel-green'
+          : 'opc-panel-soft'
       }`}
     >
       <div className="flex items-center justify-between gap-3">
         <div className="font-medium text-white">{title}</div>
         <span
-          className={`rounded-full border px-2 py-0.5 text-xs ${
-            complete
-              ? 'border-emerald-500 text-emerald-200'
-              : 'border-gray-600 text-gray-400'
-          }`}
+          className={complete ? 'opc-chip-green' : 'opc-chip-white'}
         >
           {complete ? 'Done' : 'Next'}
         </span>
       </div>
-      <p className="mt-2 text-sm text-gray-400">{description}</p>
+      <p className="mt-2 text-sm text-[color:var(--opc-muted)]">{description}</p>
     </div>
   )
 }
@@ -465,17 +461,17 @@ function StatLink({
 }) {
   const borderTone =
     tone === 'emerald'
-      ? 'hover:border-emerald-500'
+      ? 'hover:border-[var(--opc-green)]'
       : tone === 'purple'
-      ? 'hover:border-purple-500'
-      : 'hover:border-yellow-500'
+      ? 'hover:border-[var(--opc-purple)]'
+      : 'hover:border-[var(--opc-yellow)]'
 
   return (
     <Link
       href={href}
-      className={`rounded-lg border border-gray-700 bg-gray-800 p-6 transition-colors ${borderTone}`}
+      className={`opc-panel rounded-lg p-6 transition-colors ${borderTone}`}
     >
-      <p className="text-sm font-medium text-gray-400">{label}</p>
+      <p className="text-sm font-medium text-[color:var(--opc-muted)]">{label}</p>
       <p className="mt-2 text-3xl font-bold text-white">{value}</p>
     </Link>
   )
@@ -493,12 +489,12 @@ function EmptyState({
   cta: string
 }) {
   return (
-    <div className="rounded-lg border border-dashed border-gray-700 bg-gray-900/30 p-8 text-center">
+    <div className="opc-panel-soft rounded-lg border-dashed p-8 text-center">
       <div className="text-lg font-medium text-white">{title}</div>
-      <p className="mt-2 text-sm text-gray-400">{description}</p>
+      <p className="mt-2 text-sm text-[color:var(--opc-muted)]">{description}</p>
       <Link
         href={href}
-        className="mt-4 inline-block rounded-lg bg-cyan-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-cyan-700"
+        className="opc-button-primary mt-4 inline-block px-4 py-2 text-sm"
       >
         {cta}
       </Link>
@@ -523,8 +519,8 @@ function HealthRow({
       : 'text-gray-300'
 
   return (
-    <div className="flex items-center justify-between rounded-lg border border-gray-700 bg-gray-900/40 px-4 py-3">
-      <span className="text-sm text-gray-400">{label}</span>
+    <div className="opc-panel-soft flex items-center justify-between rounded-lg px-4 py-3">
+      <span className="text-sm text-[color:var(--opc-muted)]">{label}</span>
       <span className={`text-sm font-medium ${textTone}`}>{value}</span>
     </div>
   )
@@ -544,11 +540,11 @@ function WorkspaceCard({
   return (
     <Link
       href={href}
-      className="rounded-lg border border-gray-700 bg-gray-800 p-6 transition hover:border-cyan-600/60"
+      className="opc-panel rounded-lg p-6 transition hover:border-[var(--opc-green)]/60"
     >
       <div className="text-lg font-semibold text-white">{title}</div>
-      <p className="mt-2 text-sm leading-6 text-gray-400">{description}</p>
-      <div className="mt-4 text-sm font-medium text-cyan-400">{cta}</div>
+      <p className="mt-2 text-sm leading-6 text-[color:var(--opc-muted)]">{description}</p>
+      <div className="mt-4 text-sm font-medium text-[var(--opc-green)]">{cta}</div>
     </Link>
   )
 }

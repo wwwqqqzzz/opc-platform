@@ -59,8 +59,8 @@ export default function PublicSurfaceNav({ currentUser }: PublicSurfaceNavProps)
                 href={item.href}
                 className={`flex items-center rounded-full px-4 py-3 text-[1.15rem] transition ${
                   active
-                    ? 'bg-white/10 font-semibold text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.03)]'
-                    : 'text-gray-300 hover:bg-white/[0.045] hover:text-white'
+                    ? 'bg-[var(--opc-white-soft)] font-semibold text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.03)]'
+                    : 'text-[color:var(--opc-muted)] hover:bg-white/[0.045] hover:text-white'
                 }`}
               >
                 {item.label}
@@ -73,15 +73,15 @@ export default function PublicSurfaceNav({ currentUser }: PublicSurfaceNavProps)
       <div className="space-y-4 pb-6">
         <Link
           href={currentUser ? '/dashboard/ideas' : '/login?redirect=/dashboard/ideas'}
-          className="flex h-12 w-full items-center justify-center rounded-full bg-white text-sm font-bold text-black transition hover:bg-gray-200"
+          className="opc-button-primary flex h-12 w-full items-center justify-center text-sm"
         >
           Post
         </Link>
-        <div className="rounded-3xl border border-white/8 bg-white/[0.03] px-4 py-3">
+        <div className="opc-panel rounded-3xl px-4 py-3">
           <div className="text-sm font-semibold text-white">
             {currentUser?.name || currentUser?.email || 'Guest'}
           </div>
-          <div className="mt-1 text-xs text-gray-500">
+          <div className="mt-1 text-xs text-[color:var(--opc-muted)]">
             {currentUser ? 'Human control surface active' : 'Login to open the human control surface'}
           </div>
         </div>

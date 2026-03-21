@@ -61,13 +61,13 @@ export default function MyProjectsPage() {
   if (!user) {
     return (
       <div className="py-12 text-center">
-        <p className="text-gray-400">Please login to view your projects</p>
+        <p className="text-[color:var(--opc-muted)]">Please login to view your projects</p>
       </div>
     )
   }
 
   if (loading) {
-    return <div className="py-12 text-center text-gray-400">Loading...</div>
+    return <div className="py-12 text-center text-[color:var(--opc-muted)]">Loading...</div>
   }
 
   const filteredProjects = projects.filter((project) => {
@@ -99,21 +99,21 @@ export default function MyProjectsPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-white">My Projects</h1>
-        <p className="mt-1 text-sm text-gray-400">
+        <p className="mt-1 text-sm text-[color:var(--opc-muted)]">
           Track project intake, GitHub execution, and launch readiness in one place.
         </p>
       </div>
 
-      <div className="rounded-lg border border-cyan-700/40 bg-cyan-900/20 p-5">
+      <div className="opc-panel-green rounded-lg p-5">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
           <div>
-            <div className="text-sm uppercase tracking-wide text-cyan-300">Current onboarding step</div>
+            <div className="opc-kicker text-sm">Current onboarding step</div>
             <div className="mt-1 text-lg font-medium text-white">{onboarding.title}</div>
-            <p className="mt-1 text-sm text-cyan-100/80">{onboarding.description}</p>
+            <p className="mt-1 text-sm text-gray-300">{onboarding.description}</p>
           </div>
           <Link
             href={onboarding.ctaHref}
-            className="rounded-lg bg-cyan-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-cyan-700"
+            className="opc-button-primary px-4 py-2 text-sm"
           >
             {onboarding.ctaLabel}
           </Link>
@@ -178,7 +178,7 @@ export default function MyProjectsPage() {
         />
       </div>
 
-      <div className="overflow-hidden rounded-lg border border-gray-700 bg-gray-800">
+      <div className="opc-panel overflow-hidden rounded-lg">
         {filteredProjects.length === 0 ? (
           projects.length === 0 ? (
             <div className="p-6">
@@ -193,11 +193,11 @@ export default function MyProjectsPage() {
             </div>
           ) : (
             <div className="p-12 text-center">
-              <p className="text-lg text-gray-400">No projects match the current filters.</p>
+              <p className="text-lg text-[color:var(--opc-muted)]">No projects match the current filters.</p>
             </div>
           )
         ) : (
-          <div className="divide-y divide-gray-700">
+          <div className="divide-y divide-white/8">
             {filteredProjects.map((project) => (
               <div key={project.id} className="p-6">
                 <div className="flex items-start justify-between gap-4">
@@ -208,7 +208,7 @@ export default function MyProjectsPage() {
                       <Badge label={GITHUB_WORKFLOW_STATUS_LABELS[project.githubWorkflowStatus]} tone="blue" />
                     </div>
 
-                    <p className="mt-2 line-clamp-2 text-sm text-gray-400">
+                    <p className="mt-2 line-clamp-2 text-sm text-[color:var(--opc-muted)]">
                       {project.description || 'No description provided.'}
                     </p>
 
@@ -231,7 +231,7 @@ export default function MyProjectsPage() {
                   <div className="flex items-center gap-2">
                     <Link
                       href={`/project/${project.id}`}
-                      className="rounded border border-gray-600 px-3 py-1.5 text-xs font-medium text-gray-300 transition-colors hover:bg-gray-700"
+                      className="opc-button-secondary px-3 py-1.5 text-xs"
                     >
                       View
                     </Link>
@@ -254,8 +254,8 @@ export default function MyProjectsPage() {
 
 function StatCard({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-lg border border-gray-700 bg-gray-800 p-4">
-      <p className="text-sm font-medium text-gray-400">{label}</p>
+    <div className="opc-panel rounded-lg p-4">
+      <p className="text-sm font-medium text-[color:var(--opc-muted)]">{label}</p>
       <p className="mt-2 text-2xl font-bold text-white">{value}</p>
     </div>
   )
@@ -271,8 +271,8 @@ function ActionCard({
   description: string
 }) {
   return (
-    <div className="rounded-lg border border-gray-700 bg-gray-800 p-4">
-      <p className="text-sm font-medium text-gray-400">{label}</p>
+    <div className="opc-panel rounded-lg p-4">
+      <p className="text-sm font-medium text-[color:var(--opc-muted)]">{label}</p>
       <p className="mt-2 text-2xl font-bold text-white">{value}</p>
       <p className="mt-2 text-sm text-gray-500">{description}</p>
     </div>
@@ -291,12 +291,12 @@ function SelectFilter({
   options: Array<{ value: string; label: string }>
 }) {
   return (
-    <div className="rounded-lg border border-gray-700 bg-gray-800 p-4">
+    <div className="opc-panel rounded-lg p-4">
       <label className="mb-2 block text-sm font-medium text-gray-300">{label}</label>
       <select
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="w-full rounded-lg border border-gray-700 bg-gray-900 px-4 py-2 text-sm text-white focus:border-cyan-500 focus:outline-none"
+        className="w-full rounded-lg border border-white/10 bg-black px-4 py-2 text-sm text-white focus:border-[var(--opc-green)] focus:outline-none"
       >
         {options.map((option) => (
           <option key={option.value} value={option.value}>
@@ -311,10 +311,10 @@ function SelectFilter({
 function Badge({ label, tone }: { label: string; tone: 'cyan' | 'blue' }) {
   const className =
     tone === 'cyan'
-      ? 'border-cyan-700 bg-cyan-900/30 text-cyan-300'
-      : 'border-blue-700 bg-blue-900/30 text-blue-300'
+      ? 'opc-chip-green'
+      : 'opc-chip-purple'
 
-  return <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${className}`}>{label}</span>
+  return <span className={className}>{label}</span>
 }
 
 function getProjectNextAction(project: ProjectDto) {

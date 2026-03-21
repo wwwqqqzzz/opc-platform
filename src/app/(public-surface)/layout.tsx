@@ -46,7 +46,7 @@ export default async function PublicSurfaceLayout({
   ])
 
   return (
-    <main className="min-h-screen bg-[#050505] text-white">
+    <main className="opc-page-bg min-h-screen text-white">
       <div className="mx-auto grid min-h-screen w-full max-w-[1580px] grid-cols-1 xl:grid-cols-[260px_minmax(0,1fr)_340px]">
         <aside className="hidden border-r border-white/8 px-6 py-4 xl:block">
           <PublicSurfaceNav currentUser={currentUser} />
@@ -56,8 +56,8 @@ export default async function PublicSurfaceLayout({
 
         <aside className="hidden px-6 py-4 xl:block">
           <div className="sticky top-0 space-y-4">
-            <section className="rounded-[26px] border border-white/8 bg-[#08080a] p-4">
-              <div className="rounded-full border border-white/10 bg-black px-5 py-4 text-[1rem] text-gray-500">
+            <section className="opc-panel rounded-[26px] p-4">
+              <div className="rounded-full border border-white/10 bg-black px-5 py-4 text-[1rem] text-[color:var(--opc-muted)]">
                 Search posts, bots, groups, and forum topics
               </div>
             </section>
@@ -65,9 +65,9 @@ export default async function PublicSurfaceLayout({
             <RailCard title="Trending in forum">
               {trendingThreads.map((thread) => (
                 <Link key={thread.id} href={`/idea/${thread.id}`} className="block py-4">
-                  <div className="text-xs uppercase tracking-[0.15em] text-gray-500">{thread.category}</div>
+                  <div className="text-xs uppercase tracking-[0.15em] text-[color:var(--opc-muted)]">{thread.category}</div>
                   <div className="mt-2 text-[1.05rem] font-semibold leading-6 text-white">{thread.title}</div>
-                  <div className="mt-2 text-sm text-gray-500">
+                  <div className="mt-2 text-sm text-[color:var(--opc-muted)]">
                     {thread.counts.upvotes} boosts · {thread.counts.comments} replies
                   </div>
                 </Link>
@@ -79,7 +79,7 @@ export default async function PublicSurfaceLayout({
                 <Link key={bot.id} href={`/bots/${bot.id}`} className="flex items-center justify-between gap-3 py-4">
                   <div className="min-w-0">
                     <div className="truncate text-[1rem] font-semibold text-white">{bot.name}</div>
-                    <div className="mt-1 text-sm text-gray-500">
+                    <div className="mt-1 text-sm text-[color:var(--opc-muted)]">
                       {bot.isVerified ? 'Verified bot' : 'Bot actor'} · {bot.followersCount} followers
                     </div>
                   </div>
@@ -94,10 +94,10 @@ export default async function PublicSurfaceLayout({
               {openGroups.map((group) => (
                 <Link key={group.id} href={`/channels/${group.type}/${group.id}`} className="block py-4">
                   <div className="text-[1rem] font-semibold text-white">#{group.name}</div>
-                  <div className="mt-2 text-sm text-gray-500">
+                  <div className="mt-2 text-sm text-[color:var(--opc-muted)]">
                     {group._count.members} members · {group._count.messages} messages
                   </div>
-                  <div className="mt-2 text-sm leading-6 text-gray-500">
+                  <div className="mt-2 text-sm leading-6 text-[color:var(--opc-muted)]">
                     {group.description || 'Open group space'}
                   </div>
                 </Link>
@@ -108,7 +108,7 @@ export default async function PublicSurfaceLayout({
               {launches.map((launch) => (
                 <Link key={launch.id} href={`/launch?highlight=${launch.id}`} className="block py-4">
                   <div className="text-[1rem] font-semibold text-white">{launch.productName}</div>
-                  <div className="mt-2 text-sm text-gray-500">{launch.ownerName || 'Unknown owner'}</div>
+                  <div className="mt-2 text-sm text-[color:var(--opc-muted)]">{launch.ownerName || 'Unknown owner'}</div>
                 </Link>
               ))}
             </RailCard>
@@ -127,7 +127,7 @@ function RailCard({
   children: React.ReactNode
 }) {
   return (
-    <section className="rounded-[26px] border border-white/8 bg-[#08080a] p-5">
+    <section className="opc-panel rounded-[26px] p-5">
       <h2 className="text-[2rem] font-extrabold tracking-[-0.04em] text-white">{title}</h2>
       <div className="mt-3 divide-y divide-white/5">{children}</div>
     </section>

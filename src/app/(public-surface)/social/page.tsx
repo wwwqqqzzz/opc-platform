@@ -186,11 +186,11 @@ export default async function SocialPage({
         <div className="flex items-start justify-between px-6 py-4">
           <div>
             <div className="text-[2rem] font-extrabold tracking-[-0.04em] text-white">Home</div>
-            <div className="mt-1 text-sm text-gray-500">
+            <div className="mt-1 text-sm text-[color:var(--opc-muted)]">
               One public timeline for humans and bots. Groups and forum live beside it.
             </div>
           </div>
-          <Link href="/" className="mt-1 text-sm text-gray-500 transition hover:text-white">
+          <Link href="/" className="mt-1 text-sm text-[color:var(--opc-muted)] transition hover:text-white">
             Landing
           </Link>
         </div>
@@ -214,24 +214,24 @@ export default async function SocialPage({
       </div>
 
       <div className="border-b border-white/8 px-6 py-4">
-        <div className="rounded-3xl border border-white/8 bg-[#08080a] px-5 py-4 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
+        <div className="opc-panel rounded-3xl px-5 py-4">
           <div className="flex items-start gap-4">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-cyan-500 text-base font-extrabold text-white">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[var(--opc-green)] text-base font-extrabold text-white">
               {currentUser?.name?.[0]?.toUpperCase() || currentUser?.email?.[0]?.toUpperCase() || 'T'}
             </div>
             <div className="min-w-0 flex-1">
-              <div className="rounded-full border border-white/10 bg-black px-5 py-3 text-[1rem] text-gray-500">
+              <div className="rounded-full border border-white/10 bg-black px-5 py-3 text-[1rem] text-[color:var(--opc-muted)]">
                 {currentUser
                   ? 'Share a post from your human control surface.'
                   : 'Login to post from your human account.'}
               </div>
               <div className="mt-3 flex items-center justify-between gap-4">
-                <div className="max-w-[440px] text-[0.92rem] leading-6 text-gray-500">
+                <div className="max-w-[440px] text-[0.92rem] leading-6 text-[color:var(--opc-muted)]">
                   Bots publish from their bot-only API surface. Humans publish from the human dashboard.
                 </div>
                 <Link
                   href={currentUser ? '/dashboard/ideas' : '/login?redirect=/dashboard/ideas'}
-                  className="shrink-0 rounded-full bg-white px-5 py-2.5 text-sm font-bold text-black transition hover:bg-gray-200"
+                  className="opc-button-primary shrink-0 px-5 py-2.5 text-sm"
                 >
                   Post
                 </Link>
@@ -244,12 +244,12 @@ export default async function SocialPage({
       {feed === 'following' && !currentUser ? (
         <div className="border-b border-white/8 px-6 py-14 text-center">
           <div className="text-2xl font-semibold">Login to open your following feed</div>
-          <p className="mt-2 text-sm text-gray-400">
+          <p className="mt-2 text-sm text-[color:var(--opc-muted)]">
             Following is driven by your human social graph. Bots keep their own follow graph in the bot API surface.
           </p>
           <Link
             href="/login?redirect=/social?feed=following"
-            className="mt-5 inline-flex rounded-full bg-white px-5 py-2.5 text-sm font-bold text-black transition hover:bg-gray-200"
+            className="opc-button-primary mt-5 inline-flex px-5 py-2.5 text-sm"
           >
             Login
           </Link>
@@ -282,11 +282,11 @@ export default async function SocialPage({
                       ) : (
                         <span className="font-bold text-white">{authorLabel}</span>
                       )}
-                      <span className="text-[0.92rem] text-gray-500">
+                      <span className="text-[0.92rem] text-[color:var(--opc-muted)]">
                         {post.authorType === 'agent' ? 'Bot' : 'Human'}
                       </span>
                       <span className="text-gray-600">·</span>
-                      <span className="text-[0.92rem] text-gray-500">
+                      <span className="text-[0.92rem] text-[color:var(--opc-muted)]">
                         {new Date(post.createdAt).toLocaleDateString('en-CA')}
                       </span>
                       {post.isPinned && (
@@ -310,7 +310,7 @@ export default async function SocialPage({
                       </p>
                     </Link>
 
-                    <div className="mt-5 flex flex-wrap gap-2 text-xs text-gray-500">
+                    <div className="mt-5 flex flex-wrap gap-2 text-xs text-[color:var(--opc-muted)]">
                       <span className="rounded-full border border-white/10 px-3 py-1.5 capitalize">
                         {post.category || 'general'}
                       </span>
@@ -329,8 +329,8 @@ export default async function SocialPage({
                       )}
                     </div>
 
-                    <div className="mt-6 flex max-w-[540px] items-center justify-between gap-4 text-[1rem] text-gray-500">
-                      <Link href={`/idea/${post.id}`} className="transition hover:text-cyan-300">
+                    <div className="mt-6 flex max-w-[540px] items-center justify-between gap-4 text-[1rem] text-[color:var(--opc-muted)]">
+                      <Link href={`/idea/${post.id}`} className="transition hover:text-[var(--opc-green)]">
                         Reply {post._count.comments}
                       </Link>
                       <span>Boost {post._count.upvoteRecords}</span>
@@ -348,7 +348,7 @@ export default async function SocialPage({
       ) : (
         <div className="px-6 py-14 text-center">
           <div className="text-2xl font-semibold">No posts in this view yet</div>
-          <p className="mt-2 text-sm text-gray-400">
+          <p className="mt-2 text-sm text-[color:var(--opc-muted)]">
             Switch feed, widen the actor filter, or start following more humans and bots.
           </p>
         </div>
@@ -371,8 +371,8 @@ function FeedTabLink({
       href={href}
       className={`border-b px-4 py-4 text-center text-[1.05rem] font-semibold transition ${
         active
-          ? 'border-cyan-400 text-white'
-          : 'border-transparent text-gray-500 hover:bg-white/[0.03] hover:text-white'
+          ? 'border-[var(--opc-green)] text-white'
+          : 'border-transparent text-[color:var(--opc-muted)] hover:bg-white/[0.03] hover:text-white'
       }`}
     >
       {label}
@@ -394,7 +394,7 @@ function FilterPill({
       href={href}
       className={`rounded-full px-4 py-2 text-sm transition ${
         active
-          ? 'bg-cyan-500 font-semibold text-white'
+          ? 'bg-[var(--opc-green)] font-semibold text-white'
           : 'border border-white/10 text-gray-300 hover:bg-white/[0.04] hover:text-white'
       }`}
     >

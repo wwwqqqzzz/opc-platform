@@ -87,7 +87,7 @@ export default function MyIdeasPage() {
   if (!user) {
     return (
       <div className="py-12 text-center">
-        <p className="text-gray-400">Please login to view your posts</p>
+        <p className="text-[color:var(--opc-muted)]">Please login to view your posts</p>
       </div>
     )
   }
@@ -95,7 +95,7 @@ export default function MyIdeasPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="text-gray-400">Loading...</div>
+        <div className="text-[color:var(--opc-muted)]">Loading...</div>
       </div>
     )
   }
@@ -121,9 +121,9 @@ export default function MyIdeasPage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
-          <div className="text-sm uppercase tracking-wide text-cyan-300">Human posting surface</div>
+          <div className="opc-kicker text-sm">Human posting surface</div>
           <h1 className="mt-1 text-2xl font-bold text-white">Post</h1>
-          <p className="mt-1 text-sm text-gray-400">
+          <p className="mt-1 text-sm text-[color:var(--opc-muted)]">
             Publish from your human control surface and manage every post you already pushed into the public feed.
           </p>
         </div>
@@ -131,20 +131,20 @@ export default function MyIdeasPage() {
           <button
             type="button"
             onClick={() => setIsComposerOpen(true)}
-            className="inline-flex items-center rounded-lg bg-cyan-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-cyan-700"
+            className="opc-button-primary inline-flex items-center px-4 py-2 text-sm"
           >
             New post
           </button>
           <Link
             href="/social"
-            className="inline-flex items-center rounded-lg border border-gray-600 px-4 py-2 text-sm font-medium text-gray-200 transition hover:bg-gray-800"
+            className="opc-button-secondary inline-flex items-center px-4 py-2 text-sm"
           >
             Open feed
           </Link>
           {onboarding.activeProject && (
             <Link
               href={`/project/${onboarding.activeProject.id}`}
-              className="inline-flex items-center rounded-lg border border-gray-600 px-4 py-2 text-sm font-medium text-gray-200 transition hover:bg-gray-800"
+              className="opc-button-secondary inline-flex items-center px-4 py-2 text-sm"
             >
               Continue active project
             </Link>
@@ -152,18 +152,18 @@ export default function MyIdeasPage() {
         </div>
       </div>
 
-      <section className="rounded-lg border border-cyan-700/40 bg-cyan-900/20 p-5">
+      <section className="opc-panel-green rounded-lg p-5">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
-            <div className="text-sm uppercase tracking-wide text-cyan-300">Posting to execution</div>
+            <div className="opc-kicker text-sm">Posting to execution</div>
             <div className="mt-1 text-lg font-medium text-white">{claimedIdeas} post(s) already became projects</div>
-            <p className="mt-2 text-sm text-cyan-100/80">
+            <p className="mt-2 text-sm text-gray-300">
               Posts are the public intake layer. Once one gets claimed, execution moves to the active project flow.
             </p>
           </div>
           <Link
             href={onboarding.ctaHref}
-            className="rounded-lg border border-cyan-600 px-4 py-2 text-sm font-medium text-cyan-100 transition hover:bg-cyan-950/40"
+            className="opc-button-secondary px-4 py-2 text-sm"
           >
             {onboarding.ctaLabel}
           </Link>
@@ -178,19 +178,19 @@ export default function MyIdeasPage() {
             key={item.label}
             type="button"
             onClick={() => setFilter(item.filterValue)}
-            className={`rounded-lg border bg-gray-800 p-4 text-left transition-colors ${
+            className={`opc-panel rounded-lg p-4 text-left transition-colors ${
               filter === item.filterValue
-                ? 'border-cyan-500'
-                : 'border-gray-700 hover:border-gray-500'
+                ? 'border-[var(--opc-green)]'
+                : 'border-white/8 hover:border-white/20'
             }`}
           >
-            <p className="text-sm font-medium text-gray-400">{item.label}</p>
+            <p className="text-sm font-medium text-[color:var(--opc-muted)]">{item.label}</p>
             <p className="mt-2 text-2xl font-bold text-white">{item.value}</p>
           </button>
         ))}
       </div>
 
-      <div className="overflow-hidden rounded-lg border border-gray-700 bg-gray-800">
+      <div className="opc-panel overflow-hidden rounded-lg">
         {filteredIdeas.length === 0 ? (
           ideas.length === 0 ? (
             <div className="p-6">
@@ -206,7 +206,7 @@ export default function MyIdeasPage() {
                 <button
                   type="button"
                   onClick={() => setIsComposerOpen(true)}
-                  className="rounded-lg bg-cyan-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-cyan-700"
+                  className="opc-button-primary px-4 py-2 text-sm"
                 >
                   New post
                 </button>
@@ -214,11 +214,11 @@ export default function MyIdeasPage() {
             </div>
           ) : (
             <div className="p-12 text-center">
-              <p className="text-lg text-gray-400">No posts match the current filter.</p>
+              <p className="text-lg text-[color:var(--opc-muted)]">No posts match the current filter.</p>
             </div>
           )
         ) : (
-          <div className="divide-y divide-gray-700">
+          <div className="divide-y divide-white/8">
             {filteredIdeas.map((idea) => (
               <div key={idea.id} className="p-6">
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -229,7 +229,7 @@ export default function MyIdeasPage() {
                         {getStatusLabel(idea.status)}
                       </span>
                     </div>
-                    <p className="mt-2 line-clamp-2 text-sm text-gray-400">{idea.description}</p>
+                    <p className="mt-2 line-clamp-2 text-sm text-[color:var(--opc-muted)]">{idea.description}</p>
                     <div className="mt-3 flex flex-wrap gap-6 text-sm text-gray-500">
                       <span>Created: {new Date(idea.createdAt).toLocaleDateString()}</span>
                       {idea._count && (
@@ -251,7 +251,7 @@ export default function MyIdeasPage() {
                   <div className="flex items-center gap-2">
                     <Link
                       href={`/idea/${idea.id}`}
-                      className="inline-flex items-center rounded border border-gray-600 px-3 py-1.5 text-xs font-medium text-gray-300 transition-colors hover:bg-gray-700"
+                      className="opc-button-secondary inline-flex items-center px-3 py-1.5 text-xs"
                     >
                       View
                     </Link>
@@ -302,13 +302,13 @@ function Banner({
 function getStatusTone(status: string) {
   switch (status) {
     case 'pending':
-      return 'border border-yellow-700 bg-yellow-900/50 text-yellow-400'
+      return 'opc-chip-yellow'
     case 'in_progress':
-      return 'border border-blue-700 bg-blue-900/50 text-blue-400'
+      return 'opc-chip-purple'
     case 'completed':
-      return 'border border-emerald-700 bg-emerald-900/50 text-emerald-400'
+      return 'opc-chip-green'
     default:
-      return 'bg-gray-700 text-gray-300'
+      return 'opc-chip-white'
   }
 }
 
