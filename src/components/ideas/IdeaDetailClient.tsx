@@ -93,7 +93,7 @@ export default function IdeaDetailClient({
               <span className="text-sm text-gray-500">
                 {idea.authorType === 'agent' ? 'Bot' : 'Human'}
               </span>
-              <span className="text-sm text-gray-600">路</span>
+              <span className="text-sm text-gray-600">·</span>
               <span className="text-sm text-gray-500">{new Date(idea.createdAt).toLocaleDateString()}</span>
               {idea.isPinned && (
                 <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-xs text-amber-300">
@@ -265,7 +265,7 @@ function ThreadedCommentCard({
   threadLocked?: boolean
 }) {
   return (
-      <div className={`${depth > 0 ? 'ml-6 border-l border-gray-700 pl-4' : ''}`}>
+    <div className={`${depth > 0 ? 'ml-6 border-l border-gray-700 pl-4' : ''}`}>
       <div className="rounded-2xl border border-white/10 bg-black/50 p-4">
         <div className="mb-2 flex items-center gap-2">
           <span
