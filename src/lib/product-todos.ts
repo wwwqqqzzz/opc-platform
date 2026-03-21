@@ -121,14 +121,14 @@ export const PRODUCT_TODO_PHASES: ProductTodoPhase[] = [
     id: 'business_layer',
     title: 'Business Layer',
     summary:
-      'Projects, intake, readiness, execution, and launch still matter, but they now sit behind Groups, Social, and Forum instead of defining the product by themselves.',
+      'Proposal lab, synthesis, intake, readiness, execution, and launch still matter, but they now sit behind Groups, Social, and Forum instead of defining the product by themselves.',
     statusLabel: 'LATER: downstream gated layer',
     items: [
       {
-        id: 'project-intake-from-forum',
-        title: 'Project intake from forum and groups',
+        id: 'proposal-lab-from-forum',
+        title: 'Proposal lab from forum and groups',
         summary:
-          'Claims and project formation should emerge naturally from forum threads and group discussion, not feel like a disconnected subsystem.',
+          'Posts should first enter a proposer-led proposal lab with separate human and bot lanes. Community insight should be organized there before any intake record is treated as execution-ready.',
         whyItMatters:
           'The business layer should grow from the social product instead of bypassing it.',
         priority: 'later',
@@ -138,9 +138,19 @@ export const PRODUCT_TODO_PHASES: ProductTodoPhase[] = [
         id: 'readiness-gate-before-factory',
         title: 'Readiness gate before Agent GitHub',
         summary:
-          'A raw post should never jump straight into execution. OPC needs intake and readiness checks for owner, target user, scope, why-now context, and execution viability before Agent GitHub work starts.',
+          'A raw post should never jump straight into execution. OPC needs proposal synthesis, intake, and readiness checks for owner, target user, scope, why-now context, and execution viability before Agent GitHub work starts.',
         whyItMatters:
           'Without a pre-execution gate, the factory layer will produce abandoned or under-defined work.',
+        priority: 'later',
+        href: '/project',
+      },
+      {
+        id: 'factory-handoff-package',
+        title: 'Factory handoff package',
+        summary:
+          'Human lane conclusions, bot lane conclusions, accepted decisions, blockers, skills, roles, and readiness results should be merged into one formal handoff package for Agent GitHub architects.',
+        whyItMatters:
+          'Agent GitHub should receive a complete execution package, not a raw idea link.',
         priority: 'later',
         href: '/project',
       },

@@ -69,14 +69,20 @@ The execution layer is downstream from the public product.
 
 Current intended flow:
 
-`post -> intake -> readiness -> Agent GitHub -> launch_ready -> launched`
+`post -> proposal_lab -> synthesis -> intake -> readiness_review -> ready_for_factory -> Agent GitHub -> launch_ready -> launched`
 
 Important rule:
 
 - a post is not enough on its own to enter execution
+- proposal work happens in separate `human lane` and `bot lane`
+- the proposer organizes and selects, but cannot unilaterally bypass blockers
 - intake gathers owner, why-now context, target user, scope, and execution intent
 - readiness is the gate that decides whether the project is complete enough to enter the factory stage
 - launch only happens after Agent GitHub work is complete
+
+Authoritative spec:
+
+- [`docs/PROPOSAL_TO_FACTORY_SPEC.md`](c:/Users/wang/Desktop/opc-platform/docs/PROPOSAL_TO_FACTORY_SPEC.md)
 
 ## 7. GitHub OAuth App setup
 

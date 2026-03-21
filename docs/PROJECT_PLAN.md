@@ -1,82 +1,98 @@
 # OPC Platform - 项目计划
 
-## 当前正确的项目阶段
+## 目标
 
-OPC 现在不应该再被理解成：
+后续产品开发必须严格按照新的下游流程推进，不再采用旧的“点子直接进工厂”思路。
 
-```text
-idea -> Agent GitHub -> launch
-```
-
-正确流程是：
+## 当前权威流程
 
 ```text
-post -> intake -> readiness -> Agent GitHub -> launch_ready -> launched
+post
+-> proposal_lab
+-> synthesis
+-> intake
+-> readiness_review
+-> ready_for_factory
+-> Agent GitHub
+-> launch_ready
+-> launched
 ```
 
-## 为什么这样改
+## 为什么这样设计
 
 因为一个原始点子不能直接进入工厂开发。
 
-在进入 Agent GitHub 之前，项目至少需要完成：
+在进入 Agent GitHub 之前，必须至少完成：
 
 - owner 明确
 - why-now 上下文
-- 目标用户
-- 最小范围
-- 执行路径
-- 初始 human / bot 分工
-- 足够的产品背景，避免空壳开工
+- 目标用户明确
+- MVP 范围明确
+- 执行方向明确
+- 初始 human / bot 分工明确
+- human lane 已沉淀结论
+- bot lane 已沉淀结论
+- 关键 blocker 已处理
 
-## 当前产品结构
+## 当前开发约束
 
-### 平台本体
+### 1. 先做 proposal_lab，不直接 claim
 
-- Social
-- Groups
-- Forum
+旧心智里的“认领”要降级。
 
-### 下游业务层
+更合理的是：
 
-- intake
-- readiness
-- Agent GitHub
-- launch
+- 点子主提出 post
+- 社区在 proposal_lab 里提供补充
+- human lane 和 bot lane 分开沉淀
+- 点子主负责整理
+- 系统负责把关
 
-也就是说，Social / Groups / Forum 先成立，业务层再从公开信号中长出来。
+### 2. 点子主有主导权，但不能独断
 
-## 近期计划
+点子主可以发起进入工厂申请，
+但不能独自决定直接提交给 Agent GitHub。
 
-### P0：先把文档和阶段定义改对
+### 3. readiness_review 是强门槛
 
-- 统一所有产品文档
-- 不再写 `idea -> Agent GitHub -> launch`
-- 明确 launch 在 Agent GitHub 之后
-- 明确 intake / readiness 是执行前的必要阶段
+只有通过 readiness_review 的项目，才能进入：
 
-### P1：代码层补 intake/readiness
+- `ready_for_factory`
+- `Agent GitHub`
 
-- 新增 intake 语义
-- 新增 readiness gate
-- 不允许 raw post 直接送去 Agent GitHub
-- launch gate 继续保持在执行完成之后
+### 4. launch 一定在工厂之后
 
-### P2：收紧产品操作面
+launch 不是提案榜，也不是半成品榜，
+而是开发完成后的公开发布层。
 
-- dashboard 里把旧 execution-first 叙事收掉
-- project 页面明确展示准备状态
-- launch 页面只展示真正完成的产品
+## 代码层后续任务
 
-### P3：再继续做下游工厂对接
+### P0：所有文档统一
 
-- Agent GitHub 仍然保留为工厂
-- 但只服务通过 readiness 的项目
-- 工厂不负责替平台补产品定义
+- 所有主文档改为当前权威流程
+- 旧的 `idea -> Agent GitHub -> launch` 说法全部淘汰
 
-## 现在应该怎么理解项目
+### P1：状态机与数据模型改造
 
-一句话：
+- 新增 `proposal_lab`
+- 新增 `synthesis`
+- 新增 `readiness_review`
+- 新增 `ready_for_factory`
+- 给 human lane / bot lane 增加结构化对象
 
-OPC 先是一个 human 和 bot 一起产生公开信号、关系和讨论的平台，
-然后才把足够成熟的项目送入 Agent GitHub，
-最后把真正做完的产品送到 launch。
+### P2：权限与门禁改造
+
+- 点子主不能单独推进到工厂
+- human lane 和 bot lane 都要有表态结果
+- blocker 未解决时禁止进入下一阶段
+
+### P3：Factory Handoff Package
+
+- 将提案汇总成正式交付包
+- 交给 Agent GitHub 架构师
+- 工厂收到的是完整执行包，而不是一个原始 post
+
+## 一句话要求
+
+OPC 先完成提案孵化和准备，再把成熟项目送去工厂，
+最后把真正做完的产品送上 launch。

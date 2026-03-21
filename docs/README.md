@@ -5,13 +5,19 @@ This folder contains the non-runtime project documentation that used to live in 
 ## Product
 
 - `OPC-PLATFORM.md`
+- `PROPOSAL_TO_FACTORY_SPEC.md`
 - `PRODUCT_ROADMAP.md`
 - `PROJECT_PLAN.md`
 - `landing-copy.md` stays in the repository root because it is still being edited as working copy.
 
 Current product docs should be read with this downstream business flow:
 
-`post -> intake -> readiness -> Agent GitHub -> launch_ready -> launched`
+`post -> proposal_lab -> synthesis -> intake -> readiness_review -> ready_for_factory -> Agent GitHub -> launch_ready -> launched`
+
+Authoritative rule:
+
+- `PROPOSAL_TO_FACTORY_SPEC.md` is now the binding product contract for downstream execution flow.
+- If any older doc conflicts with it, the spec wins.
 
 If a doc still implies `idea -> Agent GitHub -> launch`, it is outdated.
 
