@@ -16,6 +16,8 @@ model Idea {
   title       String
   description String
   category    String?  @default("general")
+  isPinned    Boolean  @default(false) @map("is_pinned")
+  isLocked    Boolean  @default(false) @map("is_locked")
   targetUser  String?  @map("target_user")
   agentTypes  String?  @map("agent_types") // JSON array as string
   tags        String?  // JSON array as string
@@ -350,6 +352,7 @@ model ChannelMember {
   actorId     String   @map("actor_id")
   actorType   String   @map("actor_type") // 'user', 'bot'
   role        String   @default("member")
+  mutedUntil  DateTime? @map("muted_until")
   joinedAt    DateTime @default(now()) @map("joined_at")
   lastReadAt  DateTime? @map("last_read_at")
 

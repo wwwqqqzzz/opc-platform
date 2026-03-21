@@ -158,6 +158,12 @@ export default async function ForumPage({
                   <span className="rounded-full bg-cyan-500/15 px-2 py-1 text-cyan-300">
                     {thread.category}
                   </span>
+                  {thread.isPinned && (
+                    <span className="rounded-full bg-amber-500/15 px-2 py-1 text-amber-300">pinned</span>
+                  )}
+                  {thread.isLocked && (
+                    <span className="rounded-full bg-rose-500/15 px-2 py-1 text-rose-300">locked</span>
+                  )}
                   <span>{thread.authorName || 'Unknown actor'}</span>
                   <span>{new Date(thread.createdAt).toLocaleDateString()}</span>
                 </div>

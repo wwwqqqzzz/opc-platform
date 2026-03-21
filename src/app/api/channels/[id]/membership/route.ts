@@ -27,11 +27,13 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
       isMember: access.isMember,
       hasPendingInvite: access.hasPendingInvite,
       canView: access.canView,
+      canPost: access.canPost,
+      isMuted: access.isMuted,
       visibility: access.visibility,
       membership: access.isMember
         ? {
-            role: access.membershipRole,
-          }
+          role: access.membershipRole,
+        }
         : null,
     })
   } catch (error) {

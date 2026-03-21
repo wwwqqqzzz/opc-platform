@@ -8,6 +8,11 @@ interface ActorIdentity {
   name?: string | null
 }
 
+interface MessageActor {
+  id: string
+  type: SocialActorType
+}
+
 function mapMessageNode(message: {
   id: string
   channelId: string
@@ -27,12 +32,14 @@ function mapMessageNode(message: {
     senderName: message.senderName,
     content: message.content,
     createdAt: message.createdAt.toISOString(),
+    isUnread: false,
+    unreadReplyCount: 0,
     replies: [],
     replyCount: 0,
   }
 }
 
-export async function listChannelThreadMessages(channelId: string) {
+export async function listChannelThreadMessages(channelId: string, actor?: MessageActor | null) {
   const messages = await prisma.message.findMany({
     where: {
       channelId,
@@ -44,9 +51,33 @@ export async function listChannelThreadMessages(channelId: string) {
 
   const nodeMap = new Map<string, ChannelThreadMessage>()
   const roots: ChannelThreadMessage[] = []
+  let lastReadAt: Date | null = null
+
+  if (actor) {
+    const membership = await prisma.channelMember.findUnique({
+      where: {
+        channelId_actorId_actorType: {
+          channelId,
+          actorId: actor.id,
+          actorType: actor.type,
+        },
+      },
+      select: {
+        lastReadAt: true,
+      },
+    })
+
+    lastReadAt = membership?.lastReadAt || null
+  }
 
   messages.forEach((message) => {
-    nodeMap.set(message.id, mapMessageNode(message))
+    const node = mapMessageNode(message)
+    node.isUnread = Boolean(
+      actor &&
+        message.senderId !== actor.id &&
+        (!lastReadAt || message.createdAt > lastReadAt)
+    )
+    nodeMap.set(message.id, node)
   })
 
   nodeMap.forEach((node) => {
@@ -60,10 +91,19 @@ export async function listChannelThreadMessages(channelId: string) {
     }
   })
 
-  const annotate = (node: ChannelThreadMessage): number => {
-    const nestedCount = node.replies.reduce((count, reply) => count + 1 + annotate(reply), 0)
-    node.replyCount = nestedCount
-    return nestedCount
+  const annotate = (node: ChannelThreadMessage): { replyCount: number; unreadReplyCount: number } => {
+    let replyCount = 0
+    let unreadReplyCount = 0
+
+    node.replies.forEach((reply) => {
+      const nested = annotate(reply)
+      replyCount += 1 + nested.replyCount
+      unreadReplyCount += (reply.isUnread ? 1 : 0) + nested.unreadReplyCount
+    })
+
+    node.replyCount = replyCount
+    node.unreadReplyCount = unreadReplyCount
+    return { replyCount, unreadReplyCount }
   }
 
   roots.forEach(annotate)
@@ -117,5 +157,56 @@ export async function createChannelMessage(options: {
   return mapMessageNode({
     ...message,
     senderType: message.senderType,
+  })
+}
+
+export async function deleteChannelMessage(
+  channelId: string,
+  messageId: string,
+  actor: MessageActor
+) {
+  const [message, membership] = await Promise.all([
+    prisma.message.findFirst({
+      where: {
+        id: messageId,
+        channelId,
+      },
+      select: {
+        id: true,
+        senderId: true,
+        senderType: true,
+      },
+    }),
+    prisma.channelMember.findUnique({
+      where: {
+        channelId_actorId_actorType: {
+          channelId,
+          actorId: actor.id,
+          actorType: actor.type,
+        },
+      },
+      select: {
+        role: true,
+      },
+    }),
+  ])
+
+  if (!message) {
+    throw new Error('Message not found')
+  }
+
+  const isManager = membership?.role === 'owner' || membership?.role === 'moderator'
+  const isSender = message.senderId === actor.id && message.senderType === actor.type
+
+  if (!isManager && !isSender) {
+    throw new Error('You do not have permission to delete this message')
+  }
+
+  return prisma.message.update({
+    where: { id: messageId },
+    data: {
+      content: isManager ? '[removed by room moderation]' : '[removed by sender]',
+      senderName: message.senderId === actor.id ? null : undefined,
+    },
   })
 }

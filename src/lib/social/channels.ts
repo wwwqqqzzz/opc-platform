@@ -25,6 +25,7 @@ interface ChannelAccessSnapshot {
   membership: {
     id: string
     role: ChannelMemberRole
+    mutedUntil: Date | null
     joinedAt: Date
     lastReadAt: Date | null
   } | null
@@ -95,6 +96,7 @@ async function getChannelAccessSnapshot(
             select: {
               id: true,
               role: true,
+              mutedUntil: true,
               joinedAt: true,
               lastReadAt: true,
             },
@@ -130,6 +132,7 @@ async function getChannelAccessSnapshot(
       ? {
           id: channel.members[0].id,
           role: channel.members[0].role as ChannelMemberRole,
+          mutedUntil: channel.members[0].mutedUntil,
           joinedAt: channel.members[0].joinedAt,
           lastReadAt: channel.members[0].lastReadAt,
         }
@@ -164,6 +167,10 @@ export function canActorManageChannel(snapshot: ChannelAccessSnapshot, actor?: A
   }
 
   return snapshot.membership.role === 'owner' || snapshot.membership.role === 'moderator'
+}
+
+export function isChannelMemberMuted(snapshot: ChannelAccessSnapshot) {
+  return Boolean(snapshot.membership?.mutedUntil && snapshot.membership.mutedUntil > new Date())
 }
 
 export function canActorManageModerators(snapshot: ChannelAccessSnapshot, actor?: ActorIdentity | null) {
@@ -205,8 +212,10 @@ export async function getChannelAccessForActor(channelId: string, actor?: ActorI
     canPost:
       Boolean(snapshot.membership) &&
       actor != null &&
-      canActorPostInChannelType(actor.type, snapshot.type),
+      canActorPostInChannelType(actor.type, snapshot.type) &&
+      !isChannelMemberMuted(snapshot),
     canManage: canActorManageChannel(snapshot, actor),
+    isMuted: isChannelMemberMuted(snapshot),
   }
 }
 
@@ -316,6 +325,7 @@ export async function listChannelMembers(channelId: string, limit = 24): Promise
         subtitle: `${preview.subtitle} · ${member.role}`,
         href: preview.href,
         joinedAt: member.joinedAt.toISOString(),
+        mutedUntil: member.mutedUntil?.toISOString() || null,
       } satisfies ChannelMemberPreview
     })
   )
@@ -523,6 +533,100 @@ export async function setChannelModerator(
   })
 }
 
+export async function removeChannelMember(
+  channelId: string,
+  targetActorId: string,
+  targetActorType: ChannelActorType,
+  actor: ActorIdentity
+) {
+  const snapshot = await getChannelAccessSnapshot(channelId, actor)
+
+  if (!snapshot) {
+    throw new Error('Channel not found')
+  }
+
+  if (!canActorManageChannel(snapshot, actor)) {
+    throw new Error('Only room owners and moderators can manage members')
+  }
+
+  const targetMembership = await getChannelMembership(channelId, targetActorId, targetActorType)
+
+  if (!targetMembership) {
+    throw new Error('Target member not found')
+  }
+
+  if (targetMembership.role === 'owner') {
+    throw new Error('Room owners cannot be removed')
+  }
+
+  if (snapshot.membership?.role !== 'owner' && targetMembership.role === 'moderator') {
+    throw new Error('Only room owners can remove moderators')
+  }
+
+  await prisma.channelInvite.deleteMany({
+    where: {
+      channelId,
+      invitedActorId: targetActorId,
+      invitedActorType: targetActorType,
+    },
+  })
+
+  return prisma.channelMember.delete({
+    where: {
+      channelId_actorId_actorType: {
+        channelId,
+        actorId: targetActorId,
+        actorType: targetActorType,
+      },
+    },
+  })
+}
+
+export async function setChannelMemberMute(
+  channelId: string,
+  targetActorId: string,
+  targetActorType: ChannelActorType,
+  actor: ActorIdentity,
+  mutedUntil: Date | null
+) {
+  const snapshot = await getChannelAccessSnapshot(channelId, actor)
+
+  if (!snapshot) {
+    throw new Error('Channel not found')
+  }
+
+  if (!canActorManageChannel(snapshot, actor)) {
+    throw new Error('Only room owners and moderators can manage members')
+  }
+
+  const targetMembership = await getChannelMembership(channelId, targetActorId, targetActorType)
+
+  if (!targetMembership) {
+    throw new Error('Target member not found')
+  }
+
+  if (targetMembership.role === 'owner') {
+    throw new Error('Room owners cannot be muted')
+  }
+
+  if (snapshot.membership?.role !== 'owner' && targetMembership.role === 'moderator') {
+    throw new Error('Only room owners can mute moderators')
+  }
+
+  return prisma.channelMember.update({
+    where: {
+      channelId_actorId_actorType: {
+        channelId,
+        actorId: targetActorId,
+        actorType: targetActorType,
+      },
+    },
+    data: {
+      mutedUntil,
+    },
+  })
+}
+
 export async function listVisibleChannelsForActor(actor?: ActorIdentity | null): Promise<ChannelSummary[]> {
   const channels = await prisma.channel.findMany({
     where: {
@@ -574,6 +678,7 @@ export async function listVisibleChannelsForActor(actor?: ActorIdentity | null):
             select: {
               joinedAt: true,
               role: true,
+              mutedUntil: true,
               lastReadAt: true,
             },
           }
@@ -622,6 +727,8 @@ export async function listVisibleChannelsForActor(actor?: ActorIdentity | null):
           unreadCount,
           isMember: Boolean(membership),
           hasPendingInvite: actor && Array.isArray(channel.invites) ? channel.invites.length > 0 : false,
+          membershipRole: membership?.role as ChannelMemberRole | undefined,
+          isMuted: Boolean(membership?.mutedUntil && membership.mutedUntil > new Date()),
         } satisfies ChannelSummary
       })
   )

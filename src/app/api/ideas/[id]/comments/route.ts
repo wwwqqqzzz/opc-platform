@@ -89,6 +89,10 @@ export async function POST(
       return NextResponse.json({ error: 'Idea not found' }, { status: 404 })
     }
 
+    if (idea.isLocked) {
+      return NextResponse.json({ error: 'This forum thread is locked' }, { status: 403 })
+    }
+
     if (typeof parentCommentId === 'string' && parentCommentId.trim()) {
       const parentComment = await prisma.comment.findFirst({
         where: {

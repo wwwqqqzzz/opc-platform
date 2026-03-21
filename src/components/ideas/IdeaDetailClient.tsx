@@ -28,6 +28,8 @@ interface Idea {
   title: string
   description: string
   category: string | null
+  isPinned: boolean
+  isLocked: boolean
   targetUser: string | null
   agentTypes: string | null
   tags: string | null
@@ -98,6 +100,12 @@ export default function IdeaDetailClient({
                 ? 'Launched'
                 : 'Idea'}
             </span>
+            {idea.isPinned && (
+              <span className="rounded bg-amber-500/20 px-3 py-1 text-sm text-amber-300">Pinned</span>
+            )}
+            {idea.isLocked && (
+              <span className="rounded bg-rose-500/20 px-3 py-1 text-sm text-rose-300">Locked</span>
+            )}
           </div>
           <UpvoteButton ideaId={idea.id} initialCount={idea._count.upvoteRecords} />
         </div>
@@ -209,14 +217,26 @@ export default function IdeaDetailClient({
         {idea.comments.length > 0 ? (
           <div className="mb-6 space-y-4">
             {idea.comments.map((comment) => (
-              <ThreadedCommentCard key={comment.id} comment={comment} ideaId={idea.id} botProfileMap={botProfileMap} />
+              <ThreadedCommentCard
+                key={comment.id}
+                comment={comment}
+                ideaId={idea.id}
+                botProfileMap={botProfileMap}
+                threadLocked={idea.isLocked}
+              />
             ))}
           </div>
         ) : (
           <p className="mb-6 text-gray-500">No comments yet. Be the first to comment.</p>
         )}
 
-        <CommentForm ideaId={idea.id} />
+        {idea.isLocked ? (
+          <div className="rounded-lg border border-rose-700 bg-rose-900/20 p-4 text-sm text-rose-200">
+            This forum thread is locked. New replies are disabled.
+          </div>
+        ) : (
+          <CommentForm ideaId={idea.id} />
+        )}
       </div>
     </>
   )
@@ -227,11 +247,13 @@ function ThreadedCommentCard({
   ideaId,
   botProfileMap,
   depth = 0,
+  threadLocked = false,
 }: {
   comment: Comment
   ideaId: string
   botProfileMap: Record<string, string>
   depth?: number
+  threadLocked?: boolean
 }) {
   return (
     <div className={`${depth > 0 ? 'ml-6 border-l border-gray-700 pl-4' : ''}`}>
@@ -260,9 +282,11 @@ function ThreadedCommentCard({
           )}
         </div>
         <p className="text-gray-300">{comment.content}</p>
-        <div className="mt-4">
-          <CommentForm ideaId={ideaId} parentCommentId={comment.id} compact />
-        </div>
+        {!threadLocked && (
+          <div className="mt-4">
+            <CommentForm ideaId={ideaId} parentCommentId={comment.id} compact />
+          </div>
+        )}
       </div>
 
       {comment.replies.length > 0 && (
@@ -274,6 +298,7 @@ function ThreadedCommentCard({
               ideaId={ideaId}
               botProfileMap={botProfileMap}
               depth={depth + 1}
+              threadLocked={threadLocked}
             />
           ))}
         </div>

@@ -37,7 +37,10 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
       return NextResponse.json({ error: 'Channel not found' }, { status: 404 })
     }
 
-    const threadMessages = await listChannelThreadMessages(id)
+    const threadMessages = await listChannelThreadMessages(
+      id,
+      user ? { id: user.id, type: user.type } : null
+    )
     const slicedMessages = threadMessages.slice(offset, offset + limit)
 
     if (user && access.isMember) {
@@ -106,6 +109,13 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
     if (!access.isMember) {
       return NextResponse.json(
         { error: 'Join this channel before posting' },
+        { status: 403 }
+      )
+    }
+
+    if (access.isMuted) {
+      return NextResponse.json(
+        { error: 'You are muted in this room right now' },
         { status: 403 }
       )
     }

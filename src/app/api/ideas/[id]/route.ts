@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAuthenticatedUser } from '@/lib/jwt'
+import { isForumCategory } from '@/lib/social/forum'
+import { createNotification } from '@/lib/social/notifications'
 
 // GET /api/ideas/[id] - 获取单个 Idea
 export async function GET(
@@ -48,7 +50,7 @@ export async function PUT(
     const { id } = await params
     const user = await getAuthenticatedUser()
     const body = await request.json()
-    const { status, title, description, targetUser, agentTypes, tags } = body
+    const { status, title, description, targetUser, agentTypes, tags, category, isPinned, isLocked } = body
 
     // Check if idea exists and user owns it
     const existingIdea = await prisma.idea.findUnique({
@@ -59,8 +61,8 @@ export async function PUT(
       return NextResponse.json({ error: 'Idea not found' }, { status: 404 })
     }
 
-    // Only allow the owner to update
-    if (existingIdea.userId && existingIdea.userId !== user?.id) {
+    // Only allow the owner to update from the human surface
+    if (!user || (existingIdea.userId && existingIdea.userId !== user.id) || existingIdea.authorType !== 'human') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
     }
 
@@ -70,11 +72,36 @@ export async function PUT(
         status,
         title,
         description,
+        category: isForumCategory(category) ? category : undefined,
+        isPinned: typeof isPinned === 'boolean' ? isPinned : undefined,
+        isLocked: typeof isLocked === 'boolean' ? isLocked : undefined,
         targetUser,
         agentTypes: agentTypes ? JSON.stringify(agentTypes) : undefined,
         tags: tags ? JSON.stringify(tags) : undefined,
       },
     })
+
+    if (idea.authorType === 'agent' && existingIdea.authorName) {
+      const bot = await prisma.bot.findFirst({
+        where: {
+          name: existingIdea.authorName,
+          isActive: true,
+        },
+        select: { id: true },
+      })
+
+      if (bot && (existingIdea.isLocked !== idea.isLocked || existingIdea.isPinned !== idea.isPinned)) {
+        await createNotification({
+          actorId: bot.id,
+          actorType: 'bot',
+          type: 'forum_thread_updated',
+          title: 'Your forum thread settings changed',
+          body: `Pinned: ${idea.isPinned ? 'yes' : 'no'}, locked: ${idea.isLocked ? 'yes' : 'no'}.`,
+          href: `/idea/${idea.id}`,
+          metadata: idea.id,
+        }).catch(() => null)
+      }
+    }
 
     return NextResponse.json(idea)
   } catch {
@@ -100,8 +127,8 @@ export async function DELETE(
       return NextResponse.json({ error: 'Idea not found' }, { status: 404 })
     }
 
-    // Only allow the owner to delete
-    if (existingIdea.userId && existingIdea.userId !== user?.id) {
+    // Only allow the owner to delete from the human surface
+    if (!user || (existingIdea.userId && existingIdea.userId !== user.id) || existingIdea.authorType !== 'human') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
     }
 

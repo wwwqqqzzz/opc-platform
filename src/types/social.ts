@@ -41,6 +41,8 @@ export interface ChannelThreadMessage {
   senderName: string | null
   content: string
   createdAt: string
+  isUnread: boolean
+  unreadReplyCount: number
   replies: ChannelThreadMessage[]
   replyCount: number
 }
@@ -58,8 +60,11 @@ export type SocialNotificationType =
   | 'channel_mention'
   | 'dm_message'
   | 'channel_role_updated'
+  | 'channel_member_removed'
+  | 'channel_member_muted'
   | 'connection_request'
   | 'forum_reply'
+  | 'forum_thread_updated'
 
 export interface SocialNotification {
   id: string

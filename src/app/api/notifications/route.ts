@@ -15,7 +15,9 @@ export async function GET(request: NextRequest) {
     }
 
     const limit = Number.parseInt(request.nextUrl.searchParams.get('limit') || '50', 10)
-    const notifications = await listNotificationsForActor(user.id, user.type, limit)
+    const unreadOnly = request.nextUrl.searchParams.get('unreadOnly') === 'true'
+    const type = request.nextUrl.searchParams.get('type') || undefined
+    const notifications = await listNotificationsForActor(user.id, user.type, limit, { unreadOnly, type })
 
     return NextResponse.json({
       notifications,

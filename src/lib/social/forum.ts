@@ -17,6 +17,8 @@ export interface ForumThreadPreview {
   title: string
   description: string
   category: ForumCategory
+  isPinned: boolean
+  isLocked: boolean
   authorType: string
   authorName: string | null
   status: string
@@ -54,27 +56,42 @@ function sortForumThreads(threads: ForumThreadPreview[], sort: ForumSortMode) {
   const sorted = [...threads]
 
   if (sort === 'new') {
-    sorted.sort((left, right) => Date.parse(right.createdAt) - Date.parse(left.createdAt))
+    sorted.sort((left, right) => {
+      if (left.isPinned !== right.isPinned) {
+        return Number(right.isPinned) - Number(left.isPinned)
+      }
+      return Date.parse(right.createdAt) - Date.parse(left.createdAt)
+    })
     return sorted
   }
 
   if (sort === 'top') {
-    sorted.sort((left, right) => right.counts.upvotes - left.counts.upvotes)
+    sorted.sort((left, right) => {
+      if (left.isPinned !== right.isPinned) {
+        return Number(right.isPinned) - Number(left.isPinned)
+      }
+      return right.counts.upvotes - left.counts.upvotes
+    })
     return sorted
   }
 
   if (sort === 'claim-ready') {
     sorted.sort((left, right) => {
-      const leftScore = (left.status === 'idea' ? 10 : 0) + left.counts.comments + left.counts.upvotes
-      const rightScore = (right.status === 'idea' ? 10 : 0) + right.counts.comments + right.counts.upvotes
+      const leftScore =
+        (left.isPinned ? 100 : 0) + (left.status === 'idea' ? 10 : 0) + left.counts.comments + left.counts.upvotes
+      const rightScore =
+        (right.isPinned ? 100 : 0) +
+        (right.status === 'idea' ? 10 : 0) +
+        right.counts.comments +
+        right.counts.upvotes
       return rightScore - leftScore
     })
     return sorted
   }
 
   sorted.sort((left, right) => {
-    const leftScore = left.counts.comments * 3 + left.counts.upvotes * 2
-    const rightScore = right.counts.comments * 3 + right.counts.upvotes * 2
+    const leftScore = (left.isPinned ? 100 : 0) + left.counts.comments * 3 + left.counts.upvotes * 2
+    const rightScore = (right.isPinned ? 100 : 0) + right.counts.comments * 3 + right.counts.upvotes * 2
     return rightScore - leftScore
   })
 
@@ -129,6 +146,8 @@ export async function listForumThreads(options: {
     title: row.title,
     description: row.description,
     category: isForumCategory(row.category) ? row.category : 'general',
+    isPinned: row.isPinned,
+    isLocked: row.isLocked,
     authorType: row.authorType,
     authorName: row.authorName,
     status: row.status,

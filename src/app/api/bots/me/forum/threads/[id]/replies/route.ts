@@ -30,11 +30,16 @@ export async function POST(
       select: {
         id: true,
         userId: true,
+        isLocked: true,
       },
     })
 
     if (!idea) {
       return NextResponse.json({ error: 'Forum thread not found' }, { status: 404 })
+    }
+
+    if (idea.isLocked) {
+      return NextResponse.json({ error: 'This forum thread is locked' }, { status: 403 })
     }
 
     if (parentCommentId) {

@@ -14,6 +14,8 @@ export interface ChannelSummary {
   unreadCount?: number
   isMember?: boolean
   hasPendingInvite?: boolean
+  membershipRole?: ChannelMemberRole | null
+  isMuted?: boolean
 }
 
 export interface ChannelMemberPreview {
@@ -25,6 +27,7 @@ export interface ChannelMemberPreview {
   subtitle: string
   href: string | null
   joinedAt: string
+  mutedUntil: string | null
 }
 
 export interface ChannelInvitePreview {

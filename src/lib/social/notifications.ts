@@ -37,12 +37,18 @@ export async function createNotification(input: NotificationInput) {
 export async function listNotificationsForActor(
   actorId: string,
   actorType: SocialActorType,
-  limit = 50
+  limit = 50,
+  options: {
+    unreadOnly?: boolean
+    type?: string
+  } = {}
 ): Promise<SocialNotification[]> {
   const notifications = await prisma.notification.findMany({
     where: {
       actorId,
       actorType,
+      ...(options.unreadOnly ? { readAt: null } : {}),
+      ...(options.type ? { type: options.type } : {}),
     },
     orderBy: {
       createdAt: 'desc',
