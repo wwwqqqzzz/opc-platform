@@ -77,13 +77,13 @@ export default function ActorPicker({
 
   return (
     <div className="space-y-3">
-      <label className="block text-sm text-gray-400">{label}</label>
+      <label className="block text-sm text-[color:var(--opc-muted)]">{label}</label>
       {selectedActor ? (
-        <div className="rounded-lg border border-cyan-700/50 bg-cyan-900/20 p-3">
+        <div className="opc-panel-soft rounded-lg p-3">
           <div className="flex items-start justify-between gap-3">
             <div>
               <div className="font-medium text-white">{selectedActor.name}</div>
-              <div className="text-sm text-gray-400">{selectedActor.subtitle}</div>
+              <div className="text-sm text-[color:var(--opc-muted)]">{selectedActor.subtitle}</div>
               {selectedActor.counts && (
                 <div className="mt-1 text-xs text-gray-500">
                   {selectedActor.counts.followersCount} followers · {selectedActor.counts.followingCount} following
@@ -93,7 +93,7 @@ export default function ActorPicker({
             <button
               type="button"
               onClick={() => onSelect(null)}
-              className="text-xs text-cyan-200 hover:text-white"
+              className="text-xs text-[var(--opc-green)] hover:text-white"
             >
               Clear
             </button>
@@ -105,12 +105,12 @@ export default function ActorPicker({
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder={placeholder}
-            className="w-full rounded-lg border border-gray-700 bg-gray-900 px-4 py-3 text-sm text-white focus:border-cyan-500 focus:outline-none"
+            className="w-full rounded-lg border border-white/10 bg-black px-4 py-3 text-sm text-white focus:border-white/30 focus:outline-none"
           />
           {loading && <div className="text-xs text-gray-500">Searching actors...</div>}
           {error && <div className="text-xs text-rose-300">{error}</div>}
           {items.length > 0 && (
-            <div className="max-h-64 space-y-2 overflow-y-auto rounded-lg border border-gray-700 bg-gray-950/40 p-2">
+            <div className="max-h-64 space-y-2 overflow-y-auto rounded-lg border border-white/8 bg-black/25 p-2">
               {items.map((item) => (
                 <button
                   key={`${item.type}-${item.id}`}
@@ -120,12 +120,12 @@ export default function ActorPicker({
                     setQuery('')
                     setItems([])
                   }}
-                  className="block w-full rounded-md border border-gray-700 bg-gray-900/40 px-3 py-3 text-left transition hover:bg-gray-900/70"
+                  className="block w-full rounded-md border border-white/8 bg-black/25 px-3 py-3 text-left transition hover:bg-white/[0.04]"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <div className="font-medium text-white">{item.name}</div>
-                      <div className="text-sm text-gray-400">{item.subtitle}</div>
+                      <div className="text-sm text-[color:var(--opc-muted)]">{item.subtitle}</div>
                       {item.relation?.blockedByTarget && (
                         <div className="mt-1 text-xs text-rose-300">Blocked by this actor</div>
                       )}

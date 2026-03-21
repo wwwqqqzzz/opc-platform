@@ -86,12 +86,12 @@ export default function ClaimIdeaModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-      <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg bg-gray-800 p-6">
+      <div className="opc-panel max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg p-6">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-2xl font-bold">Claim this post</h2>
           <button
             onClick={onClose}
-            className="text-2xl text-gray-400 hover:text-white"
+            className="text-2xl text-[color:var(--opc-muted)] hover:text-white"
             disabled={isSubmitting}
             type="button"
           >
@@ -99,8 +99,8 @@ export default function ClaimIdeaModal({
           </button>
         </div>
 
-        <div className="mb-4 rounded-lg bg-gray-900/50 p-3">
-          <div className="mb-1 text-sm text-gray-400">Post to claim:</div>
+        <div className="mb-4 rounded-lg border border-white/8 bg-black/25 p-3">
+          <div className="mb-1 text-sm text-[color:var(--opc-muted)]">Post to claim:</div>
           <div className="font-medium">{ideaTitle}</div>
         </div>
 
@@ -120,7 +120,7 @@ export default function ClaimIdeaModal({
               value={ownerName}
               onChange={(e) => setOwnerName(e.target.value)}
               placeholder="Your name"
-              className="w-full rounded-lg border border-gray-700 bg-gray-900 px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-yellow-500"
+              className="w-full rounded-lg border border-white/10 bg-black px-4 py-2 text-white focus:border-white/30 focus:outline-none"
               disabled={isSubmitting}
               required
             />
@@ -135,7 +135,7 @@ export default function ClaimIdeaModal({
               value={ownerRole}
               onChange={(e) => setOwnerRole(e.target.value)}
               placeholder="Founder, operator, researcher, sponsor..."
-              className="w-full rounded-lg border border-gray-700 bg-gray-900 px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-yellow-500"
+              className="w-full rounded-lg border border-white/10 bg-black px-4 py-2 text-white focus:border-white/30 focus:outline-none"
               disabled={isSubmitting}
               required
             />
@@ -143,14 +143,14 @@ export default function ClaimIdeaModal({
 
           <div className="mb-4">
             <label className="mb-2 block text-sm font-medium">
-              Initial agent team <span className="text-gray-500">(optional)</span>
+              Initial agent team <span className="text-[color:var(--opc-muted)]">(optional)</span>
             </label>
             <input
               type="text"
               value={agentTeam}
               onChange={(e) => setAgentTeam(e.target.value)}
               placeholder="Coder, designer, researcher"
-              className="w-full rounded-lg border border-gray-700 bg-gray-900 px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-yellow-500"
+              className="w-full rounded-lg border border-white/10 bg-black px-4 py-2 text-white focus:border-white/30 focus:outline-none"
               disabled={isSubmitting}
             />
             <p className="mt-1 text-xs text-gray-500">Enter multiple agent names separated by commas.</p>
@@ -164,7 +164,7 @@ export default function ClaimIdeaModal({
               value={initialGoal}
               onChange={(e) => setInitialGoal(e.target.value)}
               placeholder="What should this project accomplish first?"
-              className="min-h-[96px] w-full rounded-lg border border-gray-700 bg-gray-900 px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-yellow-500"
+              className="min-h-[96px] w-full rounded-lg border border-white/10 bg-black px-4 py-3 text-white focus:border-white/30 focus:outline-none"
               disabled={isSubmitting}
               required
             />
@@ -178,7 +178,7 @@ export default function ClaimIdeaModal({
               value={whyNow}
               onChange={(e) => setWhyNow(e.target.value)}
               placeholder="Why should this move now instead of staying a post in the feed?"
-              className="min-h-[96px] w-full rounded-lg border border-gray-700 bg-gray-900 px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-yellow-500"
+              className="min-h-[96px] w-full rounded-lg border border-white/10 bg-black px-4 py-3 text-white focus:border-white/30 focus:outline-none"
               disabled={isSubmitting}
               required
             />
@@ -186,14 +186,14 @@ export default function ClaimIdeaModal({
 
           <div className="mb-6">
             <label className="mb-2 block text-sm font-medium">
-              Expected execution path <span className="text-gray-500">(optional)</span>
+              Expected execution path <span className="text-[color:var(--opc-muted)]">(optional)</span>
             </label>
             <input
               type="text"
               value={executionPath}
               onChange={(e) => setExecutionPath(e.target.value)}
               placeholder="GitHub bridge now, Agent GitHub later"
-              className="w-full rounded-lg border border-gray-700 bg-gray-900 px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-yellow-500"
+              className="w-full rounded-lg border border-white/10 bg-black px-4 py-2 text-white focus:border-white/30 focus:outline-none"
               disabled={isSubmitting}
             />
             <p className="mt-1 text-xs text-gray-500">
@@ -206,14 +206,14 @@ export default function ClaimIdeaModal({
               type="button"
               onClick={onClose}
               disabled={isSubmitting}
-              className="flex-1 rounded-lg bg-gray-700 px-4 py-2 font-medium transition hover:bg-gray-600 disabled:opacity-50"
+              className="opc-button-secondary flex-1 px-4 py-2 disabled:opacity-50"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex-1 rounded-lg bg-gradient-to-r from-yellow-500 to-orange-500 px-4 py-2 font-medium transition hover:from-yellow-600 hover:to-orange-600 disabled:opacity-50"
+              className="opc-button-primary flex-1 px-4 py-2 disabled:opacity-50"
             >
               {isSubmitting ? 'Claiming...' : 'Claim post'}
             </button>

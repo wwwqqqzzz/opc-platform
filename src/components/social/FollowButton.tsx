@@ -66,7 +66,7 @@ export default function FollowButton({
 
   if (loading) {
     return (
-      <div className="rounded-lg border border-gray-700 px-4 py-2 text-sm text-gray-400">
+      <div className="opc-panel-soft rounded-lg px-4 py-2 text-sm text-[color:var(--opc-muted)]">
         Loading...
       </div>
     )
@@ -76,7 +76,7 @@ export default function FollowButton({
     return (
       <Link
         href={`/login?redirect=${encodeURIComponent(pathname || `/bots/${targetId}`)}`}
-        className="inline-flex items-center rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-purple-700"
+        className="opc-button-primary inline-flex items-center px-4 py-2 text-sm"
       >
         Login to follow
       </Link>
@@ -119,8 +119,8 @@ export default function FollowButton({
         disabled={statusLoading || isPending}
         className={`inline-flex items-center rounded-lg px-4 py-2 text-sm font-medium transition ${
           following
-            ? 'border border-gray-600 bg-transparent text-gray-200 hover:bg-gray-800'
-            : 'bg-purple-600 text-white hover:bg-purple-700'
+            ? 'opc-button-secondary text-gray-200'
+            : 'opc-button-primary'
         } disabled:cursor-not-allowed disabled:opacity-60`}
       >
         {statusLoading || isPending ? 'Updating...' : following ? 'Following' : 'Follow'}

@@ -94,14 +94,14 @@ export default function NewIdeaModal({ isOpen, onClose }: NewIdeaModalProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-      <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg bg-gray-800">
+      <div className="opc-panel max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg">
         <div className="p-6">
           <div className="mb-6 flex items-center justify-between">
             <h2 className="text-2xl font-bold text-white">Create Post</h2>
             <button
               type="button"
               onClick={onClose}
-              className="text-2xl leading-none text-gray-400 hover:text-white"
+              className="text-2xl leading-none text-[color:var(--opc-muted)] hover:text-white"
             >
               x
             </button>
@@ -120,7 +120,7 @@ export default function NewIdeaModal({ isOpen, onClose }: NewIdeaModalProps) {
                 type="text"
                 value={formData.title}
                 onChange={(event) => setFormData((current) => ({ ...current, title: event.target.value }))}
-                className="w-full rounded-lg border border-gray-700 bg-gray-900 px-4 py-2 text-white focus:border-emerald-500 focus:outline-none"
+                className="w-full rounded-lg border border-white/10 bg-black px-4 py-2 text-white focus:border-white/30 focus:outline-none"
                 placeholder="Short, clear post title"
                 disabled={isSubmitting}
               />
@@ -131,7 +131,7 @@ export default function NewIdeaModal({ isOpen, onClose }: NewIdeaModalProps) {
               <select
                 value={formData.category}
                 onChange={(event) => setFormData((current) => ({ ...current, category: event.target.value }))}
-                className="w-full rounded-lg border border-gray-700 bg-gray-900 px-4 py-2 text-white focus:border-emerald-500 focus:outline-none"
+                className="w-full rounded-lg border border-white/10 bg-black px-4 py-2 text-white focus:border-white/30 focus:outline-none"
                 disabled={isSubmitting}
               >
                 {FORUM_CATEGORIES.map((category) => (
@@ -149,7 +149,7 @@ export default function NewIdeaModal({ isOpen, onClose }: NewIdeaModalProps) {
                 onChange={(event) =>
                   setFormData((current) => ({ ...current, description: event.target.value }))
                 }
-                className="min-h-[100px] w-full resize-y rounded-lg border border-gray-700 bg-gray-900 px-4 py-2 text-white focus:border-emerald-500 focus:outline-none"
+                className="min-h-[100px] w-full resize-y rounded-lg border border-white/10 bg-black px-4 py-2 text-white focus:border-white/30 focus:outline-none"
                 placeholder="Describe the post, position, or discussion you want the network to respond to..."
                 disabled={isSubmitting}
               />
@@ -161,7 +161,7 @@ export default function NewIdeaModal({ isOpen, onClose }: NewIdeaModalProps) {
                 type="text"
                 value={formData.targetUser}
                 onChange={(event) => setFormData((current) => ({ ...current, targetUser: event.target.value }))}
-                className="w-full rounded-lg border border-gray-700 bg-gray-900 px-4 py-2 text-white focus:border-emerald-500 focus:outline-none"
+                className="w-full rounded-lg border border-white/10 bg-black px-4 py-2 text-white focus:border-white/30 focus:outline-none"
                 placeholder="Who is this post most relevant for?"
                 disabled={isSubmitting}
               />
@@ -177,8 +177,8 @@ export default function NewIdeaModal({ isOpen, onClose }: NewIdeaModalProps) {
                     onClick={() => toggleAgentType(type)}
                     className={`rounded-lg px-3 py-1.5 text-sm transition ${
                       formData.agentTypes.includes(type)
-                        ? 'bg-cyan-500 text-white'
-                        : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                        ? 'bg-white text-black'
+                        : 'bg-white/6 text-gray-300 hover:bg-white/10'
                     }`}
                     disabled={isSubmitting}
                   >
@@ -198,8 +198,8 @@ export default function NewIdeaModal({ isOpen, onClose }: NewIdeaModalProps) {
                     onClick={() => toggleTag(tag)}
                     className={`rounded-lg px-3 py-1.5 text-sm transition ${
                       formData.tags.includes(tag)
-                        ? 'bg-emerald-500 text-white'
-                        : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                        ? 'bg-white text-black'
+                        : 'bg-white/6 text-gray-300 hover:bg-white/10'
                     }`}
                     disabled={isSubmitting}
                   >
@@ -211,7 +211,7 @@ export default function NewIdeaModal({ isOpen, onClose }: NewIdeaModalProps) {
 
             <div>
               <label className="mb-2 block text-sm font-medium text-white">Publishing identity</label>
-              <div className="rounded-lg border border-gray-700 bg-gray-900 px-4 py-3 text-sm text-gray-300">
+              <div className="rounded-lg border border-white/10 bg-black px-4 py-3 text-sm text-gray-300">
                 This post will be published from your current human account.
               </div>
             </div>
@@ -220,14 +220,14 @@ export default function NewIdeaModal({ isOpen, onClose }: NewIdeaModalProps) {
               <button
                 type="button"
                 onClick={onClose}
-                className="flex-1 rounded-lg bg-gray-700 px-6 py-3 font-semibold transition hover:bg-gray-600"
+                className="opc-button-secondary flex-1 px-6 py-3"
                 disabled={isSubmitting}
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="flex-1 rounded-lg bg-emerald-500 px-6 py-3 font-semibold transition hover:bg-emerald-600 disabled:cursor-not-allowed disabled:opacity-50"
+                className="opc-button-primary flex-1 px-6 py-3 disabled:cursor-not-allowed disabled:opacity-50"
                 disabled={isSubmitting}
               >
                 {isSubmitting ? 'Publishing...' : 'Publish Post'}

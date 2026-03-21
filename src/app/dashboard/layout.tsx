@@ -3,7 +3,6 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
-import DashboardExecutionRail from '@/components/dashboard/DashboardExecutionRail'
 import { useAuth } from '@/contexts/AuthContext'
 
 interface NavItem {
@@ -36,9 +35,9 @@ export default function DashboardLayout({
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-gray-900 to-gray-800">
+      <div className="opc-page-bg flex min-h-screen items-center justify-center">
         <div className="text-center text-white">
-          <div className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-emerald-500 border-t-transparent" />
+          <div className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-white/20 border-t-white" />
           <p className="mt-4 text-xl">Loading...</p>
         </div>
       </div>
@@ -51,12 +50,12 @@ export default function DashboardLayout({
     }
 
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-gray-900 to-gray-800">
+      <div className="opc-page-bg flex min-h-screen items-center justify-center">
         <div className="text-center text-white">
           <p className="mb-4 text-xl">Please login to access dashboard</p>
           <button
             onClick={handleLoginRedirect}
-            className="inline-block rounded-lg bg-emerald-500 px-6 py-3 font-semibold transition hover:bg-emerald-600"
+            className="opc-button-primary inline-block px-6 py-3"
             type="button"
           >
             Go to Login
@@ -67,7 +66,7 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800">
+    <div className="opc-page-bg min-h-screen">
       {sidebarOpen && (
         <div
           className="fixed inset-0 z-40 bg-gray-950/70 lg:hidden"
@@ -75,97 +74,101 @@ export default function DashboardLayout({
         />
       )}
 
-      <div
-        className={`fixed inset-y-0 left-0 z-50 w-64 transform bg-gray-800 transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 ${
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
-      >
-        <div className="flex h-full flex-col">
-          <div className="flex h-16 items-center justify-between border-b border-gray-700 px-6">
-            <Link href="/dashboard" className="text-xl font-bold text-white">
-              OPC Platform
-            </Link>
-            <button
-              onClick={() => setSidebarOpen(false)}
-              className="text-gray-400 hover:text-white lg:hidden"
-            >
-              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
+      <div className="flex min-h-screen">
+        {/* Sidebar */}
+        <div
+          className={`fixed inset-y-0 left-0 z-50 w-64 transform border-r border-white/8 bg-[var(--opc-surface)] transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0 ${
+            sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+          }`}
+        >
+          <div className="flex h-full flex-col">
+            <div className="flex h-16 items-center justify-between border-b border-white/8 px-6">
+              <Link href="/dashboard" className="text-xl font-bold text-white">
+                OPC Platform
+              </Link>
+              <button
+                onClick={() => setSidebarOpen(false)}
+                className="text-[color:var(--opc-muted)] hover:text-white lg:hidden"
+              >
+                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
 
-          <nav className="flex-1 space-y-2 overflow-y-auto px-4 py-6">
-            {navigation.map((item) => {
-              const isActive =
-                pathname === item.href ||
-                (item.href !== '/dashboard' && pathname.startsWith(item.href))
+            <nav className="flex-1 space-y-2 overflow-y-auto px-4 py-6">
+              {navigation.map((item) => {
+                const isActive =
+                  pathname === item.href ||
+                  (item.href !== '/dashboard' && pathname.startsWith(item.href))
 
-              return (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  className={`group flex items-center rounded-lg px-3 py-3 text-sm font-medium transition-colors ${
-                    isActive
-                      ? 'bg-emerald-600 text-white'
-                      : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                  }`}
-                  onClick={() => setSidebarOpen(false)}
-                >
-                  <svg
-                    className={`mr-3 h-6 w-6 flex-shrink-0 ${
-                      isActive ? 'text-white' : 'text-gray-400 group-hover:text-white'
+                return (
+                  <Link
+                    key={item.name}
+                    href={item.href}
+                    className={`group flex items-center rounded-lg px-3 py-3 text-sm font-medium transition-colors ${
+                      isActive
+                        ? 'bg-white/8 text-white'
+                        : 'text-[color:var(--opc-muted)] hover:bg-white/[0.04] hover:text-white'
                     }`}
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
+                    onClick={() => setSidebarOpen(false)}
                   >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
-                  </svg>
-                  {item.name}
-                </Link>
-              )
-            })}
-          </nav>
+                    <svg
+                      className={`mr-3 h-6 w-6 flex-shrink-0 ${
+                        isActive ? 'text-white' : 'text-[color:var(--opc-muted)] group-hover:text-white'
+                      }`}
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
+                    </svg>
+                    {item.name}
+                  </Link>
+                )
+              })}
+            </nav>
 
-          <div className="border-t border-gray-700 px-4 py-6">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-500 font-semibold text-white">
-                  {user.name?.[0]?.toUpperCase() || user.email[0].toUpperCase()}
+            <div className="border-t border-white/8 px-4 py-6">
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-sm font-semibold text-black">
+                    {user.name?.[0]?.toUpperCase() || user.email[0].toUpperCase()}
+                  </div>
                 </div>
-              </div>
-              <div className="ml-3">
-                <p className="text-sm font-medium text-white">{user.name || 'User'}</p>
-                <p className="text-xs text-gray-400">{user.email}</p>
+                <div className="ml-3">
+                  <p className="text-sm font-medium text-white">{user.name || 'User'}</p>
+                  <p className="text-xs text-[color:var(--opc-muted)]">{user.email}</p>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <div className="flex min-h-screen flex-col lg:pl-64">
-        <div className="sticky top-0 z-10 lg:hidden">
-          <div className="flex h-16 items-center justify-between border-b border-gray-700 bg-gray-800 px-4">
-            <button
-              onClick={() => setSidebarOpen(true)}
-              className="text-gray-400 hover:text-white"
-            >
-              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            </button>
-            <Link href="/dashboard" className="text-lg font-bold text-white">
-              OPC Platform
-            </Link>
-            <div className="w-6" />
+        {/* Main content */}
+        <div className="flex flex-1 flex-col">
+          {/* Mobile header */}
+          <div className="sticky top-0 z-10 lg:hidden">
+            <div className="flex h-16 items-center justify-between border-b border-white/8 bg-[var(--opc-surface)] px-4">
+              <button
+                onClick={() => setSidebarOpen(true)}
+                className="text-[color:var(--opc-muted)] hover:text-white"
+              >
+                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              </button>
+              <Link href="/dashboard" className="text-lg font-bold text-white">
+                OPC Platform
+              </Link>
+              <div className="w-6" />
+            </div>
           </div>
-        </div>
 
-        <main className="flex-1 p-4 lg:p-8">
-          <DashboardExecutionRail />
-          {children}
-        </main>
+          <main className="flex-1 p-4 lg:p-8">
+            {children}
+          </main>
+        </div>
       </div>
     </div>
   )

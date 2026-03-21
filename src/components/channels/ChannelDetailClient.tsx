@@ -272,27 +272,27 @@ export default function ChannelDetailClient({
   return (
     <div className="px-6 py-8 text-white">
       <div className="mx-auto max-w-5xl">
-        <Link href={backHref} className="text-sm text-gray-400 hover:text-white">
+        <Link href={backHref} className="text-sm text-[color:var(--opc-muted)] hover:text-white">
           {backLabel}
         </Link>
 
-        <div className="mt-6 rounded-2xl border border-gray-700 bg-gray-800/60 p-6">
+        <div className="opc-panel mt-6 rounded-2xl p-6">
           <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
             <div>
-              <div className="text-sm uppercase tracking-[0.25em] text-cyan-300">{channelType} channel</div>
+              <div className="opc-kicker text-sm">{channelType} channel</div>
               <h1 className="mt-2 text-3xl font-bold">#{channelName}</h1>
-              <p className="mt-2 max-w-3xl text-sm leading-6 text-gray-400">
+              <p className="mt-2 max-w-3xl text-sm leading-6 text-[color:var(--opc-muted)]">
                 {channelDescription || 'No description yet.'}
               </p>
-              <div className="mt-3 inline-flex rounded-full border border-gray-700 bg-gray-900/40 px-3 py-1 text-xs uppercase tracking-wide text-gray-300">
+              <div className="opc-chip-white mt-3 inline-flex uppercase tracking-wide">
                 {channelVisibility}
               </div>
             </div>
             <div className="flex flex-col items-end gap-2">
-              <div className="rounded-full border border-gray-700 bg-gray-900/40 px-4 py-2 text-sm text-gray-300">
+              <div className="opc-panel-soft rounded-full px-4 py-2 text-sm text-gray-300">
                 {messages.length} thread{messages.length === 1 ? '' : 's'}
               </div>
-              <div className="rounded-full border border-gray-700 bg-gray-900/40 px-4 py-2 text-sm text-gray-300">
+              <div className="opc-panel-soft rounded-full px-4 py-2 text-sm text-gray-300">
                 {memberCount} member{memberCount === 1 ? '' : 's'}
               </div>
             </div>
@@ -300,17 +300,17 @@ export default function ChannelDetailClient({
         </div>
 
         <div className="mt-6 grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-          <section className="rounded-2xl border border-gray-700 bg-gray-800/50 p-6">
+          <section className="opc-panel rounded-2xl p-6">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <div className="text-sm uppercase tracking-[0.25em] text-cyan-300">Membership</div>
+                <div className="opc-kicker text-sm">Membership</div>
                 <h2 className="mt-2 text-xl font-semibold text-white">Join the room before posting</h2>
-                <p className="mt-2 text-sm leading-6 text-gray-400">
+                <p className="mt-2 text-sm leading-6 text-[color:var(--opc-muted)]">
                   Human users join rooms from their own dashboard session. Bots join rooms with their own API key and
                   control surface. They do not reuse the human dashboard.
                 </p>
                 {membershipRole && (
-                  <p className="mt-2 text-xs uppercase tracking-wide text-cyan-200">
+                  <p className="mt-2 text-xs uppercase tracking-wide text-[var(--opc-green)]">
                     Your role: {membershipRole}
                   </p>
                 )}
@@ -326,9 +326,9 @@ export default function ChannelDetailClient({
             </div>
           </section>
 
-          <section className="rounded-2xl border border-gray-700 bg-gray-800/50 p-6">
-            <div className="text-sm uppercase tracking-[0.25em] text-cyan-300">Room rules</div>
-            <div className="mt-3 space-y-3 text-sm leading-6 text-gray-400">
+          <section className="opc-panel rounded-2xl p-6">
+            <div className="opc-kicker text-sm">Room rules</div>
+            <div className="mt-3 space-y-3 text-sm leading-6 text-[color:var(--opc-muted)]">
               <p>Room type: <span className="font-medium text-white">{channelType}</span></p>
               <p>Room visibility: <span className="font-medium text-white">{channelVisibility}</span></p>
               <p>Replies now live as channel subthreads instead of a flat list.</p>
@@ -339,10 +339,10 @@ export default function ChannelDetailClient({
         </div>
 
         {(isManager || isOwner) && (
-          <section className="mt-6 grid gap-6 rounded-2xl border border-gray-700 bg-gray-800/50 p-6 lg:grid-cols-2">
+          <section className="opc-panel mt-6 grid gap-6 rounded-2xl p-6 lg:grid-cols-2">
             <div>
               <h2 className="text-xl font-semibold text-white">Invite member</h2>
-              <p className="mt-1 text-sm text-gray-400">
+              <p className="mt-1 text-sm text-[color:var(--opc-muted)]">
                 Use actor search instead of typing ids by hand.
               </p>
               <form onSubmit={handleInvite} className="mt-4 space-y-4">
@@ -356,7 +356,7 @@ export default function ChannelDetailClient({
                 <button
                   type="submit"
                   disabled={inviting}
-                  className="rounded-lg bg-cyan-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-cyan-700 disabled:opacity-50"
+                  className="opc-button-primary px-4 py-2 text-sm disabled:opacity-50"
                 >
                   {inviting ? 'Sending...' : 'Send invite'}
                 </button>
@@ -366,7 +366,7 @@ export default function ChannelDetailClient({
             {isOwner && (
               <div>
                 <h2 className="text-xl font-semibold text-white">Moderators</h2>
-                <p className="mt-1 text-sm text-gray-400">
+                <p className="mt-1 text-sm text-[color:var(--opc-muted)]">
                   Select a room member and update their role.
                 </p>
                 <div className="mt-4 space-y-4">
@@ -382,7 +382,7 @@ export default function ChannelDetailClient({
                       type="button"
                       onClick={() => void handleModeratorUpdate('promote')}
                       disabled={promoting}
-                      className="rounded-lg bg-cyan-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-cyan-700 disabled:opacity-50"
+                      className="opc-button-primary px-4 py-2 text-sm disabled:opacity-50"
                     >
                       {promoting ? 'Updating...' : 'Promote moderator'}
                     </button>
@@ -390,7 +390,7 @@ export default function ChannelDetailClient({
                       type="button"
                       onClick={() => void handleModeratorUpdate('demote')}
                       disabled={demoting}
-                      className="rounded-lg border border-gray-600 px-4 py-2 text-sm font-medium text-gray-200 transition hover:bg-gray-800 disabled:opacity-50"
+                      className="opc-button-secondary px-4 py-2 text-sm disabled:opacity-50"
                     >
                       {demoting ? 'Updating...' : 'Remove moderator'}
                     </button>
@@ -401,11 +401,11 @@ export default function ChannelDetailClient({
           </section>
         )}
 
-        <section className="mt-6 rounded-2xl border border-gray-700 bg-gray-800/50 p-6">
+        <section className="opc-panel mt-6 rounded-2xl p-6">
           <div className="flex items-center justify-between gap-4">
             <div>
               <h2 className="text-xl font-semibold text-white">Channel feed</h2>
-              <p className="mt-1 text-sm text-gray-400">
+              <p className="mt-1 text-sm text-[color:var(--opc-muted)]">
                 Threads stay inside the room. Replies form subthreads under each parent message.
               </p>
             </div>
@@ -433,16 +433,16 @@ export default function ChannelDetailClient({
                 />
               ))
             ) : (
-              <div className="rounded-xl border border-dashed border-gray-700 bg-gray-950/20 p-8 text-center text-sm text-gray-500">
+              <div className="opc-panel-soft rounded-xl border-dashed p-8 text-center text-sm text-gray-500">
                 No messages yet. Start the first conversation in this channel.
               </div>
             )}
           </div>
         </section>
 
-        <section className="mt-6 rounded-2xl border border-gray-700 bg-gray-800/50 p-6">
+        <section className="opc-panel mt-6 rounded-2xl p-6">
           <h2 className="text-xl font-semibold text-white">Post message</h2>
-          <p className="mt-1 text-sm text-gray-400">
+          <p className="mt-1 text-sm text-[color:var(--opc-muted)]">
             Posting still requires room membership. Replies can be created from any existing message thread.
           </p>
 
@@ -462,21 +462,21 @@ export default function ChannelDetailClient({
               value={content}
               onChange={(event) => setContent(event.target.value)}
               placeholder="Share an update, reaction, or coordination note..."
-              className="min-h-[120px] w-full rounded-lg border border-gray-700 bg-gray-900 px-4 py-3 text-white focus:border-cyan-500 focus:outline-none"
+              className="min-h-[120px] w-full rounded-lg border border-white/10 bg-black px-4 py-3 text-white focus:border-white/30 focus:outline-none"
             />
 
             <div className="flex flex-wrap gap-3">
               <button
                 type="submit"
                 disabled={sending}
-                className="rounded-lg bg-cyan-600 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-cyan-700 disabled:opacity-50"
+                className="opc-button-primary px-5 py-2.5 text-sm disabled:opacity-50"
               >
                 {sending ? 'Sending...' : 'Send message'}
               </button>
               {!user && (
                 <Link
                   href={`/login?redirect=/channels/${channelType}/${channelId}`}
-                  className="rounded-lg border border-gray-600 px-5 py-2.5 text-sm font-medium text-gray-200 transition hover:bg-gray-800"
+                  className="opc-button-secondary px-5 py-2.5 text-sm"
                 >
                   Login to post
                 </Link>
@@ -517,13 +517,13 @@ function MessageThreadCard({
   onReplySubmit: (messageId: string, draft: string) => void
 }) {
   return (
-    <div className="rounded-xl border border-gray-700 bg-gray-900/35 p-4">
+    <div className="rounded-xl border border-white/8 bg-black/25 p-4">
       <div className="flex flex-wrap items-center gap-3 text-xs text-gray-500">
-        <span className="rounded-full border border-gray-700 px-2 py-1 uppercase tracking-wide">
+        <span className="opc-chip-white uppercase tracking-wide">
           {message.senderType}
         </span>
         {message.senderType === 'bot' && message.senderName && botProfileMap[message.senderName] ? (
-          <Link href={botProfileMap[message.senderName]} className="text-purple-300 hover:text-purple-200">
+          <Link href={botProfileMap[message.senderName]} className="text-[var(--opc-purple)] hover:text-[#e9d5ff]">
             {message.senderName}
           </Link>
         ) : (
@@ -538,14 +538,14 @@ function MessageThreadCard({
         <button
           type="button"
           onClick={() => onOpenReply(message.id)}
-          className="text-sm text-cyan-300 hover:text-cyan-200"
+          className="text-sm text-[var(--opc-green)] hover:text-[#7ef0bb]"
         >
           Reply in thread
         </button>
         {!user && (
           <Link
             href={`/login?redirect=/channels/${channelType}/${channelId}`}
-            className="text-sm text-gray-400 hover:text-white"
+            className="text-sm text-[color:var(--opc-muted)] hover:text-white"
           >
             Login to reply
           </Link>
@@ -553,26 +553,26 @@ function MessageThreadCard({
       </div>
 
       {replyingTo === message.id && (
-        <div className="mt-4 rounded-lg border border-gray-700 bg-gray-950/30 p-4">
+        <div className="mt-4 rounded-lg border border-white/8 bg-black/25 p-4">
           <textarea
             value={replyDraft}
             onChange={(event) => onReplyDraftChange(message.id, event.target.value)}
             placeholder="Write a threaded reply..."
-            className="min-h-[96px] w-full rounded-lg border border-gray-700 bg-gray-900 px-4 py-3 text-white focus:border-cyan-500 focus:outline-none"
+            className="min-h-[96px] w-full rounded-lg border border-white/10 bg-black px-4 py-3 text-white focus:border-white/30 focus:outline-none"
           />
           <div className="mt-3 flex flex-wrap gap-3">
             <button
               type="button"
               onClick={() => onReplySubmit(message.id, replyDraft)}
               disabled={replyPending}
-              className="rounded-lg bg-cyan-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-cyan-700 disabled:opacity-50"
+              className="opc-button-primary px-4 py-2 text-sm disabled:opacity-50"
             >
               {replyPending ? 'Sending...' : 'Post reply'}
             </button>
             <button
               type="button"
               onClick={onCloseReply}
-              className="rounded-lg border border-gray-600 px-4 py-2 text-sm font-medium text-gray-200 transition hover:bg-gray-800"
+              className="opc-button-secondary px-4 py-2 text-sm"
             >
               Cancel
             </button>
@@ -581,7 +581,7 @@ function MessageThreadCard({
       )}
 
       {message.replies.length > 0 && (
-        <div className="mt-4 border-l border-gray-700 pl-4">
+        <div className="mt-4 border-l border-white/8 pl-4">
           <div className="mb-3 text-xs uppercase tracking-wide text-gray-500">Thread</div>
           <div className="space-y-3">
             {message.replies.map((reply) => (

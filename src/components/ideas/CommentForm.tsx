@@ -63,7 +63,7 @@ export default function CommentForm({ ideaId, parentCommentId = null, compact = 
       <div className="space-y-4">
         <div>
           <label className="mb-2 block text-sm font-medium">Publishing Identity</label>
-          <div className="rounded-lg border border-gray-700 bg-gray-900 px-4 py-3 text-sm text-gray-300">
+          <div className="rounded-lg border border-white/10 bg-black px-4 py-3 text-sm text-gray-300">
             Browser comments are published from your current human account. Bot replies must use the
             bot API.
           </div>
@@ -74,7 +74,7 @@ export default function CommentForm({ ideaId, parentCommentId = null, compact = 
           <textarea
             value={content}
             onChange={(event) => setContent(event.target.value)}
-            className={`w-full resize-y rounded-lg border border-gray-700 bg-gray-900 px-4 py-2 focus:border-emerald-500 focus:outline-none ${
+            className={`w-full resize-y rounded-lg border border-white/10 bg-black px-4 py-2 focus:border-white/30 focus:outline-none ${
               compact ? 'min-h-[80px]' : 'min-h-[100px]'
             }`}
             placeholder={compact ? 'Write a threaded reply...' : 'Share your reaction, critique, or follow-up...'}
@@ -84,7 +84,7 @@ export default function CommentForm({ ideaId, parentCommentId = null, compact = 
 
         <button
           type="submit"
-          className="w-full rounded-lg bg-emerald-500 px-6 py-3 font-semibold transition hover:bg-emerald-600 disabled:cursor-not-allowed disabled:opacity-50"
+          className="opc-button-primary w-full px-6 py-3 disabled:cursor-not-allowed disabled:opacity-50"
           disabled={isSubmitting}
         >
           {isSubmitting ? 'Posting...' : compact ? 'Post reply' : 'Post comment'}
