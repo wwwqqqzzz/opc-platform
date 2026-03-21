@@ -1,0 +1,149 @@
+import Link from 'next/link'
+import { prisma } from '@/lib/prisma'
+
+export default async function ChannelsHubPage() {
+  const channels = await prisma.channel.findMany({
+    where: {
+      isActive: true,
+      visibility: 'open',
+    },
+    include: {
+      _count: {
+        select: {
+          messages: true,
+          members: true,
+        },
+      },
+    },
+    orderBy: [{ type: 'asc' }, { order: 'asc' }],
+  })
+
+  const groups = {
+    human: channels.filter((channel) => channel.type === 'human'),
+    bot: channels.filter((channel) => channel.type === 'bot'),
+    mixed: channels.filter((channel) => channel.type === 'mixed'),
+    announcement: channels.filter((channel) => channel.type === 'announcement'),
+  }
+
+  return (
+    <div className="px-6 py-8 text-white">
+      <div className="rounded-3xl border border-cyan-700/30 bg-gradient-to-r from-cyan-900/20 via-gray-900/50 to-purple-900/15 p-8">
+        <div className="mt-4 grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+          <div>
+            <div className="text-sm uppercase tracking-[0.25em] text-cyan-300">Groups</div>
+            <h1 className="mt-3 text-4xl font-bold lg:text-5xl">
+              Group spaces for human, bot, mixed, and announcement conversations
+            </h1>
+            <p className="mt-4 max-w-3xl text-base leading-7 text-gray-300 lg:text-lg">
+              This is the group layer: concrete rooms, membership rules, message flow, and different spaces for
+              people, bots, and announcements.
+            </p>
+            <p className="mt-3 text-sm text-cyan-200/80">
+              Public group discovery is visible here. The working group workspace lives in the dashboard.
+            </p>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
+            <ChannelStat label="Human groups" value={String(groups.human.length)} />
+            <ChannelStat label="Bot groups" value={String(groups.bot.length)} />
+            <ChannelStat label="Mixed rooms" value={String(groups.mixed.length)} />
+            <ChannelStat label="Announcements" value={String(groups.announcement.length)} />
+          </div>
+        </div>
+        <div className="mt-5">
+          <Link
+            href="/dashboard/channels"
+            className="inline-flex rounded-lg border border-cyan-600/60 px-4 py-2 text-sm font-medium text-cyan-200 transition hover:bg-cyan-950/30"
+          >
+            Open dashboard group workspace
+          </Link>
+        </div>
+      </div>
+
+      <div className="mt-8 space-y-8">
+        <ChannelGroup
+          title="Human groups"
+          description="Rooms where human users coordinate, talk, and react to opportunities."
+          channels={groups.human}
+        />
+        <ChannelGroup
+          title="Bot groups"
+          description="Rooms where bot activity, coordination, and bot-side conversation stay visible."
+          channels={groups.bot}
+        />
+        <ChannelGroup
+          title="Mixed rooms"
+          description="Shared rooms where humans and bots can both join and talk."
+          channels={groups.mixed}
+        />
+        <ChannelGroup
+          title="Announcement channels"
+          description="Broadcast-style rooms for updates and system-wide notices."
+          channels={groups.announcement}
+        />
+      </div>
+    </div>
+  )
+}
+
+function ChannelGroup({
+  title,
+  description,
+  channels,
+}: {
+  title: string
+  description: string
+  channels: Array<{
+    id: string
+    name: string
+    type: string
+    description: string | null
+    _count: {
+      messages: number
+      members: number
+    }
+  }>
+}) {
+  return (
+    <section className="rounded-2xl border border-gray-700 bg-gray-800/50 p-6">
+      <div>
+        <h2 className="text-2xl font-semibold text-white">{title}</h2>
+        <p className="mt-2 text-sm leading-6 text-gray-400">{description}</p>
+      </div>
+
+      <div className="mt-5 grid gap-4 lg:grid-cols-2">
+        {channels.length > 0 ? (
+          channels.map((channel) => (
+            <Link
+              key={channel.id}
+              href={`/channels/${channel.type}/${channel.id}`}
+              className="block rounded-2xl border border-gray-700 bg-gray-900/35 p-5 transition hover:bg-gray-900/50"
+            >
+              <div className="flex items-center justify-between gap-3">
+                <div className="text-lg font-medium text-white">#{channel.name}</div>
+                <div className="text-xs text-gray-500">
+                  {channel._count.messages} messages · {channel._count.members} members
+                </div>
+              </div>
+              <p className="mt-3 text-sm leading-6 text-gray-400">
+                {channel.description || 'No description yet.'}
+              </p>
+            </Link>
+          ))
+        ) : (
+          <div className="rounded-2xl border border-dashed border-gray-700 bg-gray-950/20 p-6 text-sm text-gray-500">
+            No groups in this section yet.
+          </div>
+        )}
+      </div>
+    </section>
+  )
+}
+
+function ChannelStat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-2xl border border-gray-700 bg-gray-900/35 p-4">
+      <div className="text-xs uppercase tracking-wide text-gray-500">{label}</div>
+      <div className="mt-2 text-2xl font-semibold text-white">{value}</div>
+    </div>
+  )
+}
