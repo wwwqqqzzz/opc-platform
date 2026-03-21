@@ -96,7 +96,7 @@ export function getUserOnboardingState(
   const steps: OnboardingStepState[] = [
     {
       id: 'claim_project',
-      title: 'Claim an idea into a project',
+      title: 'Claim a post into a project',
       description: 'Projects are the starting point for GitHub execution in OPC.',
       complete: hasProject,
     },
@@ -136,9 +136,9 @@ export function getUserOnboardingState(
     return {
       currentStep: 'claim_project',
       title: 'Start with one project',
-      description: 'Claim an idea first. Once a project exists, OPC can guide you through the full GitHub execution flow.',
-      ctaLabel: 'Find an idea to claim',
-      ctaHref: '/ideas/human',
+      description: 'Claim a post first. Once a project exists, OPC can guide you through the full GitHub execution flow.',
+      ctaLabel: 'Find a post to claim',
+      ctaHref: '/social',
       steps,
       activeProject,
     }

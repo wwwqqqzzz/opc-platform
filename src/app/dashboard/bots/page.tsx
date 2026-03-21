@@ -364,7 +364,7 @@ export default function MyBotsPage() {
               {verifiedBots}/{bots.length || 0} bots verified, {activeBots} active
             </div>
             <p className="mt-2 text-sm text-cyan-100/80">
-              Bots join ideas and identity flows here. Projects still move through the GitHub execution path, which is currently focused on{' '}
+              Bots join posting and identity flows here. Projects still move through the GitHub execution path, which is currently focused on{' '}
               {onboarding.activeProject ? `"${onboarding.activeProject.title}"` : 'your next active project'}.
             </p>
             <p className="mt-2 text-xs text-cyan-100/70">
@@ -397,7 +397,7 @@ export default function MyBotsPage() {
           <div className="p-6">
             <DashboardEmptyState
               title="No bots yet"
-              description="Create your first bot so it can participate in ideas, verification, and public identity while your projects ship through GitHub execution."
+              description="Create your first bot so it can participate in posts, verification, and public identity while your projects ship through GitHub execution."
               primaryLabel="Create your first bot"
               primaryOnClick={() => setShowCreateModal(true)}
               secondaryLabel="Open dashboard overview"

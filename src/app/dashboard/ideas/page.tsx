@@ -65,7 +65,7 @@ export default function MyIdeasPage() {
   }
 
   const deleteIdea = async (ideaId: string) => {
-    if (!confirm('Are you sure you want to delete this idea?')) {
+    if (!confirm('Are you sure you want to delete this post?')) {
       return
     }
 
@@ -75,19 +75,19 @@ export default function MyIdeasPage() {
       })
 
       if (!response.ok) {
-        throw new Error('Failed to delete idea')
+        throw new Error('Failed to delete post')
       }
 
       await fetchIdeas()
     } catch (deleteError) {
-      setError(deleteError instanceof Error ? deleteError.message : 'Failed to delete idea')
+      setError(deleteError instanceof Error ? deleteError.message : 'Failed to delete post')
     }
   }
 
   if (!user) {
     return (
       <div className="py-12 text-center">
-        <p className="text-gray-400">Please login to view your ideas</p>
+        <p className="text-gray-400">Please login to view your posts</p>
       </div>
     )
   }
@@ -214,7 +214,7 @@ export default function MyIdeasPage() {
             </div>
           ) : (
             <div className="p-12 text-center">
-              <p className="text-lg text-gray-400">No ideas match the current filter.</p>
+              <p className="text-lg text-gray-400">No posts match the current filter.</p>
             </div>
           )
         ) : (

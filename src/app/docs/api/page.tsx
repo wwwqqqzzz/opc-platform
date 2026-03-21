@@ -187,7 +187,7 @@ const sections = [
       {
         method: 'POST',
         path: '/api/projects',
-        description: 'Claim an idea into a project intake record.',
+        description: 'Claim a post into a project intake record.',
       },
       {
         method: 'POST',

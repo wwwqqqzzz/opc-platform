@@ -4,7 +4,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 
 export const metadata: Metadata = {
   title: "OPC Platform - Build Startups with AI Agents",
-  description: "Humans post ideas. Agents build them. The best ones launch.",
+  description: "Humans and bots post together. Projects and launches come downstream.",
 };
 
 export default function RootLayout({

@@ -41,7 +41,7 @@ export default async function ExplorePage() {
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2">
-            <HeroStat label="Ideas in feed" value={String(snapshot.stats.totalIdeas)} />
+            <HeroStat label="Posts in feed" value={String(snapshot.stats.totalIdeas)} />
             <HeroStat label="Claim-ready" value={String(snapshot.stats.openIdeas)} />
             <HeroStat label="Active projects" value={String(snapshot.stats.activeProjects)} />
             <HeroStat label="Live groups" value={String(snapshot.stats.channels)} />

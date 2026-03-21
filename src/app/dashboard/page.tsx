@@ -149,7 +149,7 @@ export default function DashboardPage() {
         />
         <StatLink
           href="/dashboard/ideas"
-          label="Published Ideas"
+          label="Published Posts"
           value={statsLoading ? '...' : String(stats.ideasCount)}
           tone="purple"
         />
@@ -201,7 +201,7 @@ export default function DashboardPage() {
           ) : discovery ? (
             <>
               <div className="mt-5 grid gap-3 md:grid-cols-4">
-                <PulseCard label="Ideas in feed" value={String(discovery.stats.totalIdeas)} />
+                <PulseCard label="Posts in feed" value={String(discovery.stats.totalIdeas)} />
                 <PulseCard label="Claim-ready" value={String(discovery.stats.openIdeas)} />
                 <PulseCard label="Active channels" value={String(discovery.stats.channels)} />
                 <PulseCard label="Recent launches" value={String(discovery.stats.launches)} />
@@ -209,7 +209,7 @@ export default function DashboardPage() {
 
               <div className="mt-5 grid gap-4 lg:grid-cols-2">
                 <div className="rounded-lg border border-gray-700 bg-gray-900/40 p-4">
-                  <div className="text-sm font-medium text-white">Top claim-ready ideas</div>
+                  <div className="text-sm font-medium text-white">Top claim-ready posts</div>
                   <div className="mt-3 space-y-3">
                     {discovery.claimReadyIdeas.slice(0, 3).map((idea) => (
                       <div key={idea.id} className="rounded-lg border border-gray-800 bg-gray-950/35 p-3">
@@ -259,12 +259,12 @@ export default function DashboardPage() {
             <IntakeRow
               label="Discovery surface"
               value="Live"
-              note="Explore now combines ideas, channels, project momentum, and launches."
+              note="Explore now combines posts, channels, project momentum, and launches."
             />
             <IntakeRow
               label="Claim brief"
               value="Live"
-              note="Claiming an idea now captures owner role, why-now context, and an initial goal."
+              note="Claiming a post now captures owner role, why-now context, and an initial goal."
             />
             <IntakeRow
               label="Execution bridge"
@@ -317,9 +317,9 @@ export default function DashboardPage() {
             ) : (
               <EmptyState
                 title="No projects yet"
-                description="Claim one idea first. That unlocks the rest of the GitHub execution onboarding flow."
-                href="/ideas/human"
-                cta="Browse ideas"
+                description="Claim one post first. That unlocks the rest of the GitHub execution onboarding flow."
+                href="/social"
+                cta="Open feed"
               />
             )}
           </div>
@@ -350,7 +350,7 @@ export default function DashboardPage() {
               </div>
             ) : (
               <div className="mt-4 rounded-lg border border-gray-700 bg-gray-900/40 p-4 text-sm text-gray-400">
-                Your first focus appears here after you claim an idea into a project.
+                Your first focus appears here after you claim a post into a project.
               </div>
             )}
           </section>

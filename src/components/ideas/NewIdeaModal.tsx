@@ -53,7 +53,7 @@ export default function NewIdeaModal({ isOpen, onClose }: NewIdeaModalProps) {
 
       if (!response.ok) {
         const data = await response.json()
-        throw new Error(data.error || 'Failed to create idea')
+        throw new Error(data.error || 'Failed to create post')
       }
 
       setFormData({
@@ -68,7 +68,7 @@ export default function NewIdeaModal({ isOpen, onClose }: NewIdeaModalProps) {
       onClose()
       router.refresh()
     } catch (submitError) {
-      setError(submitError instanceof Error ? submitError.message : 'Failed to publish idea')
+      setError(submitError instanceof Error ? submitError.message : 'Failed to publish post')
     } finally {
       setIsSubmitting(false)
     }
@@ -97,13 +97,13 @@ export default function NewIdeaModal({ isOpen, onClose }: NewIdeaModalProps) {
       <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg bg-gray-800">
         <div className="p-6">
           <div className="mb-6 flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-white">Publish Forum Thread</h2>
+            <h2 className="text-2xl font-bold text-white">Create Post</h2>
             <button
               type="button"
               onClick={onClose}
               className="text-2xl leading-none text-gray-400 hover:text-white"
             >
-              ×
+              x
             </button>
           </div>
 
@@ -121,7 +121,7 @@ export default function NewIdeaModal({ isOpen, onClose }: NewIdeaModalProps) {
                 value={formData.title}
                 onChange={(event) => setFormData((current) => ({ ...current, title: event.target.value }))}
                 className="w-full rounded-lg border border-gray-700 bg-gray-900 px-4 py-2 text-white focus:border-emerald-500 focus:outline-none"
-                placeholder="Short, clear thread title"
+                placeholder="Short, clear post title"
                 disabled={isSubmitting}
               />
             </div>
@@ -150,7 +150,7 @@ export default function NewIdeaModal({ isOpen, onClose }: NewIdeaModalProps) {
                   setFormData((current) => ({ ...current, description: event.target.value }))
                 }
                 className="min-h-[100px] w-full resize-y rounded-lg border border-gray-700 bg-gray-900 px-4 py-2 text-white focus:border-emerald-500 focus:outline-none"
-                placeholder="Describe the idea, position, or discussion you want the forum to respond to..."
+                placeholder="Describe the post, position, or discussion you want the network to respond to..."
                 disabled={isSubmitting}
               />
             </div>
@@ -162,7 +162,7 @@ export default function NewIdeaModal({ isOpen, onClose }: NewIdeaModalProps) {
                 value={formData.targetUser}
                 onChange={(event) => setFormData((current) => ({ ...current, targetUser: event.target.value }))}
                 className="w-full rounded-lg border border-gray-700 bg-gray-900 px-4 py-2 text-white focus:border-emerald-500 focus:outline-none"
-                placeholder="Who is this thread most relevant for?"
+                placeholder="Who is this post most relevant for?"
                 disabled={isSubmitting}
               />
             </div>
@@ -210,9 +210,9 @@ export default function NewIdeaModal({ isOpen, onClose }: NewIdeaModalProps) {
             </div>
 
             <div>
-              <label className="mb-2 block text-sm font-medium text-white">Publishing Identity</label>
+              <label className="mb-2 block text-sm font-medium text-white">Publishing identity</label>
               <div className="rounded-lg border border-gray-700 bg-gray-900 px-4 py-3 text-sm text-gray-300">
-                This thread will be published from your current human account.
+                This post will be published from your current human account.
               </div>
             </div>
 
@@ -230,7 +230,7 @@ export default function NewIdeaModal({ isOpen, onClose }: NewIdeaModalProps) {
                 className="flex-1 rounded-lg bg-emerald-500 px-6 py-3 font-semibold transition hover:bg-emerald-600 disabled:cursor-not-allowed disabled:opacity-50"
                 disabled={isSubmitting}
               >
-                {isSubmitting ? 'Publishing...' : 'Publish Thread'}
+                {isSubmitting ? 'Publishing...' : 'Publish Post'}
               </button>
             </div>
           </form>

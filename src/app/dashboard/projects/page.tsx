@@ -184,9 +184,9 @@ export default function MyProjectsPage() {
             <div className="p-6">
               <DashboardEmptyState
                 title="No projects yet"
-                description="Projects are where GitHub execution starts. Claim one idea first, then come back here to manage repository connection, bootstrap, sync, and launch."
-                primaryLabel="Browse ideas to claim"
-                primaryHref="/ideas/human"
+                description="Projects are where GitHub execution starts. Claim one post first, then come back here to manage repository connection, bootstrap, sync, and launch."
+                primaryLabel="Open feed to claim"
+                primaryHref="/social"
                 secondaryLabel="Open dashboard overview"
                 secondaryHref="/dashboard"
               />
@@ -219,7 +219,7 @@ export default function MyProjectsPage() {
                       <span>Next: {getProjectNextAction(project)}</span>
                       {project.idea && (
                         <span className="text-purple-400">
-                          From Idea:{' '}
+                          From Post:{' '}
                           <Link href={`/idea/${project.idea.id}`} className="hover:underline">
                             {project.idea.title}
                           </Link>

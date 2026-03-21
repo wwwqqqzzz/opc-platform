@@ -96,7 +96,7 @@ export default function DashboardExecutionRail() {
               <>
                 <div className="mt-1 text-lg font-medium text-white">No active project yet</div>
                 <p className="mt-2 text-sm text-gray-400">
-                  Claim one idea to activate the GitHub execution flow.
+                  Claim one post to activate the GitHub execution flow.
                 </p>
                 <Link
                   href={onboarding.ctaHref}

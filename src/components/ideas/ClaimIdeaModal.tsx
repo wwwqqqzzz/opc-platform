@@ -70,7 +70,7 @@ export default function ClaimIdeaModal({
 
       if (!response.ok) {
         const data = await response.json()
-        throw new Error(data.error || 'Failed to claim idea')
+        throw new Error(data.error || 'Failed to claim post')
       }
 
       const project = await response.json()
@@ -78,7 +78,7 @@ export default function ClaimIdeaModal({
       router.push(`/project/${project.id}?onboarding=1&claimed=1`)
       router.refresh()
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to claim idea. Please try again.')
+      setError(err instanceof Error ? err.message : 'Failed to claim post. Please try again.')
     } finally {
       setIsSubmitting(false)
     }
@@ -88,7 +88,7 @@ export default function ClaimIdeaModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
       <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg bg-gray-800 p-6">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-2xl font-bold">Claim this idea</h2>
+          <h2 className="text-2xl font-bold">Claim this post</h2>
           <button
             onClick={onClose}
             className="text-2xl text-gray-400 hover:text-white"
@@ -100,7 +100,7 @@ export default function ClaimIdeaModal({
         </div>
 
         <div className="mb-4 rounded-lg bg-gray-900/50 p-3">
-          <div className="mb-1 text-sm text-gray-400">Idea to claim:</div>
+          <div className="mb-1 text-sm text-gray-400">Post to claim:</div>
           <div className="font-medium">{ideaTitle}</div>
         </div>
 
@@ -177,7 +177,7 @@ export default function ClaimIdeaModal({
             <textarea
               value={whyNow}
               onChange={(e) => setWhyNow(e.target.value)}
-              placeholder="Why should this move now instead of staying an idea?"
+              placeholder="Why should this move now instead of staying a post in the feed?"
               className="min-h-[96px] w-full rounded-lg border border-gray-700 bg-gray-900 px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-yellow-500"
               disabled={isSubmitting}
               required
@@ -215,7 +215,7 @@ export default function ClaimIdeaModal({
               disabled={isSubmitting}
               className="flex-1 rounded-lg bg-gradient-to-r from-yellow-500 to-orange-500 px-4 py-2 font-medium transition hover:from-yellow-600 hover:to-orange-600 disabled:opacity-50"
             >
-              {isSubmitting ? 'Claiming...' : 'Claim idea'}
+              {isSubmitting ? 'Claiming...' : 'Claim post'}
             </button>
           </div>
         </form>
