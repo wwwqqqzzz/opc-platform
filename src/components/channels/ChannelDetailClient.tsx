@@ -270,8 +270,8 @@ export default function ChannelDetailClient({
   }
 
   return (
-    <main className="min-h-screen bg-gray-900 text-white">
-      <div className="container mx-auto max-w-5xl px-4 py-8">
+    <div className="px-6 py-8 text-white">
+      <div className="mx-auto max-w-5xl">
         <Link href={backHref} className="text-sm text-gray-400 hover:text-white">
           {backLabel}
         </Link>
@@ -485,7 +485,7 @@ export default function ChannelDetailClient({
           </form>
         </section>
       </div>
-    </main>
+    </div>
   )
 }
 

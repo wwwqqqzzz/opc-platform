@@ -24,13 +24,35 @@ const NAV_ITEMS = [
 export default function PublicSurfaceNav({ currentUser }: PublicSurfaceNavProps) {
   const pathname = usePathname()
 
+  const isActive = (href: string) => {
+    if (href === '/social') {
+      return (
+        pathname === '/social' ||
+        pathname.startsWith('/idea/') ||
+        pathname === '/project' ||
+        pathname.startsWith('/project/') ||
+        pathname === '/launch'
+      )
+    }
+
+    if (href === '/channels') {
+      return pathname === '/channels' || pathname.startsWith('/channels/')
+    }
+
+    if (href === '/bots') {
+      return pathname === '/bots' || pathname.startsWith('/bots/')
+    }
+
+    return pathname === href
+  }
+
   return (
     <div className="sticky top-0 flex min-h-screen flex-col justify-between py-2">
       <div>
         <div className="px-3 text-[2.65rem] font-black tracking-[-0.06em] text-white">OPC</div>
         <nav className="mt-8 space-y-1">
           {NAV_ITEMS.map((item) => {
-            const active = pathname === item.href
+            const active = isActive(item.href)
             return (
               <Link
                 key={item.href}

@@ -15,17 +15,21 @@ export default async function ProjectsPage() {
   })
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 text-white">
-      <div className="container mx-auto px-4 py-8">
-        <div className="mb-8 flex items-center justify-between">
-          <div>
-            <Link href="/" className="mb-2 inline-block text-gray-400 hover:text-white">
-              Back to Ideas
+    <div className="px-6 py-8 text-white">
+      <div className="mx-auto max-w-6xl">
+        <div className="mb-8 rounded-3xl border border-white/8 bg-[#08080a] p-6">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <div className="text-sm uppercase tracking-[0.25em] text-cyan-300">Projects</div>
+              <h1 className="mt-3 text-4xl font-bold tracking-[-0.04em] text-white">Active builds in public view</h1>
+              <p className="mt-3 max-w-3xl text-sm leading-7 text-gray-400">
+                These are claimed posts that moved out of the timeline and into project execution. The feed stays public.
+                The workbench and GitHub delivery trail stay visible here.
+              </p>
+            </div>
+            <Link href="/social" className="text-sm text-gray-500 transition hover:text-white">
+              Back to Home
             </Link>
-            <h1 className="text-3xl font-bold">Active Projects</h1>
-            <p className="mt-2 text-gray-400">
-              Public project intake and GitHub execution status across OPC Platform.
-            </p>
           </div>
         </div>
 
@@ -105,18 +109,18 @@ export default async function ProjectsPage() {
             })}
           </div>
         ) : (
-          <div className="py-16 text-center">
+          <div className="rounded-3xl border border-white/8 bg-[#08080a] px-6 py-16 text-center">
             <h2 className="mb-2 text-2xl font-bold">No active projects</h2>
             <p className="mb-6 text-gray-400">
               Projects will appear here once ideas are claimed and moved into delivery.
             </p>
-            <Link href="/" className="inline-block rounded-lg bg-emerald-500 px-6 py-3 font-semibold transition hover:bg-emerald-600">
-              Submit an Idea
+            <Link href="/social" className="inline-block rounded-full bg-white px-6 py-3 text-sm font-semibold text-black transition hover:bg-gray-200">
+              Open feed
             </Link>
           </div>
         )}
       </div>
-    </main>
+    </div>
   )
 }
 

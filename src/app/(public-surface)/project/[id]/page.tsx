@@ -220,11 +220,11 @@ export default function ProjectDetailPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 text-white">
-        <div className="container mx-auto max-w-6xl px-4 py-8">
+      <div className="px-6 py-10 text-white">
+        <div className="mx-auto max-w-6xl">
           <div className="py-16 text-center text-gray-400">Loading...</div>
         </div>
-      </main>
+      </div>
     )
   }
 
@@ -335,8 +335,8 @@ export default function ProjectDetailPage() {
   ]
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 text-white">
-      <div className="container mx-auto max-w-6xl px-4 py-8">
+    <div className="px-6 py-8 text-white">
+      <div className="mx-auto max-w-6xl">
         <div className="mb-8">
           <Link href="/project" className="mb-4 inline-block text-gray-400 hover:text-white">
             Back to Projects
@@ -955,7 +955,7 @@ export default function ProjectDetailPage() {
           </div>
         </div>
       </div>
-    </main>
+    </div>
   )
 }
 

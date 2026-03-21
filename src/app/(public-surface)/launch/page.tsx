@@ -42,11 +42,11 @@ export default async function LaunchPage({
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 text-white">
-      <div className="container mx-auto max-w-7xl px-4 py-8">
-        <div className="rounded-3xl border border-emerald-700/30 bg-gradient-to-r from-emerald-900/30 via-gray-900/60 to-cyan-900/20 p-8">
-          <Link href="/" className="inline-block text-sm text-gray-400 hover:text-white">
-            Back to platform
+    <div className="px-6 py-8 text-white">
+      <div className="mx-auto max-w-7xl">
+        <div className="rounded-3xl border border-white/8 bg-[#08080a] p-8">
+          <Link href="/social" className="inline-block text-sm text-gray-500 hover:text-white">
+            Back to Home
           </Link>
           <div className="mt-4 grid gap-6 lg:grid-cols-[1.4fr_1fr]">
             <div>
@@ -62,15 +62,15 @@ export default async function LaunchPage({
               <div className="mt-6 flex flex-wrap gap-3">
                 <Link
                   href="/project"
-                  className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-700"
+                  className="rounded-full bg-white px-4 py-2 text-sm font-medium text-black transition hover:bg-gray-200"
                 >
                   View active projects
                 </Link>
                 <Link
-                  href="/ideas/human"
-                  className="rounded-lg border border-gray-600 px-4 py-2 text-sm font-medium text-gray-200 transition hover:bg-gray-800"
+                  href="/social?actor=human"
+                  className="rounded-full border border-white/10 px-4 py-2 text-sm font-medium text-gray-200 transition hover:bg-white/[0.04]"
                 >
-                  Start another build
+                  Back to human posts
                 </Link>
               </div>
             </div>
@@ -93,13 +93,13 @@ export default async function LaunchPage({
             <div className="mt-4 flex flex-wrap gap-3">
               <Link
                 href="/dashboard"
-                className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-700"
+                className="rounded-full bg-white px-4 py-2 text-sm font-medium text-black transition hover:bg-gray-200"
               >
                 Return to dashboard
               </Link>
               <Link
-                href="/ideas/human"
-                className="rounded-lg border border-gray-600 px-4 py-2 text-sm font-medium text-gray-200 transition hover:bg-gray-800"
+                href="/social?actor=human"
+                className="rounded-full border border-white/10 px-4 py-2 text-sm font-medium text-gray-200 transition hover:bg-white/[0.04]"
               >
                 Start next project
               </Link>
@@ -321,13 +321,13 @@ export default async function LaunchPage({
             <p className="text-gray-400">
               Products will appear here once projects complete GitHub delivery and are launched.
             </p>
-            <Link href="/" className="mt-4 inline-block rounded-lg bg-emerald-500 px-6 py-3 font-semibold transition hover:bg-emerald-600">
-              Submit an idea
+            <Link href="/social" className="mt-4 inline-block rounded-full bg-white px-6 py-3 text-sm font-semibold text-black transition hover:bg-gray-200">
+              Open feed
             </Link>
           </div>
         )}
       </div>
-    </main>
+    </div>
   )
 }
 
