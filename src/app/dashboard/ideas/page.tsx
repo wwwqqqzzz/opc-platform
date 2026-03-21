@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import DashboardEmptyState from '@/components/dashboard/DashboardEmptyState'
+import NewIdeaModal from '@/components/ideas/NewIdeaModal'
 import { useAuth } from '@/contexts/AuthContext'
 import { useDashboardOnboarding } from '@/hooks/useDashboardExecutionState'
 
@@ -34,6 +35,7 @@ export default function MyIdeasPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [filter, setFilter] = useState<IdeaFilter>('all')
+  const [isComposerOpen, setIsComposerOpen] = useState(false)
 
   useEffect(() => {
     if (user) {
@@ -119,17 +121,25 @@ export default function MyIdeasPage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">My Ideas</h1>
+          <div className="text-sm uppercase tracking-wide text-cyan-300">Human posting surface</div>
+          <h1 className="mt-1 text-2xl font-bold text-white">Post</h1>
           <p className="mt-1 text-sm text-gray-400">
-            Track which ideas are still waiting, which ones became projects, and where to push next.
+            Publish from your human control surface and manage every post you already pushed into the public feed.
           </p>
         </div>
         <div className="flex flex-wrap gap-3">
-          <Link
-            href="/ideas/human"
+          <button
+            type="button"
+            onClick={() => setIsComposerOpen(true)}
             className="inline-flex items-center rounded-lg bg-cyan-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-cyan-700"
           >
-            Browse Idea Board
+            New post
+          </button>
+          <Link
+            href="/social"
+            className="inline-flex items-center rounded-lg border border-gray-600 px-4 py-2 text-sm font-medium text-gray-200 transition hover:bg-gray-800"
+          >
+            Open feed
           </Link>
           {onboarding.activeProject && (
             <Link
@@ -145,10 +155,10 @@ export default function MyIdeasPage() {
       <section className="rounded-lg border border-cyan-700/40 bg-cyan-900/20 p-5">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
-            <div className="text-sm uppercase tracking-wide text-cyan-300">Idea to execution</div>
-            <div className="mt-1 text-lg font-medium text-white">{claimedIdeas} idea(s) already became projects</div>
+            <div className="text-sm uppercase tracking-wide text-cyan-300">Posting to execution</div>
+            <div className="mt-1 text-lg font-medium text-white">{claimedIdeas} post(s) already became projects</div>
             <p className="mt-2 text-sm text-cyan-100/80">
-              Ideas are the intake layer. Once one gets claimed, GitHub execution moves to the active project flow.
+              Posts are the public intake layer. Once one gets claimed, execution moves to the active project flow.
             </p>
           </div>
           <Link
@@ -185,13 +195,22 @@ export default function MyIdeasPage() {
           ideas.length === 0 ? (
             <div className="p-6">
               <DashboardEmptyState
-                title="No ideas yet"
-                description="Your idea list is empty. Start by browsing the idea board, then claim or publish the first opportunity you want to turn into a project."
-                primaryLabel="Browse idea board"
-                primaryHref="/ideas/human"
+                title="No posts yet"
+                description="Your human posting surface is empty. Publish the first post here, then watch replies, follows, and project claims build downstream."
+                primaryLabel="Open composer"
+                primaryHref="/dashboard/ideas"
                 secondaryLabel="Open dashboard overview"
                 secondaryHref="/dashboard"
               />
+              <div className="mt-4 flex justify-center">
+                <button
+                  type="button"
+                  onClick={() => setIsComposerOpen(true)}
+                  className="rounded-lg bg-cyan-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-cyan-700"
+                >
+                  New post
+                </button>
+              </div>
             </div>
           ) : (
             <div className="p-12 text-center">
@@ -250,6 +269,8 @@ export default function MyIdeasPage() {
           </div>
         )}
       </div>
+
+      <NewIdeaModal isOpen={isComposerOpen} onClose={() => setIsComposerOpen(false)} />
     </div>
   )
 }
