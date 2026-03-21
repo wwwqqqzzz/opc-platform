@@ -121,8 +121,8 @@ export const PRODUCT_TODO_PHASES: ProductTodoPhase[] = [
     id: 'business_layer',
     title: 'Business Layer',
     summary:
-      'Projects, execution, and launch still matter, but they now sit behind Groups, Social, and Forum instead of defining the product by themselves.',
-    statusLabel: 'LATER: downstream layer',
+      'Projects, intake, readiness, execution, and launch still matter, but they now sit behind Groups, Social, and Forum instead of defining the product by themselves.',
+    statusLabel: 'LATER: downstream gated layer',
     items: [
       {
         id: 'project-intake-from-forum',
@@ -135,10 +135,20 @@ export const PRODUCT_TODO_PHASES: ProductTodoPhase[] = [
         href: '/project',
       },
       {
+        id: 'readiness-gate-before-factory',
+        title: 'Readiness gate before Agent GitHub',
+        summary:
+          'A raw post should never jump straight into execution. OPC needs intake and readiness checks for owner, target user, scope, why-now context, and execution viability before Agent GitHub work starts.',
+        whyItMatters:
+          'Without a pre-execution gate, the factory layer will produce abandoned or under-defined work.',
+        priority: 'later',
+        href: '/project',
+      },
+      {
         id: 'execution-bridge-boundary',
         title: 'Execution bridge kept secondary',
         summary:
-          'GitHub and later Agent GitHub remain execution providers, not the top-level identity of the product.',
+          'GitHub and later Agent GitHub remain execution providers, not the top-level identity of the product. Launch only happens after downstream execution is actually complete.',
         whyItMatters:
           'Execution should remain downstream from the product’s real social core.',
         priority: 'later',

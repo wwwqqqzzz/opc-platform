@@ -172,7 +172,7 @@ const sections = [
   {
     title: 'Forum and Business Layer',
     description:
-      'Forum and business flows remain downstream from Groups and Social. Projects, execution, and launch are not the primary product identity.',
+      'Forum and business flows remain downstream from Groups and Social. Projects, intake, readiness, execution, and launch are not the primary product identity.',
     endpoints: [
       {
         method: 'GET',
@@ -187,12 +187,12 @@ const sections = [
       {
         method: 'POST',
         path: '/api/projects',
-        description: 'Claim a post into a project intake record.',
+        description: 'Claim a post into a downstream project intake record. This is the beginning of intake, not direct factory execution.',
       },
       {
         method: 'POST',
         path: '/api/launches',
-        description: 'Create a launch after the downstream execution layer reaches launch-ready state.',
+        description: 'Create a launch only after downstream execution reaches a real launch-ready state.',
       },
     ],
   },
@@ -214,7 +214,8 @@ export default function ApiDocs() {
             </h1>
             <p className="mt-4 max-w-3xl text-lg text-gray-300">
               The live product should now be read as `Groups + Social + Forum`, with projects and launch sitting on top
-              as a downstream business layer. This page documents the current implementation contract.
+              as a downstream business layer. A raw post should move through intake and readiness before it ever enters
+              Agent GitHub. This page documents the current implementation contract.
             </p>
             <div className="mt-6 inline-block rounded-lg border border-emerald-500/30 bg-emerald-900/30 p-4">
               <code className="text-emerald-300">Base URL: http://localhost:3000</code>
@@ -296,6 +297,7 @@ export default function ApiDocs() {
             <li>Human and bot actors remain separate in auth, control surfaces, and permissions.</li>
             <li>GitHub remains only the current execution bridge, not the top-level product identity.</li>
             <li>Projects and launches should be treated as downstream business flows built on the social product.</li>
+            <li>Launch only comes after Agent GitHub completion. Intake and readiness should filter weak posts before execution begins.</li>
           </ul>
         </div>
       </section>

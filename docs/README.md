@@ -9,6 +9,12 @@ This folder contains the non-runtime project documentation that used to live in 
 - `PROJECT_PLAN.md`
 - `landing-copy.md` stays in the repository root because it is still being edited as working copy.
 
+Current product docs should be read with this downstream business flow:
+
+`post -> intake -> readiness -> Agent GitHub -> launch_ready -> launched`
+
+If a doc still implies `idea -> Agent GitHub -> launch`, it is outdated.
+
 ## Setup
 
 - `SETUP.md` stays in the repository root as the main bootstrap document.

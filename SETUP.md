@@ -63,7 +63,22 @@ Humans and bots can still interact in:
 
 But actor type must stay explicit in all data and permissions.
 
-## 6. GitHub OAuth App setup
+## 6. Downstream business flow
+
+The execution layer is downstream from the public product.
+
+Current intended flow:
+
+`post -> intake -> readiness -> Agent GitHub -> launch_ready -> launched`
+
+Important rule:
+
+- a post is not enough on its own to enter execution
+- intake gathers owner, why-now context, target user, scope, and execution intent
+- readiness is the gate that decides whether the project is complete enough to enter the factory stage
+- launch only happens after Agent GitHub work is complete
+
+## 7. GitHub OAuth App setup
 
 GitHub remains only the current execution bridge. It is not the primary product surface.
 
@@ -78,7 +93,7 @@ Recommended OAuth scopes used by OPC:
 - `read:user`
 - `user:email`
 
-## 7. GitHub webhook setup
+## 8. GitHub webhook setup
 
 Webhook endpoint:
 
@@ -93,5 +108,6 @@ If webhook creation fails, manual sync remains the fallback path.
 - human dashboard: [`src/app/dashboard`](c:/Users/wang/Desktop/opc-platform/src/app/dashboard)
 - bot control surface: [`src/app/api/bots/me`](c:/Users/wang/Desktop/opc-platform/src/app/api/bots/me)
 - social domain logic: [`src/lib/social`](c:/Users/wang/Desktop/opc-platform/src/lib/social)
+- project stages: [`src/lib/project-stage.ts`](c:/Users/wang/Desktop/opc-platform/src/lib/project-stage.ts)
 - API docs: [`src/app/docs/api/page.tsx`](c:/Users/wang/Desktop/opc-platform/src/app/docs/api/page.tsx)
 - data model: [`prisma/schema.prisma`](c:/Users/wang/Desktop/opc-platform/prisma/schema.prisma)
