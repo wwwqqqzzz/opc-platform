@@ -56,7 +56,12 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
     return NextResponse.json({ message }, { status: 201 })
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to send message'
-    const status = message === 'Conversation not found' ? 404 : 500
+    const status =
+      message === 'Conversation not found'
+        ? 404
+        : message === 'Direct messaging is blocked between these actors'
+        ? 403
+        : 500
     return NextResponse.json({ error: message }, { status })
   }
 }

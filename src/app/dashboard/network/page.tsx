@@ -1,6 +1,8 @@
 import Link from 'next/link'
+import NetworkControlsClient from '@/components/social/NetworkControlsClient'
 import { getAuthenticatedUser } from '@/lib/jwt'
 import { prisma } from '@/lib/prisma'
+import { listConnectionsForActor } from '@/lib/social/connections'
 import { getSocialFollowOverview } from '@/lib/social/follows'
 
 export default async function DashboardNetworkPage() {
@@ -14,7 +16,7 @@ export default async function DashboardNetworkPage() {
     )
   }
 
-  const [humanNetwork, bots] = await Promise.all([
+  const [humanNetwork, bots, incomingConnections, outgoingConnections, acceptedFriends, acceptedContacts] = await Promise.all([
     getSocialFollowOverview(user.id, 'user', 8),
     prisma.bot.findMany({
       where: {
@@ -34,6 +36,22 @@ export default async function DashboardNetworkPage() {
       },
       take: 6,
     }),
+    listConnectionsForActor(
+      { id: user.id, type: 'user' },
+      { status: 'pending', direction: 'incoming' }
+    ),
+    listConnectionsForActor(
+      { id: user.id, type: 'user' },
+      { status: 'pending', direction: 'outgoing' }
+    ),
+    listConnectionsForActor(
+      { id: user.id, type: 'user' },
+      { status: 'accepted', connectionType: 'friend' }
+    ),
+    listConnectionsForActor(
+      { id: user.id, type: 'user' },
+      { status: 'accepted', connectionType: 'contact' }
+    ),
   ])
 
   const botNetworks = await Promise.all(
@@ -92,6 +110,26 @@ export default async function DashboardNetworkPage() {
           description="Actors you currently follow from your human account."
           items={humanNetwork.following}
           empty="You are not following anyone yet."
+        />
+      </div>
+
+      <NetworkControlsClient
+        initialIncoming={incomingConnections}
+        initialOutgoing={outgoingConnections}
+      />
+
+      <div className="grid gap-6 xl:grid-cols-2">
+        <ConnectionListCard
+          title="Accepted friends"
+          description="Mutual connections that made it past the request stage."
+          items={acceptedFriends}
+          empty="No accepted friends yet."
+        />
+        <ConnectionListCard
+          title="Accepted contacts"
+          description="Lighter-weight accepted contacts across humans and bots."
+          items={acceptedContacts}
+          empty="No accepted contacts yet."
         />
       </div>
 
@@ -270,5 +308,67 @@ function NetworkMiniStat({ label, value }: { label: string; value: string }) {
       <div className="text-xs uppercase tracking-wide text-gray-500">{label}</div>
       <div className="mt-1 text-lg font-semibold text-white">{value}</div>
     </div>
+  )
+}
+
+function ConnectionListCard({
+  title,
+  description,
+  items,
+  empty,
+}: {
+  title: string
+  description: string
+  items: Array<{
+    id: string
+    type: 'user' | 'bot'
+    name: string
+    subtitle: string
+    href: string | null
+    connectionType: 'friend' | 'contact'
+    createdAt: string
+  }>
+  empty: string
+}) {
+  return (
+    <section className="rounded-lg border border-gray-700 bg-gray-800 p-5">
+      <h2 className="text-xl font-semibold text-white">{title}</h2>
+      <p className="mt-1 text-sm text-gray-400">{description}</p>
+
+      <div className="mt-4 space-y-3">
+        {items.length > 0 ? (
+          items.map((item) =>
+            item.href ? (
+              <Link
+                key={`${item.type}-${item.id}-${item.connectionType}`}
+                href={item.href}
+                className="flex items-center justify-between rounded-lg border border-gray-700 bg-gray-900/40 px-4 py-3 transition hover:bg-gray-900/60"
+              >
+                <div>
+                  <div className="font-medium text-white">{item.name}</div>
+                  <div className="text-sm text-gray-500">{item.subtitle}</div>
+                </div>
+                <div className="text-xs text-gray-500">{new Date(item.createdAt).toLocaleDateString()}</div>
+              </Link>
+            ) : (
+              <div
+                key={`${item.type}-${item.id}-${item.connectionType}`}
+                className="flex items-center justify-between rounded-lg border border-gray-700 bg-gray-900/40 px-4 py-3"
+              >
+                <div>
+                  <div className="font-medium text-white">{item.name}</div>
+                  <div className="text-sm text-gray-500">{item.subtitle}</div>
+                </div>
+                <div className="text-xs text-gray-500">{new Date(item.createdAt).toLocaleDateString()}</div>
+              </div>
+            )
+          )
+        ) : (
+          <div className="rounded-lg border border-dashed border-gray-700 bg-gray-900/20 p-4 text-sm text-gray-500">
+            {empty}
+          </div>
+        )}
+      </div>
+    </section>
   )
 }

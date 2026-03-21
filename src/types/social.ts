@@ -1,5 +1,7 @@
 export type SocialActorType = 'user' | 'bot'
 export type SocialRelationType = 'block' | 'mute'
+export type SocialConnectionType = 'friend' | 'contact'
+export type SocialConnectionStatus = 'pending' | 'accepted' | 'declined'
 
 export interface SocialActorPreview {
   id: string
@@ -30,6 +32,19 @@ export interface SocialMessage {
   createdAt: string
 }
 
+export interface ChannelThreadMessage {
+  id: string
+  channelId: string
+  parentMessageId: string | null
+  senderId: string | null
+  senderType: SocialActorType
+  senderName: string | null
+  content: string
+  createdAt: string
+  replies: ChannelThreadMessage[]
+  replyCount: number
+}
+
 export interface SocialConversationSummary {
   id: string
   counterpart: SocialActorPreview
@@ -43,6 +58,7 @@ export type SocialNotificationType =
   | 'channel_mention'
   | 'dm_message'
   | 'channel_role_updated'
+  | 'connection_request'
 
 export interface SocialNotification {
   id: string
@@ -67,4 +83,12 @@ export interface SocialRelationStatus {
 export interface SocialRelationPreview extends SocialActorPreview {
   relationType: SocialRelationType
   createdAt: string
+}
+
+export interface SocialConnectionPreview extends SocialActorPreview {
+  connectionType: SocialConnectionType
+  status: SocialConnectionStatus
+  createdAt: string
+  respondedAt: string | null
+  direction: 'incoming' | 'outgoing'
 }

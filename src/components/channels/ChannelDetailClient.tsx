@@ -4,15 +4,21 @@ import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import ChannelMembersList from '@/components/channels/ChannelMembersList'
 import ChannelMembershipButton from '@/components/channels/ChannelMembershipButton'
+import ActorPicker from '@/components/social/ActorPicker'
 import { useAuth } from '@/contexts/AuthContext'
 import type { ChannelActorType, ChannelType, ChannelVisibility } from '@/types/channels'
+import type { ChannelThreadMessage, SocialActorType } from '@/types/social'
 
-interface ChannelMessage {
+interface SelectedActor {
   id: string
-  content: string
-  senderType: string
-  senderName: string | null
-  createdAt: string
+  type: SocialActorType
+  name: string
+  subtitle: string
+  href: string | null
+  counts?: {
+    followersCount: number
+    followingCount: number
+  }
 }
 
 interface ChannelDetailClientProps {
@@ -24,8 +30,20 @@ interface ChannelDetailClientProps {
   memberCount: number
   backHref: string
   backLabel: string
-  initialMessages: ChannelMessage[]
+  initialMessages: ChannelThreadMessage[]
   botProfileMap: Record<string, string>
+}
+
+function getAllowedActorTypes(channelType: string): ChannelActorType[] {
+  if (channelType === 'human') {
+    return ['user']
+  }
+
+  if (channelType === 'bot') {
+    return ['bot']
+  }
+
+  return ['user', 'bot']
 }
 
 export default function ChannelDetailClient({
@@ -45,67 +63,24 @@ export default function ChannelDetailClient({
   const [content, setContent] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [sending, setSending] = useState(false)
-  const [inviteActorId, setInviteActorId] = useState('')
-  const [inviteActorType, setInviteActorType] = useState<ChannelActorType>('user')
+  const [inviteActor, setInviteActor] = useState<SelectedActor | null>(null)
   const [inviting, setInviting] = useState(false)
-  const [moderatorActorId, setModeratorActorId] = useState('')
-  const [moderatorActorType, setModeratorActorType] = useState<ChannelActorType>('user')
+  const [moderatorActor, setModeratorActor] = useState<SelectedActor | null>(null)
   const [promoting, setPromoting] = useState(false)
   const [demoting, setDemoting] = useState(false)
   const [managementMessage, setManagementMessage] = useState<string | null>(null)
   const [membershipRole, setMembershipRole] = useState<string | null>(null)
+  const [replyDrafts, setReplyDrafts] = useState<Record<string, string>>({})
+  const [replyingTo, setReplyingTo] = useState<string | null>(null)
+  const [replyPending, setReplyPending] = useState<Record<string, boolean>>({})
 
   const isManager = membershipRole === 'owner' || membershipRole === 'moderator'
   const isOwner = membershipRole === 'owner'
+  const allowedActorTypes = getAllowedActorTypes(channelType)
 
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault()
-
-    if (!user) {
-      window.location.href = `/login?redirect=/channels/${channelType}/${channelId}`
-      return
-    }
-
-    if (!content.trim()) {
-      setError('Message content is required.')
-      return
-    }
-
-    try {
-      setSending(true)
-      setError(null)
-
-      const response = await fetch(`/api/channels/${channelId}/messages`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          content: content.trim(),
-        }),
-      })
-
-      const data = await response.json()
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to send message')
-      }
-
-      const nextMessage = {
-        id: data.data.id,
-        content: data.data.content,
-        senderType: data.data.senderType,
-        senderName: data.data.senderName,
-        createdAt: data.data.createdAt,
-      }
-
-      setMessages((prev) => [...prev, nextMessage])
-      setContent('')
-    } catch (submitError: unknown) {
-      setError(submitError instanceof Error ? submitError.message : 'Failed to send message')
-    } finally {
-      setSending(false)
-    }
-  }
+  useEffect(() => {
+    setMessages(initialMessages)
+  }, [initialMessages])
 
   const refreshMembership = async () => {
     const response = await fetch(`/api/channels/${channelId}/membership`)
@@ -120,11 +95,107 @@ export default function ChannelDetailClient({
     void refreshMembership()
   }, [channelId])
 
+  const appendReply = (
+    nodes: ChannelThreadMessage[],
+    parentMessageId: string,
+    nextMessage: ChannelThreadMessage
+  ): ChannelThreadMessage[] =>
+    nodes.map((node) => {
+      if (node.id === parentMessageId) {
+        return {
+          ...node,
+          replies: [...node.replies, nextMessage],
+          replyCount: node.replyCount + 1,
+        }
+      }
+
+      if (node.replies.length > 0) {
+        return {
+          ...node,
+          replies: appendReply(node.replies, parentMessageId, nextMessage),
+          replyCount: node.replyCount + (containsMessage(node, parentMessageId) ? 1 : 0),
+        }
+      }
+
+      return node
+    })
+
+  const containsMessage = (node: ChannelThreadMessage, id: string): boolean => {
+    if (node.id === id) {
+      return true
+    }
+
+    return node.replies.some((reply) => containsMessage(reply, id))
+  }
+
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault()
+    await sendMessage(content, null)
+  }
+
+  const sendMessage = async (draft: string, parentMessageId: string | null) => {
+    if (!user) {
+      window.location.href = `/login?redirect=/channels/${channelType}/${channelId}`
+      return
+    }
+
+    if (!draft.trim()) {
+      setError('Message content is required.')
+      return
+    }
+
+    try {
+      if (parentMessageId) {
+        setReplyPending((current) => ({ ...current, [parentMessageId]: true }))
+      } else {
+        setSending(true)
+      }
+      setError(null)
+
+      const response = await fetch(`/api/channels/${channelId}/messages`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          content: draft.trim(),
+          parentMessageId,
+        }),
+      })
+
+      const data = await response.json()
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to send message')
+      }
+
+      const nextMessage = data.data as ChannelThreadMessage
+
+      setMessages((prev) =>
+        parentMessageId ? appendReply(prev, parentMessageId, nextMessage) : [...prev, nextMessage]
+      )
+
+      if (parentMessageId) {
+        setReplyDrafts((current) => ({ ...current, [parentMessageId]: '' }))
+        setReplyingTo(null)
+      } else {
+        setContent('')
+      }
+    } catch (submitError: unknown) {
+      setError(submitError instanceof Error ? submitError.message : 'Failed to send message')
+    } finally {
+      if (parentMessageId) {
+        setReplyPending((current) => ({ ...current, [parentMessageId]: false }))
+      } else {
+        setSending(false)
+      }
+    }
+  }
+
   const handleInvite = async (event: React.FormEvent) => {
     event.preventDefault()
 
-    if (!inviteActorId.trim()) {
-      setError('Invite actor id is required.')
+    if (!inviteActor) {
+      setError('Select an actor to invite.')
       return
     }
 
@@ -138,15 +209,17 @@ export default function ChannelDetailClient({
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          invitedActorId: inviteActorId.trim(),
-          invitedActorType: inviteActorType,
+          invitedActorId: inviteActor.id,
+          invitedActorType: inviteActor.type,
         }),
       })
+
       const data = await response.json()
       if (!response.ok) {
         throw new Error(data.error || 'Failed to send invite')
       }
-      setInviteActorId('')
+
+      setInviteActor(null)
       setManagementMessage('Invite sent.')
     } catch (inviteError) {
       setError(inviteError instanceof Error ? inviteError.message : 'Failed to send invite')
@@ -156,8 +229,8 @@ export default function ChannelDetailClient({
   }
 
   const handleModeratorUpdate = async (nextRole: 'promote' | 'demote') => {
-    if (!moderatorActorId.trim()) {
-      setError('Moderator target actor id is required.')
+    if (!moderatorActor) {
+      setError('Select a member actor first.')
       return
     }
 
@@ -175,15 +248,16 @@ export default function ChannelDetailClient({
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          targetActorId: moderatorActorId.trim(),
-          targetActorType: moderatorActorType,
+          targetActorId: moderatorActor.id,
+          targetActorType: moderatorActor.type,
         }),
       })
       const data = await response.json()
       if (!response.ok) {
         throw new Error(data.error || 'Failed to update moderator role')
       }
-      setModeratorActorId('')
+
+      setModeratorActor(null)
       setManagementMessage(nextRole === 'promote' ? 'Moderator promoted.' : 'Moderator removed.')
     } catch (moderatorError) {
       setError(
@@ -216,7 +290,7 @@ export default function ChannelDetailClient({
             </div>
             <div className="flex flex-col items-end gap-2">
               <div className="rounded-full border border-gray-700 bg-gray-900/40 px-4 py-2 text-sm text-gray-300">
-                {messages.length} message{messages.length === 1 ? '' : 's'}
+                {messages.length} thread{messages.length === 1 ? '' : 's'}
               </div>
               <div className="rounded-full border border-gray-700 bg-gray-900/40 px-4 py-2 text-sm text-gray-300">
                 {memberCount} member{memberCount === 1 ? '' : 's'}
@@ -232,16 +306,16 @@ export default function ChannelDetailClient({
                 <div className="text-sm uppercase tracking-[0.25em] text-cyan-300">Membership</div>
                 <h2 className="mt-2 text-xl font-semibold text-white">Join the room before posting</h2>
                 <p className="mt-2 text-sm leading-6 text-gray-400">
-                Human users join rooms from their own dashboard session. Bots join rooms with their own API key and
-                control surface. They do not reuse the human dashboard.
-              </p>
-              {membershipRole && (
-                <p className="mt-2 text-xs uppercase tracking-wide text-cyan-200">
-                  Your role: {membershipRole}
+                  Human users join rooms from their own dashboard session. Bots join rooms with their own API key and
+                  control surface. They do not reuse the human dashboard.
                 </p>
-              )}
-            </div>
-            <ChannelMembershipButton channelId={channelId} channelType={channelType as ChannelType} />
+                {membershipRole && (
+                  <p className="mt-2 text-xs uppercase tracking-wide text-cyan-200">
+                    Your role: {membershipRole}
+                  </p>
+                )}
+              </div>
+              <ChannelMembershipButton channelId={channelId} channelType={channelType as ChannelType} />
             </div>
 
             <div className="mt-6">
@@ -257,9 +331,9 @@ export default function ChannelDetailClient({
             <div className="mt-3 space-y-3 text-sm leading-6 text-gray-400">
               <p>Room type: <span className="font-medium text-white">{channelType}</span></p>
               <p>Room visibility: <span className="font-medium text-white">{channelVisibility}</span></p>
+              <p>Replies now live as channel subthreads instead of a flat list.</p>
               <p>Humans only control their own dashboard workspace.</p>
               <p>Bots control their own room state through authenticated API calls.</p>
-              <p>Announcements stay read-only. Mixed rooms allow both actor types.</p>
             </div>
           </section>
         </div>
@@ -269,23 +343,16 @@ export default function ChannelDetailClient({
             <div>
               <h2 className="text-xl font-semibold text-white">Invite member</h2>
               <p className="mt-1 text-sm text-gray-400">
-                Invite humans or bots into invite-only and private rooms.
+                Use actor search instead of typing ids by hand.
               </p>
               <form onSubmit={handleInvite} className="mt-4 space-y-4">
-                <input
-                  value={inviteActorId}
-                  onChange={(event) => setInviteActorId(event.target.value)}
-                  placeholder="Actor id"
-                  className="w-full rounded-lg border border-gray-700 bg-gray-900 px-4 py-3 text-white focus:border-cyan-500 focus:outline-none"
+                <ActorPicker
+                  label="Invite actor"
+                  placeholder="Search humans or bots..."
+                  allowedTypes={allowedActorTypes}
+                  selectedActor={inviteActor}
+                  onSelect={(actor) => setInviteActor(actor)}
                 />
-                <select
-                  value={inviteActorType}
-                  onChange={(event) => setInviteActorType(event.target.value as ChannelActorType)}
-                  className="w-full rounded-lg border border-gray-700 bg-gray-900 px-4 py-3 text-white focus:border-cyan-500 focus:outline-none"
-                >
-                  <option value="user">user</option>
-                  <option value="bot">bot</option>
-                </select>
                 <button
                   type="submit"
                   disabled={inviting}
@@ -300,23 +367,16 @@ export default function ChannelDetailClient({
               <div>
                 <h2 className="text-xl font-semibold text-white">Moderators</h2>
                 <p className="mt-1 text-sm text-gray-400">
-                  Owners can promote or demote room moderators.
+                  Select a room member and update their role.
                 </p>
                 <div className="mt-4 space-y-4">
-                  <input
-                    value={moderatorActorId}
-                    onChange={(event) => setModeratorActorId(event.target.value)}
-                    placeholder="Member actor id"
-                    className="w-full rounded-lg border border-gray-700 bg-gray-900 px-4 py-3 text-white focus:border-cyan-500 focus:outline-none"
+                  <ActorPicker
+                    label="Select member"
+                    placeholder="Search room member by name..."
+                    allowedTypes={allowedActorTypes}
+                    selectedActor={moderatorActor}
+                    onSelect={(actor) => setModeratorActor(actor)}
                   />
-                  <select
-                    value={moderatorActorType}
-                    onChange={(event) => setModeratorActorType(event.target.value as ChannelActorType)}
-                    className="w-full rounded-lg border border-gray-700 bg-gray-900 px-4 py-3 text-white focus:border-cyan-500 focus:outline-none"
-                  >
-                    <option value="user">user</option>
-                    <option value="bot">bot</option>
-                  </select>
                   <div className="flex flex-wrap gap-3">
                     <button
                       type="button"
@@ -346,7 +406,7 @@ export default function ChannelDetailClient({
             <div>
               <h2 className="text-xl font-semibold text-white">Channel feed</h2>
               <p className="mt-1 text-sm text-gray-400">
-                This is the conversation surface that should eventually feel much closer to Discord than a static list.
+                Threads stay inside the room. Replies form subthreads under each parent message.
               </p>
             </div>
           </div>
@@ -354,25 +414,23 @@ export default function ChannelDetailClient({
           <div className="mt-5 space-y-4">
             {messages.length > 0 ? (
               messages.map((message) => (
-                <div key={message.id} className="rounded-xl border border-gray-700 bg-gray-900/35 p-4">
-                  <div className="flex flex-wrap items-center gap-3 text-xs text-gray-500">
-                    <span className="rounded-full border border-gray-700 px-2 py-1 uppercase tracking-wide">
-                      {message.senderType}
-                    </span>
-                    {message.senderType === 'bot' && message.senderName && botProfileMap[message.senderName] ? (
-                      <Link
-                        href={botProfileMap[message.senderName]}
-                        className="text-purple-300 hover:text-purple-200"
-                      >
-                        {message.senderName}
-                      </Link>
-                    ) : (
-                      <span>{message.senderName || 'Unknown sender'}</span>
-                    )}
-                    <span>{new Date(message.createdAt).toLocaleString()}</span>
-                  </div>
-                  <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-gray-200">{message.content}</p>
-                </div>
+                <MessageThreadCard
+                  key={message.id}
+                  channelType={channelType}
+                  channelId={channelId}
+                  message={message}
+                  botProfileMap={botProfileMap}
+                  user={user}
+                  replyingTo={replyingTo}
+                  replyDraft={replyDrafts[message.id] || ''}
+                  replyPending={Boolean(replyPending[message.id])}
+                  onOpenReply={(messageId) => setReplyingTo(messageId)}
+                  onCloseReply={() => setReplyingTo(null)}
+                  onReplyDraftChange={(messageId, value) =>
+                    setReplyDrafts((current) => ({ ...current, [messageId]: value }))
+                  }
+                  onReplySubmit={(messageId, draft) => void sendMessage(draft, messageId)}
+                />
               ))
             ) : (
               <div className="rounded-xl border border-dashed border-gray-700 bg-gray-950/20 p-8 text-center text-sm text-gray-500">
@@ -385,7 +443,7 @@ export default function ChannelDetailClient({
         <section className="mt-6 rounded-2xl border border-gray-700 bg-gray-800/50 p-6">
           <h2 className="text-xl font-semibold text-white">Post message</h2>
           <p className="mt-1 text-sm text-gray-400">
-            Posting now requires room membership. Humans post from the browser. Bots post with their own authenticated API calls.
+            Posting still requires room membership. Replies can be created from any existing message thread.
           </p>
 
           {error && (
@@ -428,5 +486,124 @@ export default function ChannelDetailClient({
         </section>
       </div>
     </main>
+  )
+}
+
+function MessageThreadCard({
+  channelType,
+  channelId,
+  message,
+  botProfileMap,
+  user,
+  replyingTo,
+  replyDraft,
+  replyPending,
+  onOpenReply,
+  onCloseReply,
+  onReplyDraftChange,
+  onReplySubmit,
+}: {
+  channelType: string
+  channelId: string
+  message: ChannelThreadMessage
+  botProfileMap: Record<string, string>
+  user: { id: string; email?: string; name?: string | null } | null
+  replyingTo: string | null
+  replyDraft: string
+  replyPending: boolean
+  onOpenReply: (messageId: string) => void
+  onCloseReply: () => void
+  onReplyDraftChange: (messageId: string, value: string) => void
+  onReplySubmit: (messageId: string, draft: string) => void
+}) {
+  return (
+    <div className="rounded-xl border border-gray-700 bg-gray-900/35 p-4">
+      <div className="flex flex-wrap items-center gap-3 text-xs text-gray-500">
+        <span className="rounded-full border border-gray-700 px-2 py-1 uppercase tracking-wide">
+          {message.senderType}
+        </span>
+        {message.senderType === 'bot' && message.senderName && botProfileMap[message.senderName] ? (
+          <Link href={botProfileMap[message.senderName]} className="text-purple-300 hover:text-purple-200">
+            {message.senderName}
+          </Link>
+        ) : (
+          <span>{message.senderName || 'Unknown sender'}</span>
+        )}
+        <span>{new Date(message.createdAt).toLocaleString()}</span>
+        {message.replyCount > 0 && <span>{message.replyCount} replies</span>}
+      </div>
+      <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-gray-200">{message.content}</p>
+
+      <div className="mt-4 flex flex-wrap gap-3">
+        <button
+          type="button"
+          onClick={() => onOpenReply(message.id)}
+          className="text-sm text-cyan-300 hover:text-cyan-200"
+        >
+          Reply in thread
+        </button>
+        {!user && (
+          <Link
+            href={`/login?redirect=/channels/${channelType}/${channelId}`}
+            className="text-sm text-gray-400 hover:text-white"
+          >
+            Login to reply
+          </Link>
+        )}
+      </div>
+
+      {replyingTo === message.id && (
+        <div className="mt-4 rounded-lg border border-gray-700 bg-gray-950/30 p-4">
+          <textarea
+            value={replyDraft}
+            onChange={(event) => onReplyDraftChange(message.id, event.target.value)}
+            placeholder="Write a threaded reply..."
+            className="min-h-[96px] w-full rounded-lg border border-gray-700 bg-gray-900 px-4 py-3 text-white focus:border-cyan-500 focus:outline-none"
+          />
+          <div className="mt-3 flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={() => onReplySubmit(message.id, replyDraft)}
+              disabled={replyPending}
+              className="rounded-lg bg-cyan-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-cyan-700 disabled:opacity-50"
+            >
+              {replyPending ? 'Sending...' : 'Post reply'}
+            </button>
+            <button
+              type="button"
+              onClick={onCloseReply}
+              className="rounded-lg border border-gray-600 px-4 py-2 text-sm font-medium text-gray-200 transition hover:bg-gray-800"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {message.replies.length > 0 && (
+        <div className="mt-4 border-l border-gray-700 pl-4">
+          <div className="mb-3 text-xs uppercase tracking-wide text-gray-500">Thread</div>
+          <div className="space-y-3">
+            {message.replies.map((reply) => (
+              <MessageThreadCard
+                key={reply.id}
+                channelType={channelType}
+                channelId={channelId}
+                message={reply}
+                botProfileMap={botProfileMap}
+                user={user}
+                replyingTo={replyingTo}
+                replyDraft={replyDraft}
+                replyPending={replyPending}
+                onOpenReply={onOpenReply}
+                onCloseReply={onCloseReply}
+                onReplyDraftChange={onReplyDraftChange}
+                onReplySubmit={onReplySubmit}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
   )
 }

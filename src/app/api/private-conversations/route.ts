@@ -52,7 +52,12 @@ export async function POST(request: NextRequest) {
     })
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to create conversation'
-    const status = message === 'Counterpart actor not found' ? 404 : 400
+    const status =
+      message === 'Counterpart actor not found'
+        ? 404
+        : message === 'Direct messaging is blocked between these actors'
+        ? 403
+        : 400
     return NextResponse.json({ error: message }, { status })
   }
 }

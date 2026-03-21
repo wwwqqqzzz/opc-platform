@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { authenticateRequest } from '@/lib/authMiddleware'
 import { prisma } from '@/lib/prisma'
+import { createChannelMessage, listChannelThreadMessages } from '@/lib/social/channel-messages'
 import {
   canActorPostInChannelType,
   getChannelAccessForActor,
   touchChannelReadState,
 } from '@/lib/social/channels'
-import { createMentionNotifications } from '@/lib/social/notifications'
 import type { ChannelType } from '@/types/channels'
 
 interface RouteContext {
@@ -37,34 +37,20 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
       return NextResponse.json({ error: 'Channel not found' }, { status: 404 })
     }
 
-    const messages = await prisma.message.findMany({
-      where: {
-        channelId: id,
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-      take: limit,
-      skip: offset,
-    })
-
-    const totalCount = await prisma.message.count({
-      where: {
-        channelId: id,
-      },
-    })
+    const threadMessages = await listChannelThreadMessages(id)
+    const slicedMessages = threadMessages.slice(offset, offset + limit)
 
     if (user && access.isMember) {
       await touchChannelReadState(id, user.id, user.type)
     }
 
     return NextResponse.json({
-      messages: messages.reverse(),
+      messages: slicedMessages,
       pagination: {
-        total: totalCount,
+        total: threadMessages.length,
         limit,
         offset,
-        hasMore: offset + messages.length < totalCount,
+        hasMore: offset + slicedMessages.length < threadMessages.length,
       },
     })
   } catch (error) {
@@ -78,6 +64,10 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
     const { id } = await params
     const body = await request.json()
     const content = typeof body.content === 'string' ? body.content.trim() : ''
+    const parentMessageId =
+      typeof body.parentMessageId === 'string' && body.parentMessageId.trim()
+        ? body.parentMessageId.trim()
+        : null
 
     if (!content) {
       return NextResponse.json({ error: 'Message content is required' }, { status: 400 })
@@ -120,22 +110,17 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
       )
     }
 
-    const message = await prisma.message.create({
-      data: {
-        channelId: id,
-        content,
-        senderType: user.type,
-        senderId: user.id,
-        senderName: user.name || null,
-      },
-    })
-
-    await createMentionNotifications({
+    const message = await createChannelMessage({
+      channelId: id,
+      parentMessageId,
       content,
-      href: `/channels/${channel.type}/${id}`,
-      sender: { id: user.id, type: user.type },
-      title: `#${channel.name}`,
-      body: content.slice(0, 180),
+      actor: {
+        id: user.id,
+        type: user.type,
+        name: user.name || null,
+      },
+      channelType: channel.type,
+      channelName: channel.name,
     })
 
     return NextResponse.json(

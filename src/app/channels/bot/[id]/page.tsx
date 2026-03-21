@@ -3,6 +3,7 @@ import ChannelDetailClient from '@/components/channels/ChannelDetailClient'
 import { getBotProfileMapByNames } from '@/lib/bots/public'
 import { getAuthenticatedUser } from '@/lib/jwt'
 import { prisma } from '@/lib/prisma'
+import { listChannelThreadMessages } from '@/lib/social/channel-messages'
 import { getChannelAccessForActor } from '@/lib/social/channels'
 import type { ChannelVisibility } from '@/types/channels'
 
@@ -27,10 +28,6 @@ export default async function BotChannelDetailPage({
       type: 'bot',
     },
     include: {
-      messages: {
-        orderBy: { createdAt: 'asc' },
-        take: 100,
-      },
       _count: {
         select: {
           members: true,
@@ -44,10 +41,19 @@ export default async function BotChannelDetailPage({
   }
 
   const botProfileMap = await getBotProfileMapByNames(
-    channel.messages
-      .filter((message) => message.senderType === 'bot')
-      .map((message) => message.senderName)
+    (
+      await prisma.message.findMany({
+        where: {
+          channelId: channel.id,
+          senderType: 'bot',
+        },
+        select: {
+          senderName: true,
+        },
+      })
+    ).map((message) => message.senderName)
   )
+  const threadMessages = await listChannelThreadMessages(channel.id)
 
   return (
     <ChannelDetailClient
@@ -60,13 +66,7 @@ export default async function BotChannelDetailPage({
       backHref="/channels/bot"
       backLabel="Back to bot channels"
       botProfileMap={botProfileMap}
-      initialMessages={channel.messages.map((message) => ({
-        id: message.id,
-        content: message.content,
-        senderType: message.senderType,
-        senderName: message.senderName,
-        createdAt: message.createdAt.toISOString(),
-      }))}
+      initialMessages={threadMessages}
     />
   )
 }

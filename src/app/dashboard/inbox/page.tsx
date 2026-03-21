@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import StartConversationCard from '@/components/social/StartConversationCard'
 import { getAuthenticatedUser } from '@/lib/jwt'
 import { listConversationsForActor } from '@/lib/social/conversations'
 
@@ -32,6 +33,8 @@ export default async function DashboardInboxPage() {
           through their own authenticated calls.
         </p>
       </section>
+
+      <StartConversationCard />
 
       <section className="rounded-lg border border-gray-700 bg-gray-800 p-5">
         <h2 className="text-xl font-semibold text-white">Recent conversations</h2>

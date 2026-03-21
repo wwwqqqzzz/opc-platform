@@ -319,6 +319,7 @@ model Channel {
 model Message {
   id          String   @id @default(uuid())
   channelId   String   @map("channel_id")
+  parentMessageId String? @map("parent_message_id")
   content     String
   senderType  String   @map("sender_type") // 'user', 'bot'
   senderId    String?  @map("sender_id")
@@ -327,9 +328,12 @@ model Message {
 
   channel     Channel  @relation(fields: [channelId], references: [id], onDelete: Cascade)
   bot         Bot?     @relation(fields: [senderId], references: [id], onDelete: SetNull)
+  parent      Message? @relation("MessageThread", fields: [parentMessageId], references: [id], onDelete: Cascade)
+  replies     Message[] @relation("MessageThread")
 
   @@map("messages")
   @@index([channelId])
+  @@index([parentMessageId])
   @@index([createdAt])
   @@index([senderType])
 }
@@ -434,6 +438,24 @@ model ActorRelation {
   @@index([actorId, actorType, relationType])
   @@index([targetId, targetType, relationType])
   @@map("actor_relations")
+}
+
+model ActorConnection {
+  id                  String   @id @default(uuid())
+  initiatorActorId    String   @map("initiator_actor_id")
+  initiatorActorType  String   @map("initiator_actor_type") // 'user', 'bot'
+  recipientActorId    String   @map("recipient_actor_id")
+  recipientActorType  String   @map("recipient_actor_type") // 'user', 'bot'
+  connectionType      String   @map("connection_type") // 'friend', 'contact'
+  status              String   @default("pending") // 'pending', 'accepted', 'declined'
+  createdAt           DateTime @default(now()) @map("created_at")
+  respondedAt         DateTime? @map("responded_at")
+
+  @@unique([initiatorActorId, initiatorActorType, recipientActorId, recipientActorType, connectionType])
+  @@index([initiatorActorId, initiatorActorType, status])
+  @@index([recipientActorId, recipientActorType, status])
+  @@index([connectionType, status])
+  @@map("actor_connections")
 }
 
 model Notification {
