@@ -114,27 +114,27 @@ export default function DashboardChannelsWorkspace({
 
   return (
     <div className="space-y-6">
-      <section className="rounded-lg border border-cyan-700/40 bg-cyan-900/20 p-5">
+      <section className="opc-panel-green rounded-lg p-5">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
-            <div className="text-sm uppercase tracking-wide text-cyan-300">Room operations</div>
+            <div className="opc-kicker text-sm">Room operations</div>
             <div className="mt-1 text-lg font-medium text-white">
               {channels.length} accessible rooms for {actorLabel}
             </div>
-            <p className="mt-2 text-sm text-cyan-100/80">
+            <p className="mt-2 text-sm text-gray-300">
               Humans manage rooms here. Bots use `/api/bots/me/channels` and `/api/bots/me/conversations`.
             </p>
           </div>
           <div className="flex flex-wrap gap-3">
             <Link
               href="/social"
-              className="rounded-lg border border-gray-600 px-4 py-2 text-sm font-medium text-gray-200 transition hover:bg-gray-800"
+              className="opc-button-secondary px-4 py-2 text-sm"
             >
               Open public social feed
             </Link>
             <Link
               href="/dashboard/notifications"
-              className="rounded-lg border border-cyan-600/60 px-4 py-2 text-sm font-medium text-cyan-200 transition hover:bg-cyan-950/30"
+              className="opc-button-secondary px-4 py-2 text-sm"
             >
               Open notifications
             </Link>
@@ -149,9 +149,9 @@ export default function DashboardChannelsWorkspace({
       )}
 
       <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
-        <section className="rounded-lg border border-gray-700 bg-gray-800 p-5">
+        <section className="opc-panel rounded-lg p-5">
           <h2 className="text-xl font-semibold text-white">Create room</h2>
-          <p className="mt-2 text-sm text-gray-400">
+          <p className="mt-2 text-sm text-[color:var(--opc-muted)]">
             Room ownership starts here. New rooms automatically assign you as owner.
           </p>
 
@@ -160,23 +160,23 @@ export default function DashboardChannelsWorkspace({
               value={form.name}
               onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
               placeholder="room-name"
-              className="w-full rounded-lg border border-gray-700 bg-gray-900 px-4 py-3 text-sm text-white focus:border-cyan-500 focus:outline-none"
+              className="w-full rounded-lg border border-white/10 bg-black px-4 py-3 text-sm text-white focus:border-[var(--opc-green)] focus:outline-none"
             />
             <textarea
               value={form.description}
               onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))}
               placeholder="Describe what this room is for..."
-              className="min-h-[120px] w-full rounded-lg border border-gray-700 bg-gray-900 px-4 py-3 text-sm text-white focus:border-cyan-500 focus:outline-none"
+              className="min-h-[120px] w-full rounded-lg border border-white/10 bg-black px-4 py-3 text-sm text-white focus:border-[var(--opc-green)] focus:outline-none"
             />
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="space-y-2">
-                <div className="text-sm text-gray-400">Room type</div>
+                <div className="text-sm text-[color:var(--opc-muted)]">Room type</div>
                 <select
                   value={form.type}
                   onChange={(event) =>
                     setForm((current) => ({ ...current, type: event.target.value as ChannelType }))
                   }
-                  className="w-full rounded-lg border border-gray-700 bg-gray-900 px-4 py-3 text-sm text-white focus:border-cyan-500 focus:outline-none"
+                  className="w-full rounded-lg border border-white/10 bg-black px-4 py-3 text-sm text-white focus:border-[var(--opc-green)] focus:outline-none"
                 >
                   {CHANNEL_TYPES.map((type) => (
                     <option key={type} value={type}>
@@ -186,7 +186,7 @@ export default function DashboardChannelsWorkspace({
                 </select>
               </label>
               <label className="space-y-2">
-                <div className="text-sm text-gray-400">Visibility</div>
+                <div className="text-sm text-[color:var(--opc-muted)]">Visibility</div>
                 <select
                   value={form.visibility}
                   onChange={(event) =>
@@ -195,7 +195,7 @@ export default function DashboardChannelsWorkspace({
                       visibility: event.target.value as ChannelVisibility,
                     }))
                   }
-                  className="w-full rounded-lg border border-gray-700 bg-gray-900 px-4 py-3 text-sm text-white focus:border-cyan-500 focus:outline-none"
+                  className="w-full rounded-lg border border-white/10 bg-black px-4 py-3 text-sm text-white focus:border-[var(--opc-green)] focus:outline-none"
                 >
                   {VISIBILITIES.map((visibility) => (
                     <option key={visibility} value={visibility}>
@@ -209,28 +209,28 @@ export default function DashboardChannelsWorkspace({
             <button
               type="submit"
               disabled={creating}
-              className="rounded-lg bg-cyan-600 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-cyan-700 disabled:opacity-50"
+              className="opc-button-primary px-5 py-2.5 text-sm disabled:opacity-50"
             >
               {creating ? 'Creating...' : 'Create room'}
             </button>
           </form>
         </section>
 
-        <section className="rounded-lg border border-gray-700 bg-gray-800 p-5">
+        <section className="opc-panel rounded-lg p-5">
           <h2 className="text-xl font-semibold text-white">Pending invites</h2>
-          <p className="mt-2 text-sm text-gray-400">
+          <p className="mt-2 text-sm text-[color:var(--opc-muted)]">
             Invite-only and private rooms enter your workspace from here.
           </p>
           <div className="mt-4 space-y-3">
             {invites.length > 0 ? (
               invites.map((invite) => (
-                <div key={invite.id} className="rounded-lg border border-gray-700 bg-gray-900/40 p-4">
+                <div key={invite.id} className="opc-panel-soft rounded-lg p-4">
                   <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                     <div>
                       <div className="font-medium text-white">
                         #{invite.channelName} <span className="text-gray-500">({invite.channelType})</span>
                       </div>
-                      <div className="mt-1 text-sm text-gray-400">
+                      <div className="mt-1 text-sm text-[color:var(--opc-muted)]">
                         {invite.invitedByName} invited you to a {invite.channelVisibility} room.
                       </div>
                       <div className="mt-2 text-xs text-gray-500">
@@ -242,7 +242,7 @@ export default function DashboardChannelsWorkspace({
                         type="button"
                         onClick={() => void respondToInvite(invite.id, 'accept')}
                         disabled={respondingInviteId === invite.id}
-                        className="rounded-lg bg-cyan-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-cyan-700 disabled:opacity-50"
+                        className="opc-button-primary px-3 py-2 text-sm disabled:opacity-50"
                       >
                         {respondingInviteId === invite.id ? 'Updating...' : 'Accept'}
                       </button>
@@ -250,7 +250,7 @@ export default function DashboardChannelsWorkspace({
                         type="button"
                         onClick={() => void respondToInvite(invite.id, 'decline')}
                         disabled={respondingInviteId === invite.id}
-                        className="rounded-lg border border-gray-600 px-3 py-2 text-sm font-medium text-gray-200 transition hover:bg-gray-800 disabled:opacity-50"
+                        className="opc-button-secondary px-3 py-2 text-sm disabled:opacity-50"
                       >
                         Decline
                       </button>
@@ -259,7 +259,7 @@ export default function DashboardChannelsWorkspace({
                 </div>
               ))
             ) : (
-              <div className="rounded-lg border border-dashed border-gray-700 bg-gray-900/20 p-4 text-sm text-gray-500">
+              <div className="opc-panel-soft rounded-lg border-dashed p-4 text-sm text-gray-500">
                 No pending room invites.
               </div>
             )}
@@ -269,7 +269,7 @@ export default function DashboardChannelsWorkspace({
 
       <div className="grid gap-6 xl:grid-cols-3">
         {(['human', 'bot', 'mixed', 'announcement'] as const).map((group) => (
-          <section key={group} className="rounded-lg border border-gray-700 bg-gray-800 p-5">
+          <section key={group} className="opc-panel rounded-lg p-5">
             <h2 className="text-lg font-semibold capitalize text-white">{group} rooms</h2>
             <div className="mt-4 space-y-3">
               {grouped[group].length > 0 ? (
@@ -277,24 +277,24 @@ export default function DashboardChannelsWorkspace({
                   <Link
                     key={channel.id}
                     href={`/channels/${channel.type}/${channel.id}`}
-                    className="block rounded-lg border border-gray-700 bg-gray-900/40 p-4 transition hover:bg-gray-900/60"
+                    className="opc-panel-soft block rounded-lg p-4 transition hover:bg-white/[0.04]"
                   >
                     <div className="flex items-center justify-between gap-3">
                       <div className="font-medium text-white">#{channel.name}</div>
                       <div className="text-xs text-gray-500">{channel.visibility}</div>
                     </div>
-                    <p className="mt-2 text-sm text-gray-400">{channel.description || 'No description yet.'}</p>
+                    <p className="mt-2 text-sm text-[color:var(--opc-muted)]">{channel.description || 'No description yet.'}</p>
                     <div className="mt-3 flex flex-wrap gap-2 text-xs text-gray-500">
                       <span>{channel.messageCount} messages</span>
                       <span>{channel.memberCount} members</span>
                       <span>{channel.unreadCount || 0} unread</span>
-                      {channel.isMember && <span className="text-cyan-300">Joined</span>}
+                      {channel.isMember && <span className="text-[var(--opc-green)]">Joined</span>}
                       {channel.hasPendingInvite && <span className="text-amber-300">Invite pending</span>}
                     </div>
                   </Link>
                 ))
               ) : (
-                <div className="rounded-lg border border-dashed border-gray-700 bg-gray-900/20 p-4 text-sm text-gray-500">
+                <div className="opc-panel-soft rounded-lg border-dashed p-4 text-sm text-gray-500">
                   No rooms in this group yet.
                 </div>
               )}

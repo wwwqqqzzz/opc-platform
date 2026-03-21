@@ -322,7 +322,7 @@ export default function MyBotsPage() {
   if (!user) {
     return (
       <div className="py-12 text-center">
-        <p className="text-gray-400">Please login to view your bots</p>
+        <p className="text-[color:var(--opc-muted)]">Please login to view your bots</p>
       </div>
     )
   }
@@ -330,7 +330,7 @@ export default function MyBotsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="text-gray-400">Loading...</div>
+        <div className="text-[color:var(--opc-muted)]">Loading...</div>
       </div>
     )
   }
@@ -343,31 +343,31 @@ export default function MyBotsPage() {
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-white">My Bots</h1>
-          <p className="mt-1 text-sm text-gray-400">
+          <p className="mt-1 text-sm text-[color:var(--opc-muted)]">
             Manage agent identity, API access, and public verification from one place.
           </p>
         </div>
         <button
           type="button"
           onClick={() => setShowCreateModal(true)}
-          className="inline-flex items-center rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-700"
+          className="opc-button-primary inline-flex items-center px-4 py-2 text-sm"
         >
           Create New Bot
         </button>
       </div>
 
-      <section className="rounded-lg border border-cyan-700/40 bg-cyan-900/20 p-5">
+      <section className="opc-panel-green rounded-lg p-5">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
-            <div className="text-sm uppercase tracking-wide text-cyan-300">Bot participation</div>
+            <div className="opc-kicker text-sm">Bot participation</div>
             <div className="mt-1 text-lg font-medium text-white">
               {verifiedBots}/{bots.length || 0} bots verified, {activeBots} active
             </div>
-            <p className="mt-2 text-sm text-cyan-100/80">
+            <p className="mt-2 text-sm text-gray-300">
               Bots join posting and identity flows here. Projects still move through the GitHub execution path, which is currently focused on{' '}
               {onboarding.activeProject ? `"${onboarding.activeProject.title}"` : 'your next active project'}.
             </p>
-            <p className="mt-2 text-xs text-cyan-100/70">
+            <p className="mt-2 text-xs text-gray-400">
               Human dashboard is your operator workspace. Bot control is API-first: each bot uses its own API key to manage follows, DMs, room membership, and channel messages.
             </p>
           </div>
@@ -375,13 +375,13 @@ export default function MyBotsPage() {
             <button
               type="button"
               onClick={() => setShowCreateModal(true)}
-              className="rounded-lg bg-cyan-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-cyan-700"
+              className="opc-button-primary px-4 py-2 text-sm"
             >
               Create bot
             </button>
             <Link
               href={onboarding.ctaHref}
-              className="rounded-lg border border-gray-600 px-4 py-2 text-sm font-medium text-gray-200 transition hover:bg-gray-800"
+              className="opc-button-secondary px-4 py-2 text-sm"
             >
               {onboarding.ctaLabel}
             </Link>
@@ -392,7 +392,7 @@ export default function MyBotsPage() {
       {error && <Banner tone="error" message={error} onClose={() => setError(null)} />}
       {success && <Banner tone="success" message={success} onClose={() => setSuccess(null)} />}
 
-      <div className="overflow-hidden rounded-lg border border-gray-700 bg-gray-800">
+      <div className="opc-panel overflow-hidden rounded-lg">
         {bots.length === 0 ? (
           <div className="p-6">
             <DashboardEmptyState
@@ -405,7 +405,7 @@ export default function MyBotsPage() {
             />
           </div>
         ) : (
-          <div className="divide-y divide-gray-700">
+          <div className="divide-y divide-white/8">
             {bots.map((bot) => (
               <div key={bot.id} className="p-6">
                 <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
@@ -422,7 +422,7 @@ export default function MyBotsPage() {
                       />
                     </div>
                     {bot.description && (
-                      <p className="mt-2 text-sm text-gray-400">{bot.description}</p>
+                      <p className="mt-2 text-sm text-[color:var(--opc-muted)]">{bot.description}</p>
                     )}
                     <div className="mt-3 flex flex-wrap gap-5 text-sm text-gray-500">
                       <span>Created: {new Date(bot.createdAt).toLocaleDateString()}</span>
@@ -439,7 +439,7 @@ export default function MyBotsPage() {
                           href={bot.verificationUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-cyan-400 hover:text-cyan-300"
+                          className="text-[var(--opc-green)] hover:text-[#7ef0bb]"
                         >
                           Public proof
                         </a>
@@ -462,8 +462,8 @@ export default function MyBotsPage() {
                       onClick={() => toggleBotActive(bot)}
                       className={`inline-flex items-center rounded border px-3 py-1.5 text-xs font-medium transition-colors ${
                         bot.isActive
-                          ? 'border-gray-600 text-gray-300 hover:bg-gray-700'
-                          : 'border-emerald-600 text-emerald-400 hover:bg-emerald-900/30'
+                          ? 'border-white/10 text-gray-300 hover:bg-white/[0.04]'
+                          : 'border-[var(--opc-green)] text-[var(--opc-green)] hover:bg-[var(--opc-green-soft)]'
                       }`}
                     >
                       {bot.isActive ? 'Deactivate' : 'Activate'}
@@ -471,7 +471,7 @@ export default function MyBotsPage() {
                     <button
                       type="button"
                       onClick={() => openEditModal(bot)}
-                      className="inline-flex items-center rounded border border-gray-600 px-3 py-1.5 text-xs font-medium text-gray-300 transition-colors hover:bg-gray-700"
+                      className="opc-button-secondary inline-flex items-center px-3 py-1.5 text-xs"
                     >
                       Edit
                     </button>
@@ -485,7 +485,7 @@ export default function MyBotsPage() {
                   </div>
                 </div>
 
-                <div className="mt-4 rounded-lg border border-gray-700 bg-gray-900/50 p-4">
+                <div className="opc-panel-soft mt-4 rounded-lg p-4">
                   <div className="mb-2 flex items-center justify-between">
                     <span className="text-sm font-medium text-gray-300">API Key</span>
                     <div className="flex gap-3 text-xs">
@@ -699,7 +699,7 @@ function StatusPill({
       ? 'border-blue-700 bg-blue-900/50 text-blue-400'
       : tone === 'yellow'
       ? 'border-yellow-700 bg-yellow-900/50 text-yellow-400'
-      : 'border-gray-700 bg-gray-700 text-gray-300'
+      : 'opc-chip-white'
 
   return (
     <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium ${className}`}>
@@ -722,15 +722,15 @@ function ModalFrame({
   scrollable?: boolean
 }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/75 p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
       <div
-        className={`w-full rounded-lg border border-gray-700 bg-gray-800 shadow-xl ${
+        className={`opc-panel w-full rounded-lg shadow-xl ${
           wide ? 'max-w-2xl' : 'max-w-md'
         }`}
       >
-        <div className="flex items-center justify-between border-b border-gray-700 px-6 py-4">
+        <div className="flex items-center justify-between border-b border-white/8 px-6 py-4">
           <h3 className="text-lg font-medium text-white">{title}</h3>
-          <button type="button" onClick={onClose} className="text-gray-400 hover:text-white">
+          <button type="button" onClick={onClose} className="text-[color:var(--opc-muted)] hover:text-white">
             x
           </button>
         </div>
@@ -769,7 +769,7 @@ function TextField({
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
         required={required}
-        className="mt-1 block w-full rounded-md border border-gray-600 bg-gray-700 px-3 py-2 text-white focus:border-emerald-500 focus:outline-none"
+        className="mt-1 block w-full rounded-md border border-white/10 bg-black px-3 py-2 text-white focus:border-[var(--opc-green)] focus:outline-none"
       />
     </div>
   )
@@ -796,7 +796,7 @@ function TextAreaField({
         value={value}
         onChange={(event) => onChange(event.target.value)}
         rows={3}
-        className="mt-1 block w-full rounded-md border border-gray-600 bg-gray-700 px-3 py-2 text-white focus:border-emerald-500 focus:outline-none"
+        className="mt-1 block w-full rounded-md border border-white/10 bg-black px-3 py-2 text-white focus:border-[var(--opc-green)] focus:outline-none"
       />
     </div>
   )
@@ -814,13 +814,13 @@ function ModalActions({
       <button
         type="button"
         onClick={onCancel}
-        className="rounded-md border border-gray-600 bg-gray-700 px-4 py-2 text-sm font-medium text-gray-300 transition hover:bg-gray-600"
+        className="opc-button-secondary px-4 py-2 text-sm"
       >
         Cancel
       </button>
       <button
         type="submit"
-        className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-700"
+        className="opc-button-primary px-4 py-2 text-sm"
       >
         {primaryLabel}
       </button>

@@ -57,9 +57,9 @@ export default function StartConversationCard() {
   }
 
   return (
-    <section className="rounded-lg border border-gray-700 bg-gray-800 p-5">
+    <section className="opc-panel rounded-lg p-5">
       <h2 className="text-xl font-semibold text-white">Start a conversation</h2>
-      <p className="mt-1 text-sm text-gray-400">
+      <p className="mt-1 text-sm text-[color:var(--opc-muted)]">
         Use actor search instead of manually entering ids.
       </p>
       <div className="mt-4 space-y-4">
@@ -78,7 +78,7 @@ export default function StartConversationCard() {
           type="button"
           onClick={() => void handleStart()}
           disabled={starting}
-          className="rounded-lg bg-cyan-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-cyan-700 disabled:opacity-50"
+          className="opc-button-primary px-4 py-2 text-sm disabled:opacity-50"
         >
           {starting ? 'Opening...' : 'Open DM'}
         </button>

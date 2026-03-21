@@ -7,7 +7,7 @@ export default async function DashboardNotificationsPage() {
 
   if (!user) {
     return (
-      <div className="rounded-lg border border-gray-700 bg-gray-800 p-6 text-sm text-gray-400">
+      <div className="opc-panel rounded-lg p-6 text-sm text-[color:var(--opc-muted)]">
         Please login to open your notifications.
       </div>
     )
@@ -19,7 +19,7 @@ export default async function DashboardNotificationsPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-white">Notifications</h1>
-        <p className="mt-1 text-sm text-gray-400">
+        <p className="mt-1 text-sm text-[color:var(--opc-muted)]">
           Room invites, mentions, DMs, and channel role changes arrive here.
         </p>
       </div>

@@ -166,7 +166,7 @@ export default function SettingsPage() {
   if (!user) {
     return (
       <div className="py-12 text-center">
-        <p className="text-gray-400">Please login to view settings</p>
+        <p className="text-[color:var(--opc-muted)]">Please login to view settings</p>
       </div>
     )
   }
@@ -183,27 +183,27 @@ export default function SettingsPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-white">Settings</h1>
-        <p className="mt-1 text-sm text-gray-400">Manage your account, security, and GitHub connection.</p>
+        <p className="mt-1 text-sm text-[color:var(--opc-muted)]">Manage your account, security, and GitHub connection.</p>
       </div>
 
-      <section className="rounded-lg border border-cyan-700/40 bg-cyan-900/20 p-5">
+      <section className="opc-panel-green rounded-lg p-5">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
-            <div className="text-sm uppercase tracking-wide text-cyan-300">Execution routing</div>
+            <div className="opc-kicker text-sm">Execution routing</div>
             <div className="mt-1 text-lg font-medium text-white">{onboarding.title}</div>
-            <p className="mt-2 text-sm text-cyan-100/80">{onboarding.description}</p>
+            <p className="mt-2 text-sm text-gray-300">{onboarding.description}</p>
           </div>
           <div className="flex flex-wrap gap-3">
             <Link
               href={onboarding.ctaHref}
-              className="rounded-lg bg-cyan-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-cyan-700"
+              className="opc-button-primary px-4 py-2 text-sm"
             >
               {onboarding.ctaLabel}
             </Link>
             {onboarding.activeProject && (
               <Link
                 href={`/project/${onboarding.activeProject.id}`}
-                className="rounded-lg border border-gray-600 px-4 py-2 text-sm font-medium text-gray-200 transition hover:bg-gray-800"
+                className="opc-button-secondary px-4 py-2 text-sm"
               >
                 Open active project
               </Link>
@@ -215,16 +215,16 @@ export default function SettingsPage() {
       {error && <Banner tone="error" message={error} onClose={() => setError(null)} />}
       {success && <Banner tone="success" message={success} onClose={() => setSuccess(null)} />}
 
-      <section className="overflow-hidden rounded-lg border border-gray-700 bg-gray-800">
-        <div className="border-b border-gray-700 p-6">
+      <section className="opc-panel overflow-hidden rounded-lg">
+        <div className="border-b border-white/8 p-6">
           <h2 className="text-lg font-medium text-white">GitHub Integration</h2>
-          <p className="mt-1 text-sm text-gray-400">
+          <p className="mt-1 text-sm text-[color:var(--opc-muted)]">
             Connect GitHub to bind repositories, bootstrap project workflows, and sync delivery activity back into OPC Platform.
           </p>
         </div>
         <div className="space-y-4 p-6">
           {githubStatusLoading ? (
-            <div className="rounded-lg border border-gray-700 bg-gray-900/40 p-4 text-sm text-gray-400">
+            <div className="opc-panel-soft rounded-lg p-4 text-sm text-[color:var(--opc-muted)]">
               Loading GitHub integration status...
             </div>
           ) : null}
@@ -238,11 +238,11 @@ export default function SettingsPage() {
 
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div className="flex items-center gap-4">
-              <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-full border border-gray-700 bg-gray-900 text-lg font-semibold">
+              <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-full border border-white/8 bg-black text-lg font-semibold">
                 {githubConnected ? (githubStatus?.connection.login || 'GH').slice(0, 2).toUpperCase() : 'GH'}
               </div>
               <div>
-                <div className="text-sm text-gray-400">Status</div>
+                <div className="text-sm text-[color:var(--opc-muted)]">Status</div>
                 <div className="text-base font-medium text-white">
                   {githubConnected ? `Connected as @${githubStatus?.connection.login}` : 'Not connected'}
                 </div>
@@ -258,7 +258,7 @@ export default function SettingsPage() {
               {githubConfigured ? (
                 <a
                   href={githubConnectHref}
-                  className="rounded-lg bg-cyan-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-cyan-700"
+                  className="opc-button-primary px-4 py-2 text-sm"
                 >
                   {githubConnected ? 'Reconnect GitHub' : 'Connect GitHub'}
                 </a>
@@ -266,7 +266,7 @@ export default function SettingsPage() {
                 <button
                   type="button"
                   disabled
-                  className="rounded-lg bg-gray-700 px-4 py-2 text-sm font-medium text-gray-400"
+                  className="opc-button-secondary px-4 py-2 text-sm text-gray-400"
                 >
                   Connect GitHub
                 </button>
@@ -305,7 +305,7 @@ export default function SettingsPage() {
             />
           </div>
 
-          <div className="rounded-lg border border-gray-700 bg-gray-900/40 p-4 text-sm text-gray-400">
+          <div className="opc-panel-soft rounded-lg p-4 text-sm text-[color:var(--opc-muted)]">
             <div className="font-medium text-white">What this unlocks</div>
             <ul className="mt-2 space-y-1">
               <li>Bind a single GitHub repository to each project</li>
@@ -333,20 +333,20 @@ export default function SettingsPage() {
         </div>
       </section>
 
-      <section className="overflow-hidden rounded-lg border border-gray-700 bg-gray-800">
-        <div className="border-b border-gray-700 p-6">
+      <section className="opc-panel overflow-hidden rounded-lg">
+        <div className="border-b border-white/8 p-6">
           <h2 className="text-lg font-medium text-white">Profile Information</h2>
-          <p className="mt-1 text-sm text-gray-400">Update your account profile information.</p>
+          <p className="mt-1 text-sm text-[color:var(--opc-muted)]">Update your account profile information.</p>
         </div>
         <div className="space-y-4 p-6">
           <div>
             <label className="block text-sm font-medium text-gray-300">Email</label>
-            <p className="mt-1 text-sm text-gray-400">{user.email}</p>
+            <p className="mt-1 text-sm text-[color:var(--opc-muted)]">{user.email}</p>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-300">Display Name</label>
             <div className="mt-1 flex items-center gap-3">
-              <p className="text-sm text-gray-400">{user.name || 'Not set'}</p>
+              <p className="text-sm text-[color:var(--opc-muted)]">{user.name || 'Not set'}</p>
               <button
                 onClick={() => {
                   setShowNameModal(true)
@@ -354,7 +354,7 @@ export default function SettingsPage() {
                   setError(null)
                   setSuccess(null)
                 }}
-                className="text-sm text-emerald-400 hover:text-emerald-300"
+                className="text-sm text-[var(--opc-green)] hover:text-[#7ef0bb]"
               >
                 Edit
               </button>
@@ -362,15 +362,15 @@ export default function SettingsPage() {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-300">Account Created</label>
-            <p className="mt-1 text-sm text-gray-400">{new Date(user.createdAt).toLocaleDateString()}</p>
+            <p className="mt-1 text-sm text-[color:var(--opc-muted)]">{new Date(user.createdAt).toLocaleDateString()}</p>
           </div>
         </div>
       </section>
 
-      <section className="overflow-hidden rounded-lg border border-gray-700 bg-gray-800">
-        <div className="border-b border-gray-700 p-6">
+      <section className="opc-panel overflow-hidden rounded-lg">
+        <div className="border-b border-white/8 p-6">
           <h2 className="text-lg font-medium text-white">Security</h2>
-          <p className="mt-1 text-sm text-gray-400">Update your password.</p>
+          <p className="mt-1 text-sm text-[color:var(--opc-muted)]">Update your password.</p>
         </div>
         <div className="p-6">
           <button
@@ -382,7 +382,7 @@ export default function SettingsPage() {
               setError(null)
               setSuccess(null)
             }}
-            className="inline-flex items-center rounded-md border border-gray-600 bg-gray-700 px-4 py-2 text-sm font-medium text-gray-300 transition-colors hover:bg-gray-600"
+            className="opc-button-secondary inline-flex items-center px-4 py-2 text-sm"
           >
             Change Password
           </button>
@@ -423,10 +423,10 @@ function ChecklistCard({
 }) {
   const tone =
     status === 'done'
-      ? 'border-emerald-700 bg-emerald-900/20 text-emerald-100'
+      ? 'opc-panel-green'
       : status === 'current'
-      ? 'border-cyan-700 bg-cyan-900/20 text-cyan-100'
-      : 'border-gray-700 bg-gray-900/40 text-gray-300'
+      ? 'opc-panel-soft text-white'
+      : 'opc-panel-soft text-gray-300'
 
   const badge =
     status === 'done' ? 'Done' : status === 'current' ? 'Next' : 'Blocked'
@@ -476,11 +476,11 @@ function Modal({
   onClose: () => void
 }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/75 p-4">
-      <div className="w-full max-w-md rounded-lg border border-gray-700 bg-gray-800 shadow-xl">
-        <div className="flex items-center justify-between border-b border-gray-700 px-6 py-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
+      <div className="opc-panel w-full max-w-md rounded-lg shadow-xl">
+        <div className="flex items-center justify-between border-b border-white/8 px-6 py-4">
           <h3 className="text-lg font-medium text-white">{title}</h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-white">
+          <button onClick={onClose} className="text-[color:var(--opc-muted)] hover:text-white">
             x
           </button>
         </div>
@@ -513,7 +513,7 @@ function Field({
         type={type}
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="mt-1 block w-full rounded-md border border-gray-600 bg-gray-700 px-3 py-2 text-white focus:border-emerald-500 focus:outline-none"
+        className="mt-1 block w-full rounded-md border border-white/10 bg-black px-3 py-2 text-white focus:border-[var(--opc-green)] focus:outline-none"
       />
     </div>
   )
@@ -533,14 +533,14 @@ function ModalActions({
       <button
         type="button"
         onClick={onCancel}
-        className="rounded-md border border-gray-600 bg-gray-700 px-4 py-2 text-sm font-medium text-gray-300 hover:bg-gray-600"
+        className="opc-button-secondary px-4 py-2 text-sm"
         disabled={loading}
       >
         Cancel
       </button>
       <button
         type="submit"
-        className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700"
+        className="opc-button-primary px-4 py-2 text-sm"
         disabled={loading}
       >
         {primaryLabel}

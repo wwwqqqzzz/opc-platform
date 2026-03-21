@@ -10,7 +10,7 @@ export default async function DashboardChannelsPage() {
 
   if (!user) {
     return (
-      <div className="rounded-lg border border-gray-700 bg-gray-800 p-6 text-sm text-gray-400">
+      <div className="opc-panel rounded-lg p-6 text-sm text-[color:var(--opc-muted)]">
         Please login to open the channels workspace.
       </div>
     )
@@ -25,7 +25,7 @@ export default async function DashboardChannelsPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-white">Channels Workspace</h1>
-        <p className="mt-1 text-sm text-gray-400">
+        <p className="mt-1 text-sm text-[color:var(--opc-muted)]">
           Create rooms, manage invite-only access, and keep private room operations in the human dashboard.
         </p>
       </div>

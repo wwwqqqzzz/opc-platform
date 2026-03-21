@@ -61,35 +61,35 @@ export default function PrivateConversationClient({
 
   return (
     <div className="space-y-6">
-      <div className="rounded-lg border border-gray-700 bg-gray-800 p-5">
+      <div className="opc-panel rounded-lg p-5">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
           <div>
-            <div className="text-sm uppercase tracking-wide text-cyan-300">Private conversation</div>
+            <div className="opc-kicker text-sm">Private conversation</div>
             <div className="mt-1 text-2xl font-semibold text-white">{summary.counterpart.name}</div>
-            <p className="mt-2 text-sm text-gray-400">{summary.counterpart.subtitle}</p>
+            <p className="mt-2 text-sm text-[color:var(--opc-muted)]">{summary.counterpart.subtitle}</p>
             {summary.counterpart.href && (
               <Link
                 href={summary.counterpart.href}
-                className="mt-3 inline-block text-sm text-cyan-400 hover:text-cyan-300"
+                className="mt-3 inline-block text-sm text-[var(--opc-green)] hover:text-[#7ef0bb]"
               >
                 Open public profile
               </Link>
             )}
           </div>
-          <div className="rounded-full border border-gray-700 bg-gray-900/40 px-4 py-2 text-sm text-gray-300">
+          <div className="opc-panel-soft rounded-full px-4 py-2 text-sm text-gray-300">
             {messages.length} message{messages.length === 1 ? '' : 's'}
           </div>
         </div>
       </div>
 
-      <section className="rounded-lg border border-gray-700 bg-gray-800 p-5">
+      <section className="opc-panel rounded-lg p-5">
         <h2 className="text-lg font-semibold text-white">Conversation history</h2>
         <div className="mt-4 space-y-3">
           {messages.length > 0 ? (
             messages.map((message) => (
-              <div key={message.id} className="rounded-lg border border-gray-700 bg-gray-900/40 p-4">
+              <div key={message.id} className="opc-panel-soft rounded-lg p-4">
                 <div className="flex flex-wrap items-center gap-3 text-xs text-gray-500">
-                  <span className="rounded-full border border-gray-700 px-2 py-1 uppercase tracking-wide">
+                  <span className="opc-chip-white uppercase tracking-wide">
                     {message.senderType}
                   </span>
                   <span>{new Date(message.createdAt).toLocaleString()}</span>
@@ -98,16 +98,16 @@ export default function PrivateConversationClient({
               </div>
             ))
           ) : (
-            <div className="rounded-lg border border-dashed border-gray-700 bg-gray-900/20 p-5 text-sm text-gray-500">
+            <div className="opc-panel-soft rounded-lg border-dashed p-5 text-sm text-gray-500">
               No messages yet. Start the conversation here.
             </div>
           )}
         </div>
       </section>
 
-      <section className="rounded-lg border border-gray-700 bg-gray-800 p-5">
+      <section className="opc-panel rounded-lg p-5">
         <h2 className="text-lg font-semibold text-white">Send message</h2>
-        <p className="mt-1 text-sm text-gray-400">
+        <p className="mt-1 text-sm text-[color:var(--opc-muted)]">
           This is the first concrete DM surface. Bots can use the same conversation APIs directly.
         </p>
 
@@ -122,12 +122,12 @@ export default function PrivateConversationClient({
             value={content}
             onChange={(event) => setContent(event.target.value)}
             placeholder="Write a direct message..."
-            className="min-h-[140px] w-full rounded-lg border border-gray-700 bg-gray-900 px-4 py-3 text-white focus:border-cyan-500 focus:outline-none"
+            className="min-h-[140px] w-full rounded-lg border border-white/10 bg-black px-4 py-3 text-white focus:border-[var(--opc-green)] focus:outline-none"
           />
           <button
             type="submit"
             disabled={sending}
-            className="rounded-lg bg-cyan-600 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-cyan-700 disabled:opacity-60"
+            className="opc-button-primary px-5 py-2.5 text-sm disabled:opacity-60"
           >
             {sending ? 'Sending...' : 'Send direct message'}
           </button>
