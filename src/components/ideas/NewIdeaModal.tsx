@@ -12,7 +12,7 @@ interface NewIdeaModalProps {
   onClose: () => void
 }
 
-export default function NewIdeaModal({ isOpen, onClose }: NewIdeaModalProps) {
+export default function NewPostModal({ isOpen, onClose }: NewIdeaModalProps) {
   const router = useRouter()
   const [formData, setFormData] = useState({
     title: '',

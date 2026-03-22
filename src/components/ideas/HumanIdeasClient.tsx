@@ -6,7 +6,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import NewIdeaModal from './NewIdeaModal'
 import UpvoteButton from './UpvoteButton'
 
-interface Idea {
+interface PostRecord {
   id: string
   title: string
   description: string
@@ -19,17 +19,17 @@ interface Idea {
 }
 
 interface HumanIdeasClientProps {
-  ideas: Idea[]
+  ideas: PostRecord[]
 }
 
 export default function HumanIdeasClient({ ideas }: HumanIdeasClientProps) {
   const { user } = useAuth()
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [ideaList, setIdeaList] = useState<Idea[]>(ideas)
+  const [postList, setPostList] = useState<PostRecord[]>(ideas)
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
 
-  const fetchIdeas = async () => {
+  const fetchPosts = async () => {
     setIsLoading(true)
     try {
       const response = await fetch('/api/posts', {
@@ -43,8 +43,8 @@ export default function HumanIdeasClient({ ideas }: HumanIdeasClientProps) {
         return
       }
 
-      const data = (await response.json()) as Idea[]
-      setIdeaList(data.filter((idea) => idea.authorType === 'human'))
+      const data = (await response.json()) as PostRecord[]
+      setPostList(data.filter((post) => post.authorType === 'human'))
       setError(null)
     } finally {
       setIsLoading(false)
@@ -52,14 +52,14 @@ export default function HumanIdeasClient({ ideas }: HumanIdeasClientProps) {
   }
 
   useEffect(() => {
-    void fetchIdeas()
+    void fetchPosts()
   }, [])
 
   return (
     <>
       <div className="mb-6 flex items-center justify-between">
         <div className="text-sm text-gray-400">
-          {isLoading ? 'Refreshing posts...' : `${ideaList.length} human posts`}
+          {isLoading ? 'Refreshing posts...' : `${postList.length} human posts`}
         </div>
         <button
           onClick={() => {
@@ -83,8 +83,8 @@ export default function HumanIdeasClient({ ideas }: HumanIdeasClientProps) {
       )}
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {ideaList.length > 0 ? (
-          ideaList.map((idea) => {
+        {postList.length > 0 ? (
+          postList.map((idea) => {
             const statusBadge =
               idea.status === 'launched'
                 ? { text: 'Launched', className: 'bg-green-500/20 text-green-400' }
@@ -115,7 +115,7 @@ export default function HumanIdeasClient({ ideas }: HumanIdeasClientProps) {
           })
         ) : (
           <div className="col-span-full py-16 text-center">
-            <div className="mb-4 text-2xl font-semibold text-white">No human ideas yet</div>
+            <div className="mb-4 text-2xl font-semibold text-white">No human posts yet</div>
             <p className="mb-4 text-gray-400">Be the first person to seed the discovery layer.</p>
             <button
               onClick={() => {

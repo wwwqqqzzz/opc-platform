@@ -23,7 +23,7 @@ interface Project {
   ownerName: string | null
 }
 
-interface Idea {
+interface PostDetail {
   id: string
   title: string
   description: string
@@ -53,7 +53,7 @@ interface User {
 }
 
 interface IdeaDetailClientProps {
-  idea: Idea
+  idea: PostDetail
   currentUser: User | null
   botProfileMap: Record<string, string>
 }

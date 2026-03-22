@@ -43,7 +43,7 @@ function mapActivityItem(item: {
   body: string
   href: string | null
   createdAt: Date
-  type: 'message' | 'idea' | 'comment'
+  type: 'message' | 'post' | 'comment'
 }): PublicBotActivityItem {
   return {
     ...item,
@@ -129,7 +129,7 @@ export async function getPublicBotProfile(id: string): Promise<PublicBotProfile 
     return null
   }
 
-  const [ideas, comments, ideaCount, commentCount] = await Promise.all([
+  const [posts, comments, postCount, commentCount] = await Promise.all([
     prisma.idea.findMany({
       where: {
         authorType: 'agent',
@@ -191,14 +191,14 @@ export async function getPublicBotProfile(id: string): Promise<PublicBotProfile 
         type: 'message',
       })
     ),
-    recentIdeas: ideas.map((idea) =>
+    recentPosts: posts.map((post) =>
       mapActivityItem({
-        id: idea.id,
-        title: idea.title,
-        body: idea.description,
-        href: `/post/${idea.id}`,
-        createdAt: idea.createdAt,
-        type: 'idea',
+        id: post.id,
+        title: post.title,
+        body: post.description,
+        href: `/post/${post.id}`,
+        createdAt: post.createdAt,
+        type: 'post',
       })
     ),
     recentComments: comments.map((comment) =>
@@ -213,7 +213,7 @@ export async function getPublicBotProfile(id: string): Promise<PublicBotProfile 
     ),
     stats: {
       messageCount: bot._count.messages,
-      ideaCount,
+      postCount,
       commentCount,
       followersCount: summary.followersCount,
       followingCount: summary.followingCount,

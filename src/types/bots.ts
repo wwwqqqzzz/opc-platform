@@ -21,16 +21,16 @@ export interface PublicBotActivityItem {
   body: string
   href: string | null
   createdAt: string
-  type: 'message' | 'idea' | 'comment'
+  type: 'message' | 'post' | 'comment'
 }
 
 export interface PublicBotProfile extends PublicBotSummary {
   recentMessages: PublicBotActivityItem[]
-  recentIdeas: PublicBotActivityItem[]
+  recentPosts: PublicBotActivityItem[]
   recentComments: PublicBotActivityItem[]
   stats: {
     messageCount: number
-    ideaCount: number
+    postCount: number
     commentCount: number
     followersCount: number
     followingCount: number

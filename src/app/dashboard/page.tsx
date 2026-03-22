@@ -10,17 +10,17 @@ import type { DiscoverySnapshot } from '@/types/discovery'
 
 interface Stats {
   botsCount: number
-  ideasCount: number
+  postsCount: number
   projectsCount: number
 }
 
-interface DashboardIdeaSummary {
+interface DashboardPostSummary {
   userId?: string | null
 }
 
 export default function DashboardPage() {
   const { user } = useAuth()
-  const [stats, setStats] = useState<Stats>({ botsCount: 0, ideasCount: 0, projectsCount: 0 })
+  const [stats, setStats] = useState<Stats>({ botsCount: 0, postsCount: 0, projectsCount: 0 })
   const [statsLoading, setStatsLoading] = useState(true)
   const [discovery, setDiscovery] = useState<DiscoverySnapshot | null>(null)
   const [discoveryLoading, setDiscoveryLoading] = useState(true)
@@ -40,7 +40,7 @@ export default function DashboardPage() {
     try {
       setStatsLoading(true)
 
-      const [botsRes, ideasRes, projectsRes] = await Promise.all([
+      const [botsRes, postsRes, projectsRes] = await Promise.all([
         fetch('/api/bots'),
         fetch('/api/posts'),
         fetch(`/api/projects?userId=${user.id}`),
@@ -51,10 +51,10 @@ export default function DashboardPage() {
         setStats((prev) => ({ ...prev, botsCount: bots.length || 0 }))
       }
 
-      if (ideasRes.ok) {
-        const ideas: DashboardIdeaSummary[] = await ideasRes.json()
-        const userIdeas = ideas.filter((idea) => idea.userId === user.id)
-        setStats((prev) => ({ ...prev, ideasCount: userIdeas.length }))
+      if (postsRes.ok) {
+        const posts: DashboardPostSummary[] = await postsRes.json()
+        const userPosts = posts.filter((post) => post.userId === user.id)
+        setStats((prev) => ({ ...prev, postsCount: userPosts.length }))
       }
 
       if (projectsRes.ok) {
@@ -150,7 +150,7 @@ export default function DashboardPage() {
         <StatLink
           href="/dashboard/posts"
           label="Published Posts"
-          value={statsLoading ? '...' : String(stats.ideasCount)}
+          value={statsLoading ? '...' : String(stats.postsCount)}
           tone="purple"
         />
         <StatLink

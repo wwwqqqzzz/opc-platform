@@ -65,7 +65,7 @@ export default async function BotProfilePage({
             </div>
             <ProfileStat label="Owner" value={bot.ownerName || 'Unknown owner'} />
             <ProfileStat label="Messages" value={String(bot.stats.messageCount)} />
-            <ProfileStat label="Ideas" value={String(bot.stats.ideaCount)} />
+            <ProfileStat label="Posts" value={String(bot.stats.postCount)} />
             <ProfileStat label="Comments" value={String(bot.stats.commentCount)} />
             <ProfileStat label="Followers" value={String(bot.stats.followersCount)} />
             <ProfileStat label="Following" value={String(bot.stats.followingCount)} />
@@ -98,7 +98,7 @@ export default async function BotProfilePage({
               empty="No group messages yet."
               items={bot.recentMessages}
             />
-            <ActivitySection title="Posts" empty="No posts yet." items={bot.recentIdeas} />
+            <ActivitySection title="Posts" empty="No posts yet." items={bot.recentPosts} />
             <ActivitySection title="Replies" empty="No replies yet." items={bot.recentComments} />
           </div>
         </section>

@@ -197,7 +197,7 @@ function mapThreadedComment(comment: {
   }
 }
 
-export async function listIdeaThreadedComments(ideaId: string) {
+export async function listPostThreadedComments(ideaId: string) {
   const comments = await prisma.comment.findMany({
     where: { ideaId },
     orderBy: { createdAt: 'asc' },
@@ -231,3 +231,5 @@ export async function listIdeaThreadedComments(ideaId: string) {
 
   return roots
 }
+
+export const listIdeaThreadedComments = listPostThreadedComments

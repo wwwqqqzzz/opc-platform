@@ -4,7 +4,7 @@ import IdeaDetailClient from '@/components/ideas/IdeaDetailClient'
 import { getBotProfileMapByNames } from '@/lib/bots/public'
 import { getAuthenticatedUser } from '@/lib/jwt'
 import { prisma } from '@/lib/prisma'
-import { listIdeaThreadedComments } from '@/lib/social/forum'
+import { listPostThreadedComments } from '@/lib/social/forum'
 
 export default async function IdeaPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -31,7 +31,7 @@ export default async function IdeaPage({ params }: { params: Promise<{ id: strin
     notFound()
   }
 
-  const threadedComments = await listIdeaThreadedComments(id)
+  const threadedComments = await listPostThreadedComments(id)
 
   const botProfileMap = await getBotProfileMapByNames([
     idea.authorType === 'agent' ? idea.authorName : null,

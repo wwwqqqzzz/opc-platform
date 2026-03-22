@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import UpvoteButton from './UpvoteButton'
 
-interface Idea {
+interface PostRecord {
   id: string
   title: string
   description: string
@@ -16,7 +16,7 @@ interface Idea {
 }
 
 interface BotIdeasClientProps {
-  ideas: Idea[]
+  ideas: PostRecord[]
 }
 
 export default function BotIdeasClient({ ideas }: BotIdeasClientProps) {

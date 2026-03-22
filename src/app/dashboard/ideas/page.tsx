@@ -7,7 +7,7 @@ import NewIdeaModal from '@/components/ideas/NewIdeaModal'
 import { useAuth } from '@/contexts/AuthContext'
 import { useDashboardOnboarding } from '@/hooks/useDashboardExecutionState'
 
-interface Idea {
+interface PostRecord {
   id: string
   title: string
   description: string
@@ -26,24 +26,24 @@ interface Idea {
   }
 }
 
-type IdeaFilter = 'all' | 'pending' | 'in_progress' | 'completed'
+type PostFilter = 'all' | 'pending' | 'in_progress' | 'completed'
 
-export default function MyIdeasPage() {
+export default function MyPostsPage() {
   const { user } = useAuth()
   const { onboarding } = useDashboardOnboarding()
-  const [ideas, setIdeas] = useState<Idea[]>([])
+  const [posts, setPosts] = useState<PostRecord[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [filter, setFilter] = useState<IdeaFilter>('all')
+  const [filter, setFilter] = useState<PostFilter>('all')
   const [isComposerOpen, setIsComposerOpen] = useState(false)
 
   useEffect(() => {
     if (user) {
-      void fetchIdeas()
+      void fetchPosts()
     }
   }, [user])
 
-  const fetchIdeas = async () => {
+  const fetchPosts = async () => {
     if (!user) {
       return
     }
@@ -52,25 +52,25 @@ export default function MyIdeasPage() {
       setLoading(true)
       const response = await fetch('/api/posts')
       if (!response.ok) {
-        throw new Error('Failed to fetch ideas')
+        throw new Error('Failed to fetch posts')
       }
 
-      const data: Idea[] = await response.json()
-      setIdeas(data.filter((idea) => idea.userId === user.id))
+      const data: PostRecord[] = await response.json()
+      setPosts(data.filter((post) => post.userId === user.id))
     } catch (fetchError) {
-      setError(fetchError instanceof Error ? fetchError.message : 'Failed to fetch ideas')
+      setError(fetchError instanceof Error ? fetchError.message : 'Failed to fetch posts')
     } finally {
       setLoading(false)
     }
   }
 
-  const deleteIdea = async (ideaId: string) => {
+  const deletePost = async (postId: string) => {
     if (!confirm('Are you sure you want to delete this post?')) {
       return
     }
 
     try {
-      const response = await fetch(`/api/posts/${ideaId}`, {
+      const response = await fetch(`/api/posts/${postId}`, {
         method: 'DELETE',
       })
 
@@ -78,7 +78,7 @@ export default function MyIdeasPage() {
         throw new Error('Failed to delete post')
       }
 
-      await fetchIdeas()
+      await fetchPosts()
     } catch (deleteError) {
       setError(deleteError instanceof Error ? deleteError.message : 'Failed to delete post')
     }
@@ -100,20 +100,20 @@ export default function MyIdeasPage() {
     )
   }
 
-  const filteredIdeas = ideas.filter((idea) => filter === 'all' || idea.status === filter)
-  const claimedIdeas = ideas.filter((idea) => Boolean(idea.project)).length
+  const filteredPosts = posts.filter((post) => filter === 'all' || post.status === filter)
+  const preparedPosts = posts.filter((post) => Boolean(post.project)).length
   const stats = [
-    { label: 'Total', value: ideas.length, filterValue: 'all' as IdeaFilter },
-    { label: 'Pending', value: ideas.filter((idea) => idea.status === 'pending').length, filterValue: 'pending' as IdeaFilter },
+    { label: 'Total', value: posts.length, filterValue: 'all' as PostFilter },
+    { label: 'Pending', value: posts.filter((post) => post.status === 'pending').length, filterValue: 'pending' as PostFilter },
     {
       label: 'In Progress',
-      value: ideas.filter((idea) => idea.status === 'in_progress').length,
-      filterValue: 'in_progress' as IdeaFilter,
+      value: posts.filter((post) => post.status === 'in_progress').length,
+      filterValue: 'in_progress' as PostFilter,
     },
     {
       label: 'Completed',
-      value: ideas.filter((idea) => idea.status === 'completed').length,
-      filterValue: 'completed' as IdeaFilter,
+      value: posts.filter((post) => post.status === 'completed').length,
+      filterValue: 'completed' as PostFilter,
     },
   ]
 
@@ -156,7 +156,7 @@ export default function MyIdeasPage() {
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
             <div className="opc-kicker text-sm">Posting to execution</div>
-            <div className="mt-1 text-lg font-medium text-white">{claimedIdeas} post(s) already entered project prep</div>
+            <div className="mt-1 text-lg font-medium text-white">{preparedPosts} post(s) already entered project prep</div>
             <p className="mt-2 text-sm text-gray-300">
               Posts are the public signal layer. Once one enters project prep, execution planning moves into the active project flow.
             </p>
@@ -191,8 +191,8 @@ export default function MyIdeasPage() {
       </div>
 
       <div className="opc-panel overflow-hidden rounded-lg">
-        {filteredIdeas.length === 0 ? (
-          ideas.length === 0 ? (
+        {filteredPosts.length === 0 ? (
+          posts.length === 0 ? (
             <div className="p-6">
               <DashboardEmptyState
                 title="No posts yet"
@@ -219,30 +219,30 @@ export default function MyIdeasPage() {
           )
         ) : (
           <div className="divide-y divide-white/8">
-            {filteredIdeas.map((idea) => (
-              <div key={idea.id} className="p-6">
+            {filteredPosts.map((post) => (
+              <div key={post.id} className="p-6">
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                   <div className="flex-1">
                     <div className="flex flex-wrap items-center gap-3">
-                      <h3 className="text-lg font-medium text-white">{idea.title}</h3>
-                      <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusTone(idea.status)}`}>
-                        {getStatusLabel(idea.status)}
+                      <h3 className="text-lg font-medium text-white">{post.title}</h3>
+                      <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusTone(post.status)}`}>
+                        {getStatusLabel(post.status)}
                       </span>
                     </div>
-                    <p className="mt-2 line-clamp-2 text-sm text-[color:var(--opc-muted)]">{idea.description}</p>
+                    <p className="mt-2 line-clamp-2 text-sm text-[color:var(--opc-muted)]">{post.description}</p>
                     <div className="mt-3 flex flex-wrap gap-6 text-sm text-gray-500">
-                      <span>Created: {new Date(idea.createdAt).toLocaleDateString()}</span>
-                      {idea._count && (
+                      <span>Created: {new Date(post.createdAt).toLocaleDateString()}</span>
+                      {post._count && (
                         <>
-                          <span>Comments: {idea._count.comments}</span>
-                          <span>Upvotes: {idea._count.upvoteRecords}</span>
+                          <span>Comments: {post._count.comments}</span>
+                          <span>Upvotes: {post._count.upvoteRecords}</span>
                         </>
                       )}
-                      {idea.project && (
+                      {post.project && (
                         <span className="text-emerald-400">
                           Project:{' '}
-                          <Link href={`/project/${idea.project.id}`} className="hover:underline">
-                            {idea.project.title}
+                          <Link href={`/project/${post.project.id}`} className="hover:underline">
+                            {post.project.title}
                           </Link>
                         </span>
                       )}
@@ -250,14 +250,14 @@ export default function MyIdeasPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <Link
-                      href={`/post/${idea.id}`}
+                      href={`/post/${post.id}`}
                       className="opc-button-secondary inline-flex items-center px-3 py-1.5 text-xs"
                     >
                       View
                     </Link>
                     <button
                       type="button"
-                      onClick={() => deleteIdea(idea.id)}
+                      onClick={() => deletePost(post.id)}
                       className="inline-flex items-center rounded border border-red-700 px-3 py-1.5 text-xs font-medium text-red-400 transition-colors hover:bg-red-900/30"
                     >
                       Delete
